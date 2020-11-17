@@ -1,5 +1,5 @@
 import nookies from "nookies";
-import axios, { jsonHeaderHandler, refreshHeader } from "lib/axios";
+import axios, { jsonHeaderHandler, refreshHeader, signature_exp } from "lib/axios";
 import * as actionType from "./actionTypes";
 import Router from "next/router";
 
@@ -41,21 +41,26 @@ export const getUser = () => {
     dispatch(getUserStart());
     axios.get("/users/my-user")
       .then(res => {
-        dispatch(getUserSuccess(res.data))
+        if(res.data){
+          dispatch(getUserSuccess(res.data))
+        }
+        else {
+          dispatch(getUserFail())
+          axios.delete("/users/delete-cookies")
+        }
       })
       .catch(err => {
-        const signature_exp = "Signature has expired"
-        if(err.response.data.detail == signature_exp){
+        if(err.response.data.detail === signature_exp){
           axios.get("/users/my-user")
             .then(res => {
               dispatch(getUserSuccess(res.data))
             })
-            .catch(() => {
-              axios.delete("/users/delete-cookies")
-              dispatch(getUserFail())
-            })
+            .catch(() => {})
         }
-        dispatch(getUserFail())
+        else {
+          axios.delete("/users/delete-cookies")
+          dispatch(getUserFail())
+        }
       })
   };
 };

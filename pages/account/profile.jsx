@@ -1,4 +1,4 @@
-import { withAuth } from 'lib/withAuth'
+// import { withAuth } from 'lib/withAuth'
 import { useState, useEffect } from 'react'
 import { Select, Button, Upload, Input } from 'antd'
 import { useDispatch, useSelector } from "react-redux";
@@ -74,6 +74,7 @@ const Profile = () => {
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
+          const errPhone = "The phone number has already been taken."
           if(errDetail === signature_exp){
             axios.put('/users/update-account', data, jsonHeaderHandler())
               .then(res => {
@@ -85,6 +86,14 @@ const Profile = () => {
                 setLoadingProfie(false)
                 axios.delete("/users/delete-cookies")
               })
+          }
+          if (typeof errDetail === "string" && errDetail === errPhone) {
+            setLoadingProfie(false)
+            const state = JSON.parse(JSON.stringify(profile));
+            state.phone.value = state.phone.value;
+            state.phone.isValid = false;
+            state.phone.message = errDetail;
+            setProfile(state);
           }
           if (typeof errDetail !== "string") {
             setLoadingProfie(false)
@@ -282,4 +291,4 @@ const Profile = () => {
   )
 }
 
-export default withAuth(Profile)
+export default Profile
