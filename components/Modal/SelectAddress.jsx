@@ -1,24 +1,61 @@
-import { Button, Modal } from "antd";
+import { useEffect, useState } from "react";
+import { Button, Modal, Empty } from "antd";
+import { useDispatch, useSelector } from "react-redux";
+import { AnimatePresence, motion } from "framer-motion";
 
-import Card from "react-bootstrap/Card";
-import Media from "react-bootstrap/Media";
+import nookies from "nookies";
+import * as actions from "store/actions";
+import axios, { jsonHeaderHandler, signature_exp, resNotification } from "lib/axios";
+import SelectAddressList from "components/Account/Address/SelectAddressList";
 
-const SelectAddressModal = ({ show, submit, close, showAddAddress }) => {
+const SelectAddressModal = ({ show, close, showAddAddress }) => {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false)
+  const addresses = useSelector((state) => state.address.address);
 
   const onShowAddAddressHandler = () => {
-    close()
-    showAddAddress()
+    close();
+    showAddAddress();
+  };
+
+  const changeMainAddress = (id) => {
+    setLoading(true)
+    axios.put(`/address/main-address-true/${id}`, null, jsonHeaderHandler())
+      .then(res => {
+        close()
+        setLoading(false)
+        dispatch(actions.getAddress(100000, 1));
+        resNotification("success", "Success", res.data.detail)
+      })
+      .catch(err => {
+        const errDetail = err.response.data.detail
+        if(errDetail == signature_exp){
+          dispatch(actions.getAddress(100000, 1));
+          close()
+          setLoading(false)
+          resNotification("success", "Success", "Successfully set the address to main address.")
+        } else if(typeof(errDetail) === "string") {
+          setLoading(false)
+          resNotification("error", "Error", errDetail)
+        } else {
+          setLoading(false)
+          resNotification("error", "Error", errDetail[0].msg)
+        }
+      })
   }
+
+  useEffect(() => {
+    const { csrf_access_token, csrf_refresh_token } = nookies.get();
+    if (csrf_access_token && csrf_refresh_token) {
+      dispatch(actions.getAddress(100000, 1));
+    }
+  }, []);
 
   return (
     <>
       <Modal
         centered
-        title={
-          <div className="text-center">
-            <span className="ant-modal-title">Pilih Alamat Pengiriman</span>
-          </div>
-        }
+        title={ <div className="text-center"> <span className="ant-modal-title">Pilih Alamat Pengiriman</span> </div> }
         visible={show}
         zIndex="1030"
         closeIcon={<i className="fas fa-times" />}
@@ -32,36 +69,44 @@ const SelectAddressModal = ({ show, submit, close, showAddAddress }) => {
           overflowY: "auto",
         }}
       >
-        <Button type="dashed" block style={{ height: 45 }} className="text-secondary" onClick={onShowAddAddressHandler}>
+        <Button
+          type="dashed"
+          block
+          style={{ height: 45 }}
+          className="text-secondary fs-12-s"
+          onClick={onShowAddAddressHandler}
+        >
           Tambah Alamat Baru
         </Button>
 
-        {[...Array(5)].map((_, i) => (
-          <Card className="card-address" key={i}>
-            <Media>
-              <Media.Body>
-                <Card.Body>
-                  <p className="user-address-title mb-0 fw-500">
-                    Andi salamen <span className="font-weight-light">(Rumah)</span>
-                  </p>
-                  <p className="font-weight-light user-phone mb-0">628515678910</p>
-                  <p className="text-secondary mb-0">
-                    Jl. Kenari Raya, Kec. Kuta Sel., Kabupaten Badung, Bali, 80361
-                    [Tokopedia Note: JALAN TAMAN GIRIYA PERUMAHAN BINA SATYA PERMAI
-                    GANG MAWAR-Y NOMOR 41] Kuta Selatan, Kab. Badung, 80361
-                  </p>
-                </Card.Body>
-              </Media.Body>
-              <Button className="align-self-center btn-tridatu m-r-20" onClick={submit}>
-                Pilih Alamat
-              </Button>
-            </Media>
-          </Card>
-        ))}
+        <AnimatePresence>
+          {(addresses == null || addresses.data.length == 0) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: ".2" }}
+            >
+              <Empty className="my-5" description={<span className="text-secondary">Kamu belum memiliki alamat</span>} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {(addresses && addresses.data.length > 0) && addresses.data.map(data => (
+            <SelectAddressList 
+              data={data} 
+              key={data.id}
+              changeMainAddress={() => changeMainAddress(data.id)}
+              loading={loading}
+            />
+          ))}
+        </AnimatePresence>
+
       </Modal>
 
       <style jsx>{`
-        :global(.card-address){
+        :global(.card-address) {
           border-radius: 5px;
           margin-top: 20px;
         }

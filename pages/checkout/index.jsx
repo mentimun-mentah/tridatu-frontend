@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Button, Divider, Select, Space } from 'antd'
+import { useSelector } from "react-redux";
+import { Button, Divider, Select, Space, Skeleton, Empty } from "antd";
 
 import Link from 'next/link'
 import Col from 'react-bootstrap/Col'
@@ -7,6 +8,7 @@ import Row from 'react-bootstrap/Row'
 import Card from 'react-bootstrap/Card'
 import Container from 'react-bootstrap/Container'
 
+import axios, { jsonHeaderHandler, signature_exp, resNotification } from "lib/axios";
 import AddAddressModal from 'components/Modal/AddAddress'
 import SelectAddressModal from 'components/Modal/SelectAddress'
 import PromoModal from 'components/Cart/PromoModal'
@@ -26,6 +28,9 @@ const Checkout = () => {
   const [promo, setPromo] = useState({ code: '', isUsed: false })
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [showSelectAddressModal, setShowSelectAddressModal] = useState(false)
+
+  const loading = useSelector(state => state.address.loading)
+  const addresses = useSelector(state => state.address.address)
 
   const showAddressModalHandler = () => {
     setShowAddressModal(true)
@@ -73,15 +78,27 @@ const Checkout = () => {
         <Row>
           <Col lg={8}>
             <p className="fw-500 fs-16">Alamat penerima</p>
-            <Card className="address-card fs-14">
-              <p className="user-address-title mb-0 fw-500">
-                Andi salamen <span className="font-weight-light">(Rumah)</span>
-              </p>
-              <p className="font-weight-light user-phone mb-0">628515678910</p>
-              <p className="text-secondary mb-0">
-                Jl. Kenari Raya, Kec. Kuta Sel., Kabupaten Badung, Bali, 80361 [Tokopedia Note: JALAN TAMAN GIRIYA PERUMAHAN BINA SATYA PERMAI GANG MAWAR-Y NOMOR 41]
-Kuta Selatan, Kab. Badung, 80361
-              </p>
+            <Card className="address-card fs-14 fs-12-s">
+              {!loading && (addresses == null || addresses.data.length == 0) && (
+                <Empty 
+                  className="my-3 text-left"
+                  imageStyle={{ height: 70 }}
+                  description={<span className="text-secondary">Kamu belum memiliki alamat</span>} 
+                />
+              )}
+              {addresses && addresses.data.length > 0 && (
+                <Skeleton loading={loading} paragraph={{ rows: 2 }} active className="custom-skeleton">
+                  <p className="user-address-title mb-0 fw-500">
+                    {addresses.data[0].receiver} <span className="font-weight-light">({addresses.data[0].label})</span>
+                  </p>
+                  <p className="font-weight-light user-phone mb-0">{addresses.data[0].phone}</p>
+                  <p className="text-secondary mb-0">
+                    {addresses.data[0].recipient_address}
+                    <br />
+                    {addresses.data[0].region}, {addresses.data[0].postal_code}
+                  </p>
+                </Skeleton>
+              )}
             </Card>
 
             <Card.Body className="border-0 p-0 mb-3">
@@ -178,15 +195,15 @@ Kuta Selatan, Kab. Badung, 80361
 
       <SelectAddressModal
         show={showSelectAddressModal}
-        submit={closeSelectAddressModalHandler}
         close={closeSelectAddressModalHandler}
         showAddAddress={showAddressModalHandler}
       />
 
       <AddAddressModal
         show={showAddressModal}
-        submit={closeAddressModalHandler}
         close={closeAddressModalHandler}
+        perPage={1000000}
+        currentPage={1}
       />
 
       <PromoModal
@@ -214,6 +231,9 @@ Kuta Selatan, Kab. Badung, 80361
         }
         :global(.select-courier .ant-select-selection-placeholder){
           color: rgba(0, 0, 0, 0.85);
+        }
+        :global(.custom-skeleton > .ant-skeleton-content .ant-skeleton-title + .ant-skeleton-paragraph){
+          margin-top: 16px;
         }
       `}</style>
     </>
