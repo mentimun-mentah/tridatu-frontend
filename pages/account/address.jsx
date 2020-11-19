@@ -1,16 +1,31 @@
-import { useState } from 'react'
-import { Button, Popconfirm, message, Divider } from 'antd'
+import { useState, useEffect } from 'react'
+import { Button, Radio, Empty } from 'antd'
+import { useDispatch, useSelector } from "react-redux";
+import { AnimatePresence, motion } from 'framer-motion'
 
+import nookies from "nookies";
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Card from 'react-bootstrap/Card'
-import Badge from 'react-bootstrap/Badge'
+
+import { formAddress } from 'formdata/formAddress'
+import axios, { jsonHeaderHandler, signature_exp, resNotification } from "lib/axios";
+import * as actions from "store/actions";
 import Pagination from "components/Pagination";
-
 import AddAddressModal from 'components/Modal/AddAddress'
+import EditAddressModal from 'components/Modal/EditAddress'
+import AddressList from 'components/Account/Address'
 
+const perPage = 10;
 const Address = () => {
+  const dispatch = useDispatch()
+  const addresses = useSelector(state => state.address.address)
+  const loading = useSelector(state => state.address.loading)
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [currentAddress, setCurrentAddress] = useState(formAddress)
   const [showAddressModal, setShowAddressModal] = useState(false)
+  const [showEditAddressModal, setShowEditAddressModal] = useState(false)
 
   const showAddressModalHandler = () => {
     setShowAddressModal(true)
@@ -19,6 +34,117 @@ const Address = () => {
   const closeAddressModalHandler = () => {
     setShowAddressModal(false)
   }
+
+  const closeEditAddressModalHandler = () => {
+    setShowEditAddressModal(false)
+  }
+
+  const editData = (res, setState) => {
+    const { id, label, main_address, phone, postal_code, receiver, recipient_address, region } = res.data
+    let phoneData = "";
+    if(phone){
+      phoneData = phone.split(" ")[phone.split(" ").length - 1]
+      phoneData = phoneData.split("-").join("")
+    }
+    const data = {
+      id: id,
+      main_address: main_address,
+      label: { value: label, isValid: true, message: null },
+      phone: { value: phoneData, isValid: true, message: null },
+      postal_code: { value: postal_code, isValid: true, message: null },
+      receiver: { value: receiver, isValid: true, message: null },
+      recipient_address: { value: recipient_address, isValid: true, message: null },
+      region: { value: region, isValid: true, message: null },
+    }
+    setState(data)
+  }
+
+  const editAddressHandler = id => {
+    console.log(id)
+    axios.get(`/address/my-address/${id}`)
+      .then(res => {
+        editData(res, setCurrentAddress)
+        setShowEditAddressModal(true)
+      })
+      .catch(err => {
+        const errDetail = err.response.data.detail
+        if(errDetail == signature_exp){
+          axios.get(`/address/my-address/${id}`)
+            .then(res => {
+              editData(res, setCurrentAddress)
+              setShowEditAddressModal(true)
+            })
+            .catch(() => {})
+        } else if(typeof(errDetail) === "string") {
+          resNotification("error", "Error", errDetail)
+        } else {
+          resNotification("error", "Error", errDetail[0].msg)
+        }
+      })
+  }
+
+  const changeMainAddress = (e, isMobile) => {
+    const id = isMobile ? e : e.target.text;
+    axios.put(`/address/main-address-true/${id}`, null, jsonHeaderHandler())
+      .then(res => {
+        dispatch(actions.getAddress(perPage, currentPage))
+        resNotification("success", "Success", res.data.detail)
+      })
+      .catch(err => {
+        const errDetail = err.response.data.detail
+        if(errDetail == signature_exp){
+          dispatch(actions.getAddress(perPage, currentPage))
+          resNotification("success", "Success", "Successfully set the address to main address.")
+        } else if(typeof(errDetail) === "string") {
+          resNotification("error", "Error", errDetail)
+        } else {
+          resNotification("error", "Error", errDetail[0].msg)
+        }
+      })
+  }
+
+  const deleteAddressHanler = id => {
+    let page = currentPage;
+    if(addresses.data.length === 1 && page > 1){
+      page = currentPage - 1
+      setCurrentPage(page)
+    } else {
+      page = 1
+      setCurrentPage(page)
+    }
+    axios.delete(`/address/delete/${id}`, jsonHeaderHandler())
+      .then(res => {
+        dispatch(actions.getAddress(perPage, page))
+        resNotification("success", "Success", res.data.detail)
+      })
+      .catch(err => {
+        const errDetail = err.response.data.detail
+        if(errDetail == signature_exp){
+          dispatch(actions.getAddress(perPage, page))
+          resNotification("success", "Success", "Successfully delete the address.")
+        } else if(typeof(errDetail) === "string") {
+          resNotification("error", "Error", errDetail)
+        } else {
+          resNotification("error", "Error", errDetail[0].msg)
+        }
+      })
+  }
+
+  const pageChange = page => {
+    setCurrentPage(page)
+    setCurrentAddress(formAddress)
+    dispatch(actions.getAddress(perPage, page))
+  }
+
+  useEffect(() => {
+    const { csrf_access_token, csrf_refresh_token } = nookies.get();
+    if(csrf_access_token && csrf_refresh_token){
+      dispatch(actions.getAddress(perPage, currentPage))
+    }
+    if(addresses !== null){
+      setCurrentPage(addresses.page)
+    }
+  },[])
 
   return(
     <>
@@ -41,71 +167,69 @@ const Address = () => {
         </Card.Header>
 
         <Card.Body>
-          {[...Array(3)].map((_,i) => (
-            <React.Fragment key={i}>
-              <Row className="address-card">
-                <Col lg={2}>
-                  <div className="text-left">
-                    <h4 className="fs-16 text-secondary mb-sm-0">Penerima</h4>
-                    <p className="fs-14 mb-0 fw-500">Jhon Bakery</p>
-                    <p className="fs-14 mb-lg-0">0812345678</p>
-                  </div>
-                </Col>
-                <Col lg={4}>
-                  <div className="text-left">
-                    <h4 className="fs-16 text-secondary mb-sm-0">Alamat Penerima</h4>
-                    <p className="fs-14 mb-0 fw-500">
-                      Rumah {i === 0 && <Badge variant="primary">Utama</Badge>}
-                    </p>
-                    <p className="fs-14 mb-lg-0">Jl. By pass Ngurah Rai Komp Ruko Nusa Dua Nomor 23</p>
-                  </div>
-                </Col>
-                <Col lg={4}>
-                  <div className="text-left">
-                    <h4 className="fs-16 text-secondary mb-sm-0">Daerah Penerima</h4>
-                    <p className="fs-14 mb-lg-0">Kec. Abiansemal, Kota/Kab. Badung Bali, 80352</p>
-                  </div>
-                </Col>
-                <Col lg={2}>
-                  <div className="text-center">
-                    <Button 
-                      onClick={showAddressModalHandler}
-                      icon={<i className="far fa-pen" />} 
-                    />
-                    <Popconfirm
-                      title="Hapus alamat ini?"
-                      onConfirm={() => message.success({
-                        content: 'Berhasil dihapus!', 
-                      })}
-                      okText="Ya"
-                      cancelText="Batal"
-                      placement="bottomRight"
-                      arrowPointAtCenter
-                    >
-                      <Button 
-                        className="ml-2"
-                        icon={<i className="far fa-trash-alt" />} 
-                      />
-                    </Popconfirm>
-                  </div>
-                </Col>
-              </Row>
-              <Divider className="d-last-none" />
-            </React.Fragment>
-          ))}
-          
+          <AnimatePresence>
+            {!loading && (addresses == null || addresses.data.length == 0) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: ".2" }}
+              >
+                <Empty className="my-5" description={<span className="text-secondary">Kamu belum memiliki alamat</span>} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
+          <AnimatePresence>
+            {(addresses && addresses.data.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: ".2" }}
+              >
+                <Radio.Group onChange={changeMainAddress} value={true} className="w-100">
+                  {addresses && addresses.data.map(data => (
+                    <AddressList 
+                      key={data.id} 
+                      data={data} 
+                      showEditHandler={() => editAddressHandler(data.id)}
+                      deleteHandler={() => deleteAddressHanler(data.id)}
+                      changeMainAddress={() => changeMainAddress(data.id, true)}
+                    />)
+                  )}
+                </Radio.Group>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Card.Body>
 
-        <Card.Body className="text-center">
-          <Pagination />
-        </Card.Body>
+        {addresses !== null && (
+          <Card.Body className="text-center">
+            <Pagination 
+              total={addresses.total} 
+              goTo={pageChange} 
+              current={currentPage} 
+              hideOnSinglePage 
+              pageSize={perPage}
+            />
+          </Card.Body>
+        )}
       </Card>
 
       <AddAddressModal
         show={showAddressModal}
-        submit={closeAddressModalHandler}
         close={closeAddressModalHandler}
+        perPage={perPage}
+        currentPage={currentPage}
+      />
+
+      <EditAddressModal
+        show={showEditAddressModal}
+        close={closeEditAddressModalHandler}
+        perPage={perPage}
+        currentPage={currentPage}
+        currentAddress={currentAddress}
       />
 
       <style jsx>{`
@@ -115,6 +239,22 @@ const Address = () => {
       `}</style>
     </>
   )
+}
+
+Address.getInitialProps = async ctx => {
+  const { csrf_access_token, csrf_refresh_token, access_token_cookie } = nookies.get(ctx);
+
+  if(csrf_access_token && csrf_refresh_token && access_token_cookie){
+    if(ctx.req) axios.defaults.headers.get.Cookie = ctx.req.headers.cookie;
+    try{
+      ctx.store.dispatch(actions.getAddressStart())
+      const res = await axios.get(`/address/my-address?per_page=${perPage}&page=1`)
+      ctx.store.dispatch(actions.getAddressSuccess(res.data))
+    }
+    catch (err){
+      ctx.store.dispatch(actions.getAddressFail(err))
+    }
+  }
 }
 
 export default Address

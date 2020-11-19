@@ -76,7 +76,7 @@ const Password = () => {
         .then((res) => {
           setLoading(false);
           setFormPassword(formConfigPassword)
-          resNotification("success", res.data.detail)
+          resNotification("success", "Success", res.data.detail)
         })
         .catch((err) => {
           setLoading(false);

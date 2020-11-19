@@ -18,15 +18,17 @@ const itemRender = (_, type, originalElement) => {
   return originalElement;
 };
 
-const PaginationContainer = () => {
+const PaginationContainer = ({ total = 1, pageSize = 10, goTo = () => {}, current = 1, hideOnSinglePage = false }) => {
   return (
     <>
       <Pagination
+        hideOnSinglePage={hideOnSinglePage}
         itemRender={itemRender}
         showSizeChanger={false}
-        defaultCurrent={40}
-        pageSize={1}
-        total={500}
+        onChange={(e) => goTo(e)}
+        current={current} //current page
+        pageSize={pageSize} //data per_page
+        total={total} //max of iter_pages
         responsive
       />
       <style jsx>{`

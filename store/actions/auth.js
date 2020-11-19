@@ -59,7 +59,7 @@ export const getUser = () => {
         }
         else {
           axios.delete("/users/delete-cookies")
-          dispatch(getUserFail())
+          dispatch(getUserFail(err.response))
         }
       })
   };

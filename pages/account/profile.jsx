@@ -69,7 +69,7 @@ const Profile = () => {
       axios.put('/users/update-account', data, jsonHeaderHandler())
         .then(res => {
           setLoadingProfie(false)
-          resNotification("success", res.data.detail)
+          resNotification("success", "Success", res.data.detail)
           dispatch(actions.getUser())
         })
         .catch(err => {
@@ -79,7 +79,7 @@ const Profile = () => {
             axios.put('/users/update-account', data, jsonHeaderHandler())
               .then(res => {
                 setLoadingProfie(false)
-                resNotification("success", res.data.detail)
+                resNotification("success", "Success", res.data.detail)
                 dispatch(actions.getUser())
               })
               .catch(() => {

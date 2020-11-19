@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Button, Modal, Select, Input } from 'antd'
 import { LoadingOutlined } from "@ant-design/icons";
 
@@ -13,15 +13,13 @@ import ErrorMessage from "components/ErrorMessage";
 import { formAddress, formAddressIsValid } from 'formdata/formAddress'
 
 const textSearch = "Please enter 3 or more characters"
-const AddAddressModal = ({ show, close, perPage, currentPage }) => {
+const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress }) => {
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const [addressList, setAddressList] = useState([])
   const [postalCode, setPostalCode] = useState([])
   const [address, setAddress] = useState(formAddress)
   const [notFound, setNotFound] = useState({text: textSearch})
-
-  const user = useSelector(state => state.auth.user)
 
   const { label, receiver, phone, region, postal_code, recipient_address } = address
 
@@ -105,7 +103,7 @@ const AddAddressModal = ({ show, close, perPage, currentPage }) => {
         recipient_address: recipient_address.value, 
       }
 
-      axios.post("/address/create", data, jsonHeaderHandler())
+      axios.put(`/address/update/${address.id}`, data, jsonHeaderHandler())
         .then((res) => {
           setLoading(false)
           closeModalHandler()
@@ -140,20 +138,8 @@ const AddAddressModal = ({ show, close, perPage, currentPage }) => {
   }
 
   useEffect(() => {
-    if(user !== null){
-      let phone = "";
-      if(user.phone){
-        phone = user.phone.split(" ")[user.phone.split(" ").length - 1]
-        phone = phone.split("-").join("")
-      }
-      const data = {
-        ...address,
-        receiver: { value: user.username, isValid: true, message: null },
-        phone: { value: phone, isValid: true, message: null },
-      };
-      setAddress(data)
-    }
-  },[user, close])
+    setAddress(currentAddress)
+  },[currentAddress])
 
   return(
     <>
@@ -306,4 +292,4 @@ const AddAddressModal = ({ show, close, perPage, currentPage }) => {
   )
 }
 
-export default AddAddressModal
+export default EditAddressModal

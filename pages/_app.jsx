@@ -597,11 +597,6 @@ const App = ({ Component, pageProps, store }) => {
           border-top-right-radius: calc(0.25rem - 1px);
         }
 
-        @media only screen and (max-width: 425px) {
-          body {
-            padding-top: 58px;
-          }
-        }
         .bor-rad-2rem {
           border-radius: .2rem;
         }
