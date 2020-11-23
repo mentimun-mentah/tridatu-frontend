@@ -94,8 +94,20 @@ const isEmptyObject = obj => {
 }
 
 const getActiveMenu = (routes, router) => {
-  let getRoutes = routes.split('/')[2]
-  let getRouter = router.split('/')[2]
+  let rsSplit = routes.split('/')
+  let rrSplit = router.split('/')
+  let lastPathrr = rrSplit[rrSplit.length - 1]
+  let lastPathrs = rsSplit[rrSplit.length - 1]
+  
+  if(lastPathrr.startsWith('[')){
+    if(lastPathrs && lastPathrs.startsWith('new')){
+      rsSplit.shift()
+    }
+  }
+
+  let getRoutes = rsSplit[2]
+  let getRouter = rrSplit[2]
+
   if(getRoutes) return getRoutes.startsWith(getRouter)
 }
 

@@ -1,10 +1,12 @@
 import { withAuth } from 'lib/withAuth'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDispatch } from "react-redux";
 import { Form, Input, Button, Space, Upload } from 'antd'
 import { LoadingOutlined } from "@ant-design/icons";
 
 import _ from 'lodash'
+import nookies from "nookies";
+import Router from 'next/router'
 import Card from 'react-bootstrap/Card'
 
 import { formImage, formImageIsValid } from 'formdata/formImage'
@@ -17,7 +19,9 @@ import ErrorMessage from "components/ErrorMessage";
 
 import AddStyleAdmin from 'components/Admin/addStyle'
 
-const NewBrand = () => {
+const brandUrl = "/admin/brand"
+
+const EditBrand = ({ brandData }) => {
   const dispatch = useDispatch()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
@@ -50,8 +54,7 @@ const NewBrand = () => {
 
   const onCancelHandler = e => {
     e.preventDefault()
-    setBrand(formBrand)
-    setImageList(formImage)
+    Router.replace(brandUrl, brandUrl)
   }
 
   const onSubmitHandler = e => {
@@ -59,17 +62,21 @@ const NewBrand = () => {
     if(formBrandIsValid(brand, setBrand) && formImageIsValid(imageList, setImageList)){
       setLoading(true)
       const formData = new FormData()
-      _.forEach(file.value, file => {
-        formData.append('file', file.originFileObj)
+      _.forEach(file.value, (file) => {
+        if(!file.hasOwnProperty('url')){
+          formData.append('file', file.originFileObj)
+        }
       })
       formData.append("name", name.value);
 
-      axios.post("/brands/create", formData, formHeaderHandler())
+      axios.put(`/brands/update/${brandData.id_brand}`, formData, formHeaderHandler())
         .then(res => {
           setLoading(false)
+          Router.replace(brandUrl, brandUrl)
           resNotification("success", "Success", res.data.detail)
           setBrand(formBrand)
           setImageList(formImage)
+          dispatch(actions.getBrand())
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
@@ -78,7 +85,8 @@ const NewBrand = () => {
             setLoading(false)
             setBrand(formBrand)
             setImageList(formImage)
-            resNotification("success", "Success", "Successfully add a new brand.")
+            Router.replace(brandUrl, brandUrl)
+            resNotification("success", "Success", "Successfully update the brand.")
           }
           else if(typeof(errDetail) === "string" && errDetail == errName) {
             setLoading(false)
@@ -116,11 +124,37 @@ const NewBrand = () => {
     }
   }
 
+  useEffect(() => {
+    if(brandData){
+      const { id_brand, name_brand, image_brand } = brandData
+
+      const imageBrand = {
+        file: { 
+          value: [{
+            uid: -Math.abs(id_brand),
+            url: `${process.env.NEXT_PUBLIC_API_URL}/static/brands/${image_brand}`
+          }], 
+          isValid: true, 
+          message: null 
+        }
+      }
+
+      const dataBrand = {
+        id_brand: id_brand,
+        name: { value: name_brand, isValid: true, message: null }
+      }
+
+      setBrand(dataBrand)
+      setImageList(imageBrand)
+    }
+
+  },[brandData])
+
   return(
     <>
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Tambah Brand</h5>
+          <h5 className="mb-0 fs-16-s">Update Brand</h5>
         </Card.Body>
         <Card.Body className="p-3">
 
@@ -144,7 +178,7 @@ const NewBrand = () => {
                 fileList={file.value}
                 onPreview={imagePreview}
                 onChange={imageChangeHandler}
-                beforeUpload={(file) => imageValidation(file, "file", "/brands/create", "post", setLoading, () => dispatch(actions.getBrand()))}
+                beforeUpload={(file) => imageValidation(file, "file", `/brands/update/${brandData.id_brand}`, "put", setLoading, () => dispatch(actions.getBrand()))}
               >
                 {file.value.length >= 1 ? null : uploadButton(loading)}
               </Upload>
@@ -180,4 +214,31 @@ const NewBrand = () => {
   )
 }
 
-export default withAuth(NewBrand)
+EditBrand.getInitialProps = async ctx => {
+  const { id } = ctx.query
+  const { csrf_access_token, csrf_refresh_token } = nookies.get(ctx);
+
+  if(csrf_access_token && csrf_refresh_token){
+    if(ctx.req) axios.defaults.headers.get.Cookie = ctx.req.headers.cookie;
+    try{
+      let res = await axios.get(`/brands/get-brand/${id}`)
+      return {
+        brandData: res.data
+      }
+    } 
+    catch (err) {
+      if(err.response.status == 404){
+        if(process.browser){
+          Router.replace(brandUrl, brandUrl)
+        } 
+        else {
+          ctx.res.writeHead(302, { Location: brandUrl })
+          ctx.res.end();
+        }
+      }
+    }
+  }
+  
+}
+
+export default withAuth(EditBrand)

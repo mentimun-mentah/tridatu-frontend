@@ -1,4 +1,4 @@
-// import { withAuth } from 'lib/withAuth'
+import { withAuth } from 'lib/withAuth'
 import { useState, useEffect } from 'react'
 import { Select, Button, Upload, Input } from 'antd'
 import { useDispatch, useSelector } from "react-redux";
@@ -29,7 +29,7 @@ const Profile = () => {
   const user = useSelector(state => state.auth.user)
 
   const { username, email, phone, gender } = profile;
-  const avatarImage = avatar.image;
+  const avatarImage = avatar.file;
   const oldUsername = oldData.username.value;
   const oldPhone = oldData.phone.value;
   const oldGender = oldData.gender.value;
@@ -130,7 +130,7 @@ const Profile = () => {
       setProfile(data)
       setOldData(data)
       const avatarData = {
-        image: { 
+        file: { 
           value: [{
             uid: -Math.abs(Math.random()),
             url: `${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`
@@ -291,4 +291,4 @@ const Profile = () => {
   )
 }
 
-export default Profile
+export default withAuth(Profile)

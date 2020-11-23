@@ -1,4 +1,6 @@
 import { Col, Row } from "antd";
+import { useSelector } from "react-redux";
+
 import Link from "next/link";
 import Image from "next/image";
 import RowB from "react-bootstrap/Row";
@@ -7,9 +9,12 @@ import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
 import Slider from "react-slick";
 
+import axios from "lib/axios";
 import CardProduct from "components/Card/Product";
 import CardBrand from "components/Card/Brand";
 import CardBanner from "components/Card/Banner";
+
+import * as actions from "store/actions";
 
 const CardProductMemo = React.memo(CardProduct);
 const CardBrandMemo = React.memo(CardBrand);
@@ -19,9 +24,12 @@ import { brandSettings, bannerSettings, infoStoreSettings, infoStoreSettingsMobi
 import { brandData } from "data/brand";
 
 let banners = ['/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/2.jpeg', '/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/4.jpeg', '/static/images/banner/5.jpeg', '/static/images/banner/5.jpeg']
-let infoStores = ['/static/images/info-store/1.jpeg', '/static/images/info-store/2.jpeg', '/static/images/info-store/3.jpeg', '/static/images/info-store/4.jpeg', '/static/images/info-store/5.jpeg', '/static/images/info-store/6.jpeg', ]
+
+let infoStores = ['/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png']
 
 const Home = () => {
+  const outlets = useSelector(state => state.outlet.outlet)
+
   return (
     <>
       <Container className="pt-4">
@@ -53,24 +61,42 @@ const Home = () => {
           <ColB lg={2} md={12} sm={12} className="d-none d-lg-block">
             <section className="info-store">
               <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
-              <Slider {...infoStoreSettings}>
-                {infoStores.map((data, i) => (
-                  <div className="mb-1" key={i}>
-                    <Image width={145} height={145} src={data} className="info-store-img" alt="Tridatu Bali ID" />
-                  </div>
-                ))}
-              </Slider>
+              {outlets && outlets.length > 0 ? (
+                <Slider {...infoStoreSettings} infinite={outlets.length > 4}>
+                  {outlets.map(data => (
+                    <div className="mb-1" key={data.id}>
+                      <Image width={145} height={145} src={`${process.env.NEXT_PUBLIC_API_URL}/static/outlets/${data.image}`} className="info-store-img" alt="Tridatu Bali ID" />
+                    </div>
+                  ))}
+                </Slider>
+              ) : (
+                <Slider {...infoStoreSettings} infinite={true}>
+                  {infoStores.map((data, i) => (
+                    <div className="mb-1" key={i}>
+                      <Image width={145} height={145} src={data} className="info-store-img" alt="Tridatu Bali ID" />
+                    </div>
+                  ))}
+                </Slider>
+              )}
             </section>
           </ColB>
         </RowB>
 
         <section className="info-store d-block d-lg-none">
           <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
-          <Slider {...infoStoreSettingsMobile}>
-            {infoStores.map((data, i) => (
-              <Image width={151} height={151} src={data} className="info-store-img" alt="Tridatu Bali ID" key={i} />
-            ))}
-          </Slider>
+          {outlets && outlets.length > 0 ? (
+            <Slider {...infoStoreSettingsMobile} infinite={outlets.length > 4}>
+              {outlets.map(data => (
+                <Image width={151} height={151} src={`${process.env.NEXT_PUBLIC_API_URL}/static/outlets/${data.image}`} className="info-store-img" alt="Tridatu Bali ID" key={data.id} />
+              ))}
+            </Slider>
+          ) : (
+            <Slider {...infoStoreSettingsMobile} infinite={true}>
+              {infoStores.map((data, i) => (
+                <Image width={151} height={151} src={data} className="info-store-img" alt="Tridatu Bali ID" key={i} />
+              ))}
+            </Slider>
+          )}
         </section>
         
         <section>
@@ -190,5 +216,10 @@ const Home = () => {
     </>
   );
 };
+
+Home.getInitialProps = async ctx => {
+  const outlet = await axios.get("/outlets/all-outlets")
+  ctx.store.dispatch(actions.getOutletSuccess(outlet.data)); 
+}
 
 export default Home;

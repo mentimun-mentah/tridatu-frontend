@@ -701,7 +701,7 @@ const App = ({ Component, pageProps, store }) => {
 
 App.getInitialProps = async ({ Component, ctx }) => {
   const pageProps = Component.getInitialProps ? await Component.getInitialProps(ctx) : {};
-  //await ctx.store.dispatch(actions.authCheckState(ctx));
+  await ctx.store.dispatch(actions.authCheckState(ctx));
   return { pageProps };
 };
 

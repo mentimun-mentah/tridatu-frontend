@@ -12,7 +12,7 @@ const ErrorMessage = ({ item }) => (
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="form-text text-left text-danger mb-n1"
+        className="form-text text-left text-danger"
       >
         {item.message}
       </motion.small>
