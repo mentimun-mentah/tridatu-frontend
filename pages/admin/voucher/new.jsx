@@ -96,10 +96,10 @@ const NewPromo = () => {
                 accept="image/*"
                 listType="picture-card"
                 className="avatar-uploader"
-                fileList={imageList.image.value}
+                fileList={imageList.file.value}
                 beforeUpload={(file) => imageValidation(file, "www.google.com", "avatar", "formHeader")}
               >
-                {imageList.image.value.length >= 1 ? null : uploadButton(loading)}
+                {imageList.file.value.length >= 1 ? null : uploadButton(loading)}
               </Upload>
             </Form.Item>
 
@@ -108,10 +108,10 @@ const NewPromo = () => {
                 accept="image/*"
                 listType="picture-card"
                 className="avatar-uploader"
-                fileList={imageList.image.value}
+                fileList={imageList.file.value}
                 beforeUpload={(file) => imageValidation(file, "www.google.com", "avatar", "formHeader")}
               >
-                {imageList.image.value.length >= 1 ? null : uploadButton(loading)}
+                {imageList.file.value.length >= 1 ? null : uploadButton(loading)}
               </Upload>
             </Form.Item>
 

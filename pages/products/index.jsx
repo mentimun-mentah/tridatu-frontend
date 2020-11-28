@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { Menu, Rate, Tag, InputNumber, Checkbox, Drawer, Tabs, Select, Collapse, Col, Row } from 'antd';
+import { useSelector } from "react-redux";
+import { Menu, Rate, Tag, InputNumber, Checkbox, Drawer, Tabs, Select, Collapse, Col, Row, Empty } from 'antd';
 
 import RowB from "react-bootstrap/Row";
 import ColB from "react-bootstrap/Col";
@@ -25,12 +26,12 @@ const brandList = ['Adidas', 'Billabong', 'Bershka', 'Converse', 'Deus', 'GAP', 
 const sortList = ['Paling Sesuai', 'Harga Tertinggi', 'Harga Terendah']
 const ratingList = ['4 Ketas', '3 Keatas']
 
-import { category_data } from 'components/Header/data'
-
 const ProductContainer = () => {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [activeFilter, setActiveFilter] = useState(formFilter);
+
+  const allCategories = useSelector(state => state.categories.allCategories)
 
   const { sort, category, rating, brand } = activeFilter;
 
@@ -135,7 +136,7 @@ const ProductContainer = () => {
             <Card className="border-0 shadow-filter">
               <Menu
                 className="filter-menu noselect"
-                defaultOpenKeys={['sub1', 'sub6', 'sub7', 'sub2', 'sub8']}
+                defaultOpenKeys={['kategori', 'rating', 'harga', 'brand']}
                 mode="inline"
                 multiple={true}
                 selectedKeys={category.value}
@@ -143,20 +144,20 @@ const ProductContainer = () => {
                 onDeselect={(e) => onCategoryChange(e, "deselect")}
               >
                 <Menu.SubMenu 
-                  key="sub1" 
+                  key="kategori" 
                   className="title-filter" 
                   title={renderTitle('Kategori')} 
                 >
-                  {category_data.map((data, i) => (
-                    <Menu.SubMenu key={data.category + i} title={renderSubTitle(data.category)}>
-                      {data.sub.map((child, ii) => (
-                        <Menu.SubMenu key={child.title + (i + ii)} title={renderSubTitle(child.title)} className="pl-3">
-                          {child.child.map(dataChild => (
+                  {allCategories.map(category => (
+                    <Menu.SubMenu key={category.id_category} title={renderSubTitle(category.name_category)}>
+                      {category.sub_categories.map(sub => (
+                        <Menu.SubMenu key={sub.id_sub_category} title={renderSubTitle(sub.name_sub_category)} className="pl-3">
+                          {sub.item_sub_categories.map(item => (
                             <Menu.Item 
-                              key={dataChild} 
+                              key={item.id_item_sub_category} 
                               className="text-secondary"
                             >
-                              {dataChild}
+                              {item.name_item_sub_category}
                             </Menu.Item>
                           ))}
                         </Menu.SubMenu>
@@ -165,7 +166,7 @@ const ProductContainer = () => {
                   ))}
                 </Menu.SubMenu>
 
-                <Menu.SubMenu key="sub7" className="filter-checkbox title-filter" title={renderTitle('Rating')}>
+                <Menu.SubMenu key="rating" className="filter-checkbox title-filter" title={renderTitle('Rating')}>
                   <div className="p-l-20 p-r-20">
                     <Checkbox.Group className="w-100" onChange={onRatingChange} value={rating.value}>
                       {ratingList.map(x => (
@@ -178,7 +179,7 @@ const ProductContainer = () => {
                   </div>
                 </Menu.SubMenu>
 
-                <Menu.SubMenu key="sub6" className="filter-checkbox title-filter" title={renderTitle('Harga')}>
+                <Menu.SubMenu key="harga" className="filter-checkbox title-filter" title={renderTitle('Harga')}>
                   <div className="p-l-20 p-r-20 mt-3">
                     <Form.Group>
                       <Form.Label className="text-secondary m-b-13">Harga Minimum</Form.Label>
@@ -202,7 +203,7 @@ const ProductContainer = () => {
                   </Menu.Item>
                 </Menu.SubMenu>
 
-                <Menu.SubMenu key="sub8" className="scrollable-submenu title-filter" title={renderTitle('Brand')}>
+                <Menu.SubMenu key="brand" className="scrollable-submenu title-filter" title={renderTitle('Brand')}>
                   <div className="p-l-20 p-r-20">
                     <Checkbox.Group className="w-100" onChange={onBrandChange} value={brand.value}>
                       {brandList.map(x => (
@@ -317,21 +318,23 @@ const ProductContainer = () => {
         <Card className="border-0 rounded-0 w-100 card-mobile-filter noselect">
           <Card.Body>
             <h6>Kategori</h6>
+            {allCategories.length == 0 && (
+              <Empty className="my-5" description={<span className="text-secondary">Kategori tidak tersedia</span>} />
+            )}
             <Tabs>
-
-              {category_data.map((data, i) => (
-                <Tabs.TabPane tab={data.category} key={data.category + i}>
+              {allCategories.map(category => (
+                <Tabs.TabPane tab={category.name_category} key={category.id_category}>
                   <Collapse className="category-mobile scrollable-submenu" expandIconPosition="right" accordion>
-                    {data.sub.map((child, ii) => ( 
-                      <Collapse.Panel header={child.title} key={child.title + (i + ii)}>
+                    {category.sub_categories.map(sub => (
+                      <Collapse.Panel header={sub.name_sub_category} key={sub.id_sub_category}>
                         <Checkbox.Group
                           className="w-100" 
                           onChange={onCategoryChangeMobile} 
                           value={category.value}
                         >
-                          {child.child.map(dataChild => (
-                            <Checkbox value={dataChild} className="rating-checkbox" key={dataChild}>
-                              <span className="text-secondary">{dataChild}</span>
+                          {sub.item_sub_categories.map(item => (
+                            <Checkbox value={item.name_item_sub_category} className="rating-checkbox" key={item.id_item_sub_category}>
+                              <span className="text-secondary">{item.name_item_sub_category}</span>
                             </Checkbox>
                           ))}
                         </Checkbox.Group>

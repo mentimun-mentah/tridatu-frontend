@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import { useSelector } from "react-redux";
 import { useState, useEffect } from 'react';
 import { Drawer, Avatar, Input, Grid } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,12 +15,13 @@ const useBreakpoint = Grid.useBreakpoint;
 
 const dummyResponse = ['baju', 'baju anak', 'baju pria', 'baju wanita', 'baju tidur', 'baju kasual', 'baju kemeja panjang']
 
-const MobileMenu  = ({ visible, close, register, login, logout, isAuth, searchQuery, setSearchQuery, routes }) => {
+const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, setSearchQuery, routes }) => {
   const router = useRouter()
   const screens = useBreakpoint();
-  // const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   const [showCategory, setShowCategory] = useState(false)
+
+  const user = useSelector(state => state.auth.user)
 
   const showCategoryHandler = () => setShowCategory(true)
   const closeCategoryHandler = () => setShowCategory(false)
@@ -38,13 +40,11 @@ const MobileMenu  = ({ visible, close, register, login, logout, isAuth, searchQu
   }
 
   let headerMobile;
-  if(isAuth){
+  if(user){
     headerMobile = (
       <div className="text-truncate mr-4">
-        <Avatar src="https://ecs7.tokopedia.net/img/cache/700/product-1/2019/5/18/3453155/3453155_bdfa5991-04e9-49a3-8246-34f9d270b180_1438_1438.webp" />
-        <span className="text-capitalize text-truncate pl-2">
-          Jhon Bakery Handler
-        </span>
+        <Avatar src={user && `${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} />
+        <span className="text-capitalize text-truncate pl-2">{user.username}</span>
       </div>
     )
   }
@@ -101,7 +101,7 @@ const MobileMenu  = ({ visible, close, register, login, logout, isAuth, searchQu
         title={headerMobile}
       >
         <Nav className="flex-column mobile-menu">
-          <div className={`${!isAuth && 'mt-4 mb-1'} w-100 nav-search`} onClick={showSearchHandler}>
+          <div className={`${!user && 'mt-4 mb-1'} w-100 nav-search`} onClick={showSearchHandler}>
             <Input
               placeholder="Search"
               value={searchQuery}
@@ -110,7 +110,7 @@ const MobileMenu  = ({ visible, close, register, login, logout, isAuth, searchQu
             />
           </div>
 
-          {!isAuth && (
+          {!user && (
             <>
               <Nav.Link onClick={login}>Masuk</Nav.Link>
               <Nav.Link onClick={register}>Daftar</Nav.Link>
@@ -129,7 +129,7 @@ const MobileMenu  = ({ visible, close, register, login, logout, isAuth, searchQu
             </Nav.Link>
           </Link>
 
-          {isAuth && (
+          {user && (
             <>
               {routes.map((route, i) => (
                 <Link href={route.link} as={route.link} key={i}>
