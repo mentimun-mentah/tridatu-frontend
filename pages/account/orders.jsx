@@ -6,6 +6,8 @@ import Form from 'react-bootstrap/Form'
 
 import OrderList from 'components/Account/Orders/OrderList'
 
+import { withAuth } from 'lib/withAuth'
+
 const WAITING = 'waiting'
 const PACKED = 'packed'
 const SENT = 'sent'
@@ -129,4 +131,4 @@ const Orders = () => {
   )
 }
 
-export default Orders
+export default withAuth(Orders)

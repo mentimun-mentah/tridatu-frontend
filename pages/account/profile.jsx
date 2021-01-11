@@ -234,7 +234,7 @@ const Profile = () => {
                 <Upload
                   accept="image/*"
                   showUploadList={false}
-                  beforeUpload={(file) => imageValidation(file, "file", "/users/update-avatar", "put", setLoading, () => dispatch(actions.getUser()))}
+                  beforeUpload={(file) => imageValidation(file, "file", "/users/update-avatar", "put", setLoading, () => dispatch(actions.getUser()), "The image profile has updated.")}
                 >
                   <Button style={{ width: 91 }} disabled={loading}>
                     {loading ? <LoadingOutlined /> : "Pilih Foto"}

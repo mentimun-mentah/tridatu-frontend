@@ -8,6 +8,7 @@ import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Card from 'react-bootstrap/Card'
 
+import { withAuth } from 'lib/withAuth'
 import { formAddress } from 'formdata/formAddress'
 import axios, { jsonHeaderHandler, signature_exp, resNotification } from "lib/axios";
 import * as actions from "store/actions";
@@ -257,4 +258,4 @@ Address.getInitialProps = async ctx => {
   }
 }
 
-export default Address
+export default withAuth(Address)

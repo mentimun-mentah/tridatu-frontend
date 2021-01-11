@@ -144,7 +144,7 @@ const NewBrand = () => {
                 fileList={file.value}
                 onPreview={imagePreview}
                 onChange={imageChangeHandler}
-                beforeUpload={(file) => imageValidation(file, "file", "/brands/create", "post", setLoading, () => dispatch(actions.getBrand()))}
+                beforeUpload={(file) => imageValidation(file, "file", "/brands/create", "post", setLoading, () => dispatch(actions.getBrand()), "Successfully add a new brand.")}
               >
                 {file.value.length >= 1 ? null : uploadButton(loading)}
               </Upload>

@@ -78,16 +78,26 @@ const getAllCategoriesFail = (error) => {
   }
 }
 
-export const getCategories = (with_sub) => {
+export const getCategories = (with_sub, q) => {
   return dispatch => {
     dispatch(getCategoriesStart())
-    axios.get(`/categories/all-categories?with_sub=${with_sub}`)
-      .then(res => {
-        dispatch(getCategoriesSuccess(res.data))
-      })
-      .catch(err => {
-        dispatch(getCategoriesFail(err.response))
-      })
+    if(q){
+      axios.get(`/categories/all-categories?with_sub=${with_sub}&q=${q}`)
+        .then(res => {
+          dispatch(getCategoriesSuccess(res.data))
+        })
+        .catch(err => {
+          dispatch(getCategoriesFail(err.response))
+        })
+    } else {
+      axios.get(`/categories/all-categories?with_sub=${with_sub}`)
+        .then(res => {
+          dispatch(getCategoriesSuccess(res.data))
+        })
+        .catch(err => {
+          dispatch(getCategoriesFail(err.response))
+        })
+    }
   }
 }
 
@@ -117,15 +127,25 @@ export const getItemSubCategories = () => {
   }
 }
 
-export const getAllCategories = () => {
+export const getAllCategories = (q) => {
   return dispatch => {
     dispatch(getAllCategoriesStart())
-    axios.get(`/categories/`)
-      .then(res => {
-        dispatch(getAllCategoriesSuccess(res.data))
-      })
-      .catch(err => {
-        dispatch(getAllCategoriesFail(err.response))
-      })
+    if(q){
+      axios.get(`/categories/?q=${q}`)
+        .then(res => {
+          dispatch(getAllCategoriesSuccess(res.data))
+        })
+        .catch(err => {
+          dispatch(getAllCategoriesFail(err.response))
+        })
+    } else {
+      axios.get(`/categories/`)
+        .then(res => {
+          dispatch(getAllCategoriesSuccess(res.data))
+        })
+        .catch(err => {
+          dispatch(getAllCategoriesFail(err.response))
+        })
+    }
   }
 }

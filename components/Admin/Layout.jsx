@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router';
+import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Layout, Menu, Dropdown, Avatar, Badge, Grid, Drawer } from 'antd';
@@ -8,6 +9,7 @@ import Image from "next/image";
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Media from 'react-bootstrap/Media';
+import * as actions from "store/actions";
 
 const useBreakpoint = Grid.useBreakpoint;
 
@@ -41,9 +43,9 @@ const routes = {
   ],
 }
 
-const menu = (
+const menu = (logoutHandler) => (
   <Menu>
-    <Menu.Item key="SignOut"> Keluar </Menu.Item>
+    <Menu.Item key="SignOut" onClick={logoutHandler}> Keluar </Menu.Item>
   </Menu>
 )
 
@@ -113,6 +115,7 @@ const getActiveMenu = (routes, router) => {
 
 const AdminLayout = ({ children }) => {
   const router = useRouter()
+  const dispatch = useDispatch()
   const screens = useBreakpoint()
   const [collapsed, setCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -122,6 +125,12 @@ const AdminLayout = ({ children }) => {
     title: "",
     menu: "",
   }])
+
+  const user = useSelector(state => state.auth.user)
+
+  const logoutHandler = () => {
+    dispatch(actions.logout())
+  }
   
   const onCollapse = () => {
     setCollapsed(!collapsed)
@@ -238,7 +247,7 @@ const AdminLayout = ({ children }) => {
   const rightMenu = [
     <Dropdown 
       arrow
-      overlay={menu} 
+      overlay={() => menu(logoutHandler)} 
       trigger={['click']}
       placement="bottomRight" 
       key="user"
@@ -246,7 +255,7 @@ const AdminLayout = ({ children }) => {
       overlayStyle={{top: '500px'}}
     >
       <div className="nav-item-button">
-        <Avatar size={30} src="https://ecs7.tokopedia.net/img/cache/700/product-1/2019/5/18/3453155/3453155_bdfa5991-04e9-49a3-8246-34f9d270b180_1438_1438.webp" />
+        <Avatar size={30} src={user && `${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} />
       </div>
     </Dropdown>,
   ]
@@ -276,6 +285,14 @@ const AdminLayout = ({ children }) => {
   useEffect(() => {
     setActiveMenu([router.pathname])
   }, [router.pathname])
+
+  useEffect(() => {
+    dispatch(actions.getAdminCollapsed(collapsed))
+  }, [collapsed])
+
+  useEffect(() => {
+    dispatch(actions.getAdminIsMobile(isMobile))
+  }, [isMobile])
 
   return(
     <>

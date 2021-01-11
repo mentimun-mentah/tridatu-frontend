@@ -35,7 +35,7 @@ const CardCategory = ({ data, showEditHandler, deleteHandler, loading }) => {
             paragraph={{ rows: 1, width: "100%" }} 
             className="skeleton-category"
           >
-            <div className="mb-0 fs-14-s fs-16 card-title h5">{data.name_category}</div>
+            <div className="mb-0 fs-14-s fs-16 card-title h5">{data.categories_name}</div>
           </Skeleton>
         </Card>
       </motion.div>

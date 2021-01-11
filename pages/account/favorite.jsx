@@ -7,6 +7,8 @@ import Form from 'react-bootstrap/Form'
 import CardProduct from "components/Card/Product";
 import Pagination from "components/Pagination";
 
+import { withAuth } from 'lib/withAuth'
+
 const CardProductMemo = React.memo(CardProduct);
 
 const sortList = ['Terbaru', 'Terlama']
@@ -79,4 +81,4 @@ const Favorite = () => {
   )
 }
 
-export default Favorite
+export default withAuth(Favorite)

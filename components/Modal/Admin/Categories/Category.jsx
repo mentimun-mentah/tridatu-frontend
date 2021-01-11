@@ -17,7 +17,7 @@ const EditCategory = ({ show, close, currentCategory }) => {
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState(formCategories)
 
-  const { name_category } = categories
+  const { name } = categories
 
   const closeModalHandler = () => {
     close()
@@ -27,7 +27,7 @@ const EditCategory = ({ show, close, currentCategory }) => {
   const inputCategoriesHandler = e => {
     const data = {
       ...categories,
-      name_category: { ...categories.name_category, value: e.target.value, message: null }
+      name: { ...categories.name, value: e.target.value, message: null }
     }
     setCategories(data)
   }
@@ -36,7 +36,7 @@ const EditCategory = ({ show, close, currentCategory }) => {
     e.preventDefault()
     if(formCategoriesIsValid(categories, setCategories)){
       setLoading(true)
-      const data = { name_category: name_category.value }
+      const data = { name: name.value }
 
       axios.put(`/categories/update/${currentCategory.id_category}`, data, jsonHeaderHandler())
         .then(res => {
@@ -56,9 +56,9 @@ const EditCategory = ({ show, close, currentCategory }) => {
           } else if (typeof errDetail === "string" && errDetail === errName) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(categories));
-            state.name_category.value = state.name_category.value;
-            state.name_category.isValid = false;
-            state.name_category.message = errDetail;
+            state.name.value = state.name.value;
+            state.name.isValid = false;
+            state.name.message = errDetail;
             setCategories(state);
           } else if(typeof(errDetail) === "string" && errDetail !== errName) {
             setLoading(false)
@@ -82,6 +82,7 @@ const EditCategory = ({ show, close, currentCategory }) => {
 
   useEffect(() => {
     setCategories(currentCategory)
+    return () => setCategories(formCategories)
   },[currentCategory])
 
   return(
@@ -100,7 +101,14 @@ const EditCategory = ({ show, close, currentCategory }) => {
           <Button key="back" onClick={closeModalHandler}>
             Batal
           </Button>,
-          <Button key="submit" type="submit" className="btn-tridatu" onClick={submitCategoriesHandler} style={{ width: 80 }} disabled={loading}>
+          <Button 
+            key="submit" 
+            type="submit" 
+            className="btn-tridatu" 
+            onClick={submitCategoriesHandler} 
+            style={{ width: 80 }} 
+            disabled={loading}
+          >
             {loading ? <LoadingOutlined /> : "Simpan"}
           </Button>,
         ]}
@@ -109,12 +117,12 @@ const EditCategory = ({ show, close, currentCategory }) => {
           <Form form={form} layout="vertical">
             <Form.Item label="Nama Kategori" required>
               <Input 
-                value={name_category.value}
+                value={name.value}
                 onChange={inputCategoriesHandler}
                 className="h-33"
                 placeholder="Contoh: Pria, Wanita, Anak-anak dll" 
               />
-              <ErrorMessage item={name_category} />
+              <ErrorMessage item={name} />
             </Form.Item>
           </Form>
         </Card>

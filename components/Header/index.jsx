@@ -40,8 +40,18 @@ const options = [
   { value: 'baju kemeja jeans panjang', },
 ];
 
-const accountMenu = (logoutHandler) => (
+const accountMenu = (logoutHandler, { role }) => (
   <Menu className="d-none d-lg-block">
+    {role === "admin" && (
+      <Menu.Item>
+        <Link href="/admin" as="/admin">
+          <a className="text-decoration-none">
+            Admin
+          </a>
+        </Link>
+      </Menu.Item>
+    )}
+
     {routes.map((route, i) => (
       <Menu.Item key={i}>
         <Link href={route.link} as={route.link}>
@@ -387,7 +397,7 @@ const Header = () => {
               <span className="border-right mx-4"></span>
 
               {user ? (
-                <Dropdown overlay={() => accountMenu(logoutHandler)} placement="bottomRight">
+                <Dropdown overlay={() => accountMenu(logoutHandler, user)} placement="bottomRight">
                   <a className="text-truncate text-dark align-middle text-decoration-none" style={{width: 250}}>
                     <Avatar size="large" src={user && `${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} />
                     <span className="pl-2 align-middle text-capitalize">{user.username}</span>

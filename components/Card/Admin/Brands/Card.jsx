@@ -19,16 +19,15 @@ const CardBrand = ({ data, deleteHandler }) => {
           <Image 
             width={270}
             height={270}
-            src={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${data.image_brand}`}
+            src={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${data.image}`}
             alt="Tridatu Bali Id"
             className="img-fit"
           />
-          <Card.Title className="mt-4 mb-0 fs-14-s fs-16">{data.name_brand}</Card.Title>
+          <Card.Title className="mt-4 mb-0 fs-14-s fs-16">{data.name}</Card.Title>
         </Card.Body>
         <Card.Body className="pt-0">
           <Space>
-            <Link href="brand/[id]" as={`brand/${data.id_brand}`}>
-            {/* <Link href="brand/[id]" as={`brand/${888}`}> */}
+            <Link href="brand/[id]" as={`brand/${data.id}`}>
               <Button size="small">Ubah</Button>
             </Link>
             <Popconfirm 

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { Modal, Rate, InputNumber, Button, Select, Tabs, Progress, Breadcrumb } from "antd";
+import { Space, Modal, Rate, InputNumber, Button, Select, Tabs, Progress, Breadcrumb, Input, Popover } from "antd";
 import { Comment, Avatar } from 'antd';
+import { motion, AnimatePresence } from "framer-motion"
 import { buildStyles, CircularProgressbar } from 'react-circular-progressbar';
 
 import Link from 'next/link'
@@ -28,12 +29,52 @@ import { brandSettings } from "lib/slickSetting";
 
 import PHOTOS from 'data/detailPhotoProduct'
 
+const content = (
+  <Form>
+    <Form.Group>
+      <Form.Label className="d-block">Kota atau Kecamatan</Form.Label>
+      <Select
+        showSearch
+        showArrow={false}
+        name="region"
+        className="w-100"
+        placeholder="Tulis Nama Alamat / Kota / Kecamatan tujuan pengiriman"
+        notFoundContent={
+          <p className="text-center mb-2">
+            <i className="fad fa-map-marked-alt fs-35 text-center d-block my-2" />
+            <span className="text-center"></span>
+          </p>
+        }
+      >
+      </Select>
+    </Form.Group>
+    <Form.Group className="mb-1">
+      <Form.Label className="d-block">Kode Pos</Form.Label>
+      <Select
+        showSearch
+        showArrow={false}
+        name="region"
+        className="w-100"
+        placeholder="Tulis Nama Alamat / Kota / Kecamatan tujuan pengiriman"
+        notFoundContent={
+          <p className="text-center mb-2">
+            <i className="fad fa-map-marked-alt fs-35 text-center d-block my-2" />
+            <span className="text-center"></span>
+          </p>
+        }
+      >
+      </Select>
+    </Form.Group>
+  </Form>
+);
+
 const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1)
+  const [showNote, setShowNote] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showModalCart, setShowModalCart] = useState(false)
 
-  const isAuth = useSelector(state => state.auth.auth)
+  const user = useSelector(state => state.auth.user)
 
   const quantityHandler = (e, val) => {
     if(val == "input"){
@@ -48,9 +89,10 @@ const ProductDetail = () => {
     }
   }
 
-  const showModalCartHandler = () => {
-    setShowModalCart(true)
-  }
+  const showModalCartHandler = () => { setShowModalCart(true) }
+
+  const showNoteHandler = () => { setShowNote(true) }
+  const closeNoteHandler = () => { setShowNote(false) }
 
   return(
     <>
@@ -81,14 +123,9 @@ const ProductDetail = () => {
           <Col lg={6}>
             {/* TITLE PRODUCTS INFORMATION */}
             <div className="header-product">
-              <h1 className="header-product-title">Kaos - Baju - Tshirt Deus Ex Machina 02 - Putih</h1>
+              <h1 className="header-product-title fs-18-s">Kaos - Baju - Tshirt Deus Ex Machina 02 - Putih</h1>
               <div className="header-product-rating">
-                <Rate
-                  className="header-product-rating-rate"
-                  allowHalf
-                  disabled
-                  defaultValue={5}
-                />
+                <Rate className="header-product-rating-rate" allowHalf disabled defaultValue={5} />
                 <span className="header-product-rating-detail">
                   116 Ulasan • 127 Terjual • 169x Dilihat
                 </span>
@@ -113,35 +150,6 @@ const ProductDetail = () => {
               </div>
             </div>
             {/* PRICE PRODUCTS INFORMATION */}
-
-            {/* QUANTITY PRODUCTS INFORMATION */}
-            <div className="media info-product">
-              <h5 className="info-product-left">Jumlah</h5>
-              <div className="media-body info-product-body">
-                <div className="mb-2">
-                  <Button 
-                    disabled={quantity == 1}
-                    icon={<i className="far fa-minus" />} 
-                    onClick={(e) => quantityHandler(e, 'min')} 
-                  />
-                  <InputNumber 
-                    size="middle"
-                    className="mx-2" 
-                    min={1} 
-                    value={quantity} 
-                    onChange={(e) => quantityHandler(e, 'input')} 
-                  />
-                  <Button 
-                    icon={<i className="far fa-plus" />} 
-                    onClick={(e) => quantityHandler(e, 'plus')} 
-                  />
-                </div>
-                <span className="fs-14">
-                  Tersedia 12 pcs
-                </span>
-              </div>
-            </div>
-            {/* QUANTITY PRODUCTS INFORMATION */}
 
             {/* COLOR PRODUCTS INFORMATION */}
             <div className="media info-product">
@@ -184,6 +192,58 @@ const ProductDetail = () => {
             </div>
             {/* SIZE PRODUCTS INFORMATION */}
 
+            {/* QUANTITY PRODUCTS INFORMATION */}
+            <div className="media info-product">
+              <h5 className="info-product-left">Jumlah</h5>
+              <div className="media-body info-product-body">
+                <span className="fs-14 va-super">
+                  Tersedia 12 pcs
+                </span>
+                <div className="mb-2">
+                  <Button 
+                    disabled={quantity == 1}
+                    icon={<i className="far fa-minus" />} 
+                    onClick={(e) => quantityHandler(e, 'min')} 
+                  />
+                  <InputNumber 
+                    size="middle"
+                    className="mx-2" 
+                    min={1} 
+                    value={quantity} 
+                    onChange={(e) => quantityHandler(e, 'input')} 
+                  />
+                  <Button 
+                    icon={<i className="far fa-plus" />} 
+                    onClick={(e) => quantityHandler(e, 'plus')} 
+                  />
+                </div>
+                <AnimatePresence>
+                  {showNote ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className="d-flex align-items-center mt-3">
+                        <Input /> <h6 className="ml-2 mb-0 fs-14 text-tridatu hover-pointer" onClick={closeNoteHandler}>Batal</h6>
+                      </div>
+                      <small className="text-secondary fs-12 mb-0">Contoh: Warna Putih, Size M</small>
+                    </motion.div>
+                  ) : (
+                    <motion.h6 
+                      className="fs-14 mb-0 text-tridatu hover-pointer" onClick={showNoteHandler}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      Tulis catatan untuk penjual
+                    </motion.h6>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+            {/* QUANTITY PRODUCTS INFORMATION */}
+
             {/* PRODUCTS INFORMATION */}
             <div className="media info-product">
               <h5 className="info-product-left">Info produk</h5>
@@ -206,33 +266,39 @@ const ProductDetail = () => {
             </div>
             {/* PRODUCTS INFORMATION */}
 
+            {/* SHIPPING INFORMATION */}
+            <div className="media info-product">
+              <h5 className="info-product-left">Ongkos Kirim</h5>
+              <div className="media-body info-product-body">
+                <div className="fs-14 text-secondary">
+                  Ke{" "} 
+                  <Popover arrowPointAtCenter trigger="click" placement="bottom" overlayClassName="ongkir-popover" content={content}> 
+                    <span className="font-weight-bold text-dark hover-pointer">Denpasar Bali</span>
+                  </Popover>
+                </div>
+              </div>
+            </div>
+            {/* SHIPPING INFORMATION */}
+
             {/* ACTIONS PRODUCTS INFORMATION */}
             <div className="info-product">
-              <Form>
-                <Form.Row>
-                  <Form.Group as={Col} lg={6} className="mb-0 col-auto col-sm-auto col-md-auto">
-                    <Button 
-                      size="large"
-                      className="btn-tridatu w-100 p-l-8-s p-r-8-s fs-14-s"
-                      icon={<i className="far fa-cart-plus p-r-10 p-r-8-s" />} 
-                      onClick={showModalCartHandler}
-                    >Tambah Ke Keranjang</Button>
-                  </Form.Group>
-                  <Form.Group as={Col} className="mb-0 col-auto">
-                    <Button 
-                      size="large"
-                      icon={<i className="fal fa-heart" />} 
-                    />
-                  </Form.Group>
-                  <Form.Group as={Col} className="mb-0">
-                    <Button 
-                      onClick={() => setShowShareModal(true)}
-                      size="large"
-                      icon={<i className="fal fa-share-square" />} 
-                    />
-                  </Form.Group>
-                </Form.Row>
-              </Form>
+              <Space>
+                <Button 
+                  size="large"
+                  className="btn-tridatu w-100 p-l-8-s p-r-8-s fs-14-s"
+                  icon={<i className="far fa-cart-plus p-r-10 p-r-8-s" />} 
+                  onClick={showModalCartHandler}
+                >Tambah Ke Keranjang</Button>
+                <Button 
+                  size="large"
+                  icon={<i className="fal fa-heart" />} 
+                />
+                <Button 
+                  onClick={() => setShowShareModal(true)}
+                  size="large"
+                  icon={<i className="fal fa-share-square" />} 
+                />
+              </Space>
             </div>
             {/* ACTIONS PRODUCTS INFORMATION */}
 
@@ -387,7 +453,8 @@ const ProductDetail = () => {
                   <section className="diskusi-section mb-0" key={i}>
                     <DiskusiContainer head body="isi">
                       <DiskusiContainer body="isi" />
-                      {isAuth && <DiskusiContainer body="balas" />}
+                      {/* IF USER LOGIN */}
+                      {user && <DiskusiContainer body="balas" />}
                     </DiskusiContainer>
                   </section>
                 ))}
@@ -398,7 +465,7 @@ const ProductDetail = () => {
         </Row>
 
         <section className="mt-3 border-top pt-4 recomend-section">
-          <h4 className="fs-20-s mb-4">Rekomendasi untuk mu</h4>
+          <h4 className="fs-20-s mb-4">Rekomendasi produk lainnya</h4>
           <Slider {...brandSettings}>
             {[...Array(10)].map((_, i) => (
               <Col key={i} className="px-0">
@@ -466,6 +533,9 @@ const ProductDetail = () => {
         :global(.image-gallery-image){
           width: 443px;
           height: 100%;
+        }
+        :global(.img-brand > div){
+          float: right;
         }
         .header-product{
           margin-bottom: 20px;
@@ -624,7 +694,15 @@ const ProductDetail = () => {
         :global(.scrolling-wrapper){
           overflow-x: auto;
         }
-         
+
+        :global(.ongkir-popover .ant-popover-inner){
+          border-radius: 8px !important;
+        }
+
+        :global(.ongkir-popover .ant-popover-inner-content){
+          width: 300px;
+        }
+
       `}</style>
     </>
   )

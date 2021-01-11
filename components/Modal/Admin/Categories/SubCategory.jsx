@@ -19,7 +19,7 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
   const [categories, setCategories] = useState([])
   const [subCategories, setSubCategories] = useState(formSubCategories)
 
-  const { category_id, id_sub_category, name_sub_category } = subCategories
+  const { category_id, id_sub_category, name } = subCategories
 
   const closeModalHandler = () => {
     close()
@@ -51,10 +51,7 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
     if(formSubCategoriesIsValid(subCategories, setSubCategories)){
       setLoading(true)
 
-      const data = { 
-        category_id: category_id.value,
-        name_sub_category: name_sub_category.value
-      }
+      const data = { category_id: category_id.value, name: name.value }
 
       axios.put(`/sub-categories/update/${id_sub_category}`, data, jsonHeaderHandler())
         .then(res => {
@@ -74,9 +71,9 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
           } else if (typeof errDetail === "string" && errDetail === errName) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(subCategories));
-            state.name_sub_category.value = state.name_sub_category.value;
-            state.name_sub_category.isValid = false;
-            state.name_sub_category.message = errDetail;
+            state.name.value = state.name.value;
+            state.name.isValid = false;
+            state.name.message = errDetail;
             setSubCategories(state)
           } else if(typeof(errDetail) === "string" && errDetail !== errName) {
             setLoading(false)
@@ -106,9 +103,7 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
       .catch(() => {})
   }
 
-  const resetCategories = () => {
-    setCategories([])
-  }
+  const resetCategories = () => { setCategories([]) }
 
   useEffect(() => {
     setSubCategories(currentSubCategory)
@@ -119,7 +114,7 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
     <>
       <Modal
         centered
-        title="Update Kategori"
+        title="Update Sub Kategori"
         visible={show}
         onOk={submitSubCategoriesHandler}
         onCancel={closeModalHandler}
@@ -154,8 +149,8 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
                 }
                 dropdownStyle={{ zIndex: 3000 }}
               >
-                {categories.map(data => (
-                  <Select.Option value={data.id_category} key={data.id_category}>{data.name_category}</Select.Option>
+                {categories.map(({categories_id, categories_name})=> (
+                  <Select.Option value={categories_id} key={categories_id}>{categories_name}</Select.Option>
                 ))}
               </Select>
               <ErrorMessage item={category_id} />
@@ -163,12 +158,12 @@ const EditSubCategory = ({ show, close, currentSubCategory }) => {
             <Form.Item label="Nama Sub Kategori" required>
               <Input 
                 className="h-33"
-                name="name_sub_category"
-                value={name_sub_category.value}
+                name="name"
+                value={name.value}
                 onChange={e => inputSubCategoriesHandler(e)}
                 placeholder="Contoh: Baju, Celana, Jaket dll" 
               />
-              <ErrorMessage item={name_sub_category} />
+              <ErrorMessage item={name} />
             </Form.Item>
           </Form>
         </Card>

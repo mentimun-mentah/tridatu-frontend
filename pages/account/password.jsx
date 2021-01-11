@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, Modal } from "antd";
 import { useSelector } from "react-redux";
 import { AnimatePresence, motion } from "framer-motion";
+import { withAuth } from 'lib/withAuth'
 import { LoadingOutlined } from "@ant-design/icons";
 
 import axios, { jsonHeaderHandler, resNotification, signature_exp } from "lib/axios";
@@ -88,7 +89,7 @@ const Password = () => {
           else if (typeof errDetail === "string" && errDetail) {
             const state = JSON.parse(JSON.stringify(formPassword));
             if(isUpdate){
-              state.old_password.value = state.password.value;
+              state.old_password.value = state.old_password.value;
               state.old_password.isValid = false;
               state.old_password.message = errDetail;
               setFormPassword(state);
@@ -276,4 +277,4 @@ const Password = () => {
   );
 };
 
-export default Password;
+export default withAuth(Password);

@@ -43,8 +43,8 @@ const Brand = () => {
             <Row gutter={[16, 16]}>
               <AnimatePresence>
                 {brands.map(data => (
-                  <Col xl={4} lg={6} md={8} sm={8} xs={12} key={data.id_brand} >
-                    <CardBrand data={data} deleteHandler={() => deleteBrandHandler(data.id_brand)} />
+                  <Col xl={4} lg={6} md={8} sm={8} xs={12} key={data.id} >
+                    <CardBrand data={data} deleteHandler={() => deleteBrandHandler(data.id)} />
                   </Col>
                 ))}
               </AnimatePresence>

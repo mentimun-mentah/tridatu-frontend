@@ -25,10 +25,12 @@ import { brandData } from "data/brand";
 
 let banners = ['/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/2.jpeg', '/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/4.jpeg', '/static/images/banner/5.jpeg', '/static/images/banner/5.jpeg']
 
-let infoStores = ['/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png', '/static/images/info-store/placeholder.png']
+const infoStores = [...Array(4)].map(() => '/static/images/info-store/placeholder.png')
+const emptyBrands = [...Array(5)].map(() => '/static/images/brand/placeholder.png')
 
 const Home = () => {
   const outlets = useSelector(state => state.outlet.outlet)
+  const brands = useSelector(state => state.brand.brand)
 
   return (
     <>
@@ -46,18 +48,31 @@ const Home = () => {
               </Slider>
             </section>
 
+            {/*INFORMASI BRAND*/}
             <section className="brand-section">
               <h4 className="fs-20-s mb-4">Brand</h4>
-              <Slider {...brandSettings}>
-                {brandData.map((data, i) => (
-                  <ColB key={i} className="px-0">
-                    <CardBrandMemo image={data.image} name={data.name} />
-                  </ColB>
-                ))}
-              </Slider>
+              {brands && brands.length > 0 ? (
+                <Slider {...brandSettings} infinite={brands.length > 5}>
+                  {brands.map(data => (
+                    <ColB key={data.id} className="px-0">
+                      <CardBrandMemo image={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${data.image}`} name={data.name} />
+                    </ColB>
+                  ))}
+                </Slider>
+              ) : (
+                <Slider {...brandSettings} infinite={true}>
+                  {emptyBrands.map((data, i) => (
+                    <ColB key={i} className="px-0">
+                      <CardBrandMemo image={data} name="Brand" />
+                    </ColB>
+                  ))}
+                </Slider>
+              )}
             </section>
+            {/*INFORMASI BRAND*/}
           </ColB>
 
+          {/*INFORMASI OUTLET*/}
           <ColB lg={2} md={12} sm={12} className="d-none d-lg-block">
             <section className="info-store">
               <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
@@ -80,8 +95,10 @@ const Home = () => {
               )}
             </section>
           </ColB>
+          {/*INFORMASI OUTLET*/}
         </RowB>
 
+        {/*INFORMASI OUTLET MOBILE*/}
         <section className="info-store d-block d-lg-none">
           <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
           {outlets && outlets.length > 0 ? (
@@ -98,7 +115,8 @@ const Home = () => {
             </Slider>
           )}
         </section>
-        
+        {/*INFORMASI OUTLET MOBILE*/}
+
         <section>
           <h4 className="fs-20-s mb-4">Paling Banyak Dilihat</h4>
           <Row gutter={[16, 16]}>
@@ -141,6 +159,10 @@ const Home = () => {
         :global(.info-store-img){
           width: 130px;
           object-fit: cover;
+        }
+
+        :global(.brand-section .slick-track, .info-store .slick-track){
+          margin-left: 0;
         }
 
         @media only screen and (min-width: 992px){
@@ -219,7 +241,9 @@ const Home = () => {
 
 Home.getInitialProps = async ctx => {
   const outlet = await axios.get("/outlets/all-outlets")
+  const brand = await axios.get("/brands/all-brands")
   ctx.store.dispatch(actions.getOutletSuccess(outlet.data)); 
+  ctx.store.dispatch(actions.getBrandSuccess(brand.data)); 
 }
 
 export default Home;

@@ -62,7 +62,7 @@ const OutletInformation = () => {
                 listType="picture-card"
                 className="avatar-uploader"
                 fileList={file.value}
-                beforeUpload={(file) => imageValidation(file, "file", "/outlets/create", "post", setLoading, () => dispatch(actions.getOutlet()))}
+                beforeUpload={(file) => imageValidation(file, "file", "/outlets/create", "post", setLoading, () => dispatch(actions.getOutlet()), "Successfully add a new outlet.")}
               >
                 {file.value.length >= 1 ? null : uploadButton(loading)}
               </Upload>

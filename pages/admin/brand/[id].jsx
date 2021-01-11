@@ -69,7 +69,7 @@ const EditBrand = ({ brandData }) => {
       })
       formData.append("name", name.value);
 
-      axios.put(`/brands/update/${brandData.id_brand}`, formData, formHeaderHandler())
+      axios.put(`/brands/update/${brandData.id}`, formData, formHeaderHandler())
         .then(res => {
           setLoading(false)
           Router.replace(brandUrl, brandUrl)
@@ -126,13 +126,13 @@ const EditBrand = ({ brandData }) => {
 
   useEffect(() => {
     if(brandData){
-      const { id_brand, name_brand, image_brand } = brandData
+      const { id, name, image } = brandData
 
       const imageBrand = {
         file: { 
           value: [{
-            uid: -Math.abs(id_brand),
-            url: `${process.env.NEXT_PUBLIC_API_URL}/static/brands/${image_brand}`
+            uid: -Math.abs(id),
+            url: `${process.env.NEXT_PUBLIC_API_URL}/static/brands/${image}`
           }], 
           isValid: true, 
           message: null 
@@ -140,8 +140,8 @@ const EditBrand = ({ brandData }) => {
       }
 
       const dataBrand = {
-        id_brand: id_brand,
-        name: { value: name_brand, isValid: true, message: null }
+        id: id,
+        name: { value: name, isValid: true, message: null }
       }
 
       setBrand(dataBrand)
@@ -178,7 +178,7 @@ const EditBrand = ({ brandData }) => {
                 fileList={file.value}
                 onPreview={imagePreview}
                 onChange={imageChangeHandler}
-                beforeUpload={(file) => imageValidation(file, "file", `/brands/update/${brandData.id_brand}`, "put", setLoading, () => dispatch(actions.getBrand()))}
+                beforeUpload={(file) => imageValidation(file, "file", `/brands/update/${brandData.id}`, "put", setLoading, () => dispatch(actions.getBrand()))}
               >
                 {file.value.length >= 1 ? null : uploadButton(loading)}
               </Upload>

@@ -5,6 +5,7 @@ import { Row, Col, Tooltip, Table } from 'antd'
 import Chart from 'chart.js'
 import Card from 'react-bootstrap/Card'
 
+import { withAuth } from 'lib/withAuth'
 import { chartOptions, parseOptions } from 'components/Chart/chart-pro'
 import StatisticChart from 'components/Chart/Admin/Statistic'
 import SoldProductChart from 'components/Chart/Admin/SoldProduct'
@@ -195,4 +196,4 @@ const Dashboard = () => {
 
 Dashboard.whyDidYouRender = true;
 
-export default Dashboard
+export default withAuth(Dashboard)

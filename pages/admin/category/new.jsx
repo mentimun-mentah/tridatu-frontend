@@ -28,17 +28,15 @@ const AddCategory = () => {
 
   const categoriesData = useSelector(state => state.categories.categories)
 
-  const { name_category } = categories
-  const { category_id, name_sub_category } = subCategories
-  const { sub_category_id, name_item_sub_category } = itemSubCategories
+  const { name: name_category } = categories
+  const { category_id, name: name_sub_category } = subCategories
+  const { sub_category_id, name: name_item_sub_category } = itemSubCategories
 
-  /*
-   * CATEGORIES
-   */
+  /* CATEGORIES */
   const inputCategoriesHandler = e => {
     const data = {
       ...categories,
-      name_category: { ...categories.name_category, value: e.target.value, message: null }
+      name: { ...categories.name, value: e.target.value, message: null }
     }
     setCategories(data)
   }
@@ -47,7 +45,7 @@ const AddCategory = () => {
     e.preventDefault()
     if(formCategoriesIsValid(categories, setCategories)){
       setLoading(true)
-      const data = { name_category: name_category.value }
+      const data = { name: name_category.value }
 
       axios.post("/categories/create", data, jsonHeaderHandler())
         .then(res => {
@@ -65,9 +63,9 @@ const AddCategory = () => {
           } else if (typeof errDetail === "string" && errDetail === errName) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(categories));
-            state.name_category.value = state.name_category.value;
-            state.name_category.isValid = false;
-            state.name_category.message = errDetail;
+            state.name.value = state.name.value;
+            state.name.isValid = false;
+            state.name.message = errDetail;
             setCategories(state);
           } else if(typeof(errDetail) === "string" && errDetail !== errName) {
             setLoading(false)
@@ -90,9 +88,7 @@ const AddCategory = () => {
   }
   /* CATEGORIES */
 
-  /*
-   * SUB CATEGORIES
-   */
+  /* SUB CATEGORIES */
   const inputSubCategoriesHandler = (e, item) => {
     const name = !item && e.target.name;
     const value = !item && e.target.value;
@@ -118,10 +114,7 @@ const AddCategory = () => {
     if(formSubCategoriesIsValid(subCategories, setSubCategories)){
       setLoading(true)
 
-      const data = { 
-        category_id: category_id.value,
-        name_sub_category: name_sub_category.value
-      }
+      const data = { category_id: category_id.value, name: name_sub_category.value }
 
       axios.post("/sub-categories/create", data, jsonHeaderHandler())
         .then(res => {
@@ -139,9 +132,9 @@ const AddCategory = () => {
           } else if (typeof errDetail === "string" && errDetail === errName) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(subCategories));
-            state.name_sub_category.value = state.name_sub_category.value;
-            state.name_sub_category.isValid = false;
-            state.name_sub_category.message = errDetail;
+            state.name.value = state.name.value;
+            state.name.isValid = false;
+            state.name.message = errDetail;
             setSubCategories(state)
           } else if(typeof(errDetail) === "string" && errDetail !== errName) {
             setLoading(false)
@@ -164,9 +157,7 @@ const AddCategory = () => {
   }
   /* SUB CATEGORIES */
 
-  /*
-   * ITEM SUB CATEGORIES
-   */
+  /* ITEM SUB CATEGORIES */
   const inputItemSubCategoriesHandler = (e, item) => {
     const name = !item && e.target.name;
     const value = !item && e.target.value;
@@ -192,10 +183,7 @@ const AddCategory = () => {
     if(formItemSubCategoriesIsValid(itemSubCategories, setItemSubCategories)){
       setLoading(true)
 
-      const data = { 
-        sub_category_id: sub_category_id.value,
-        name_item_sub_category: name_item_sub_category.value
-      }
+      const data = { sub_category_id: sub_category_id.value, name: name_item_sub_category.value }
 
       axios.post("/item-sub-categories/create", data, jsonHeaderHandler())
         .then(res => {
@@ -213,9 +201,9 @@ const AddCategory = () => {
           } else if (typeof errDetail === "string" && errDetail === errName) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(itemSubCategories));
-            state.name_item_sub_category.value = state.name_item_sub_category.value;
-            state.name_item_sub_category.isValid = false;
-            state.name_item_sub_category.message = errDetail;
+            state.name.value = state.name.value;
+            state.name.isValid = false;
+            state.name.message = errDetail;
             setItemSubCategories(state)
           } else if(typeof(errDetail) === "string" && errDetail !== errName) {
             setLoading(false)
@@ -249,9 +237,7 @@ const AddCategory = () => {
     setActiveTab(key)
   }
 
-  const cancelHandler = (initialState, setState) => {
-    setState(initialState)
-  }
+  const cancelHandler = (initialState, setState) => { setState(initialState) }
 
   return(
     <>
@@ -281,6 +267,9 @@ const AddCategory = () => {
               </Space>
             </Tabs.TabPane>
 
+
+
+            
             <Tabs.TabPane tab="Tambah Sub Kategori" key={SUBCATEGORIES}>
               <Form form={form} layout="vertical">
                 <Form.Item label="Kategori" required>
@@ -298,8 +287,8 @@ const AddCategory = () => {
                       option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                     }
                   >
-                    {categoriesData.map(data => (
-                      <Select.Option value={data.id_category} key={data.id_category}>{data.name_category}</Select.Option>
+                    {categoriesData.map(({ categories_id, categories_name }) => (
+                      <Select.Option value={categories_id} key={categories_id}>{categories_name}</Select.Option>
                     ))}
                   </Select>
                   <ErrorMessage item={category_id} />
@@ -307,7 +296,7 @@ const AddCategory = () => {
                 <Form.Item label="Nama Sub Kategori" required>
                   <Input 
                     className="h-33"
-                    name="name_sub_category"
+                    name="name"
                     value={name_sub_category.value}
                     onChange={e => inputSubCategoriesHandler(e)}
                     placeholder="Contoh: Baju, Celana, Jaket dll" 
@@ -324,6 +313,8 @@ const AddCategory = () => {
                 </Button>
               </Space>
             </Tabs.TabPane>
+
+
 
             <Tabs.TabPane tab="Tambah Item Sub Kategori" key={ITEMSUBCATEGORIES}>
               <Form form={form} layout="vertical">
@@ -342,18 +333,18 @@ const AddCategory = () => {
                       option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                     }
                   >
-                    {categoriesData.map(data => (
-                      <Select.Option value={data.id_sub_category} key={data.id_sub_category}>
-                        {`${data.name_category} / ${data.name_sub_category}`}
+                    {activeTab === ITEMSUBCATEGORIES && categoriesData.map(({categories_name, sub_categories_id, sub_categories_name}) => (
+                      <Select.Option value={sub_categories_id} key={sub_categories_id}>
+                        {`${categories_name} / ${sub_categories_name}`}
                       </Select.Option>
                     ))}
                   </Select>
                   <ErrorMessage item={sub_category_id} />
                 </Form.Item>
-                <Form.Item label="Nama Sub Kategori" required>
+                <Form.Item label="Nama Item Sub Kategori" required>
                   <Input 
                     className="h-33"
-                    name="name_item_sub_category"
+                    name="name"
                     value={name_item_sub_category.value}
                     onChange={e => inputItemSubCategoriesHandler(e)}
                     placeholder="Contoh: Kemeja, Kaos, Polo dll" 
@@ -362,7 +353,13 @@ const AddCategory = () => {
                 </Form.Item>
               </Form>
               <Space>
-                <Button type="submit" className="btn-tridatu" onClick={submitItemSubCategoriesHandler} style={{ width: 80 }} disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="btn-tridatu" 
+                  onClick={submitItemSubCategoriesHandler} 
+                  style={{ width: 80 }} 
+                  disabled={loading}
+                >
                   {loading ? <LoadingOutlined /> : "Simpan"}
                 </Button> 
                 <Button onClick={() => cancelHandler(formItemSubCategories, setItemSubCategories)}>
@@ -370,6 +367,7 @@ const AddCategory = () => {
                 </Button>
               </Space>
             </Tabs.TabPane>
+
           </Tabs>
         </Card.Body>
       </Card>

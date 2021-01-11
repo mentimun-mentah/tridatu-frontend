@@ -45,6 +45,7 @@ export const getUser = () => {
           dispatch(getUserSuccess(res.data))
         }
         else {
+          dispatch(logout())
           dispatch(getUserFail())
           axios.delete("/users/delete-cookies")
         }
