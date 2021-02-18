@@ -1,0 +1,14 @@
+name: Deploy
+on: [push, pull_request]
+jobs:
+  deploy:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: deploy on vps
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          command_timeout: 60m
+          script: bash deploy_frontend.sh

@@ -24,7 +24,8 @@ const ProductsStyle = css`
 :global(.filter-menu .ant-menu-submenu-title){
   height: 30px !important;
   line-height: 30px !important;
-  padding-left: 20px !important;
+  padding-left: 15px !important;
+  margin-left: 0px !important;
 }
 :global(.filter-menu .ant-menu-sub.ant-menu-inline > .ant-menu-item){
   height: 30px !important;
@@ -125,6 +126,20 @@ const ProductsStyle = css`
 
 :global(.scrollable-submenu > .ant-menu-sub.ant-menu-inline, .scrollable-submenu){
   max-height: 300px;
+  overflow: scroll;
+}
+
+:global(.scrollable-submenu-brand){
+  max-height: 350px;
+  overflow: hidden;
+}
+:global(.scrollable-submenu-brand > .ant-menu-sub.ant-menu-inline){
+  overflow: scroll;
+  max-height: 250px;
+}
+
+:global(.scrollable-submenu-category > .ant-menu-sub.ant-menu-inline, .scrollable-submenu-category){
+  max-height: 450px;
   overflow: scroll;
 }
 

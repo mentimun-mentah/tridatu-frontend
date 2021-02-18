@@ -1,9 +1,17 @@
 import { Tabs } from 'antd';
+import { useState, useEffect } from 'react'
 import { useSelector } from "react-redux";
-import Link from 'next/link';
+
+import renameCategory from "lib/renameCategory"
 
 const CategoryMenu = () => {
   const allCategories = useSelector(state => state.categories.allCategories)
+
+  const [categoryList, setCategoryList] = useState(renameCategory(allCategories))
+
+  useEffect(() => {
+    setCategoryList(renameCategory(allCategories))
+  }, [allCategories])
 
   return(
     <>
@@ -13,17 +21,20 @@ const CategoryMenu = () => {
         defaultActiveKey="1" 
         className="category-item-navbar-tabs-left" 
       >
-        {allCategories.map(category => (
-          <Tabs.TabPane tab={category.name_category} key={category.id_category}>
+        {categoryList.map(category => (
+          <Tabs.TabPane tab={category.title} key={category.key}>
             <div className="westeros-c-column-container">
-              {category.sub_categories.map(sub => (
-                <div className="westeros-c-column-container_item" key={sub.id_sub_category}>
-                  <b className="fs-14">{sub.name_sub_category}</b>
-                  {sub.item_sub_categories.map(item => (
-                    <p className="m-b-3 text-dark" key={item.id_item_sub_category}>
-                      <Link href="/products" as="/products">
-                        <a className="text-reset"> {item.name_item_sub_category} </a>
-                      </Link>
+              {category.children.map(sub => (
+                <div className="westeros-c-column-container_item" key={sub.key}>
+                  <b className="fs-14">{sub.title}</b>
+                  {sub.children.map(item => (
+                    <p className="m-b-3 text-dark" key={item.key}>
+                      <a 
+                        className="text-reset"
+                        href={`/products?page=1&ck=${item.key}&cn=${item.title}&item_sub_cat=${item.key}`}
+                      > 
+                        {item.title} 
+                      </a>
                     </p>
                   ))}
                 </div>

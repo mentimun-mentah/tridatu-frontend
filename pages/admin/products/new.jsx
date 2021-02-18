@@ -1,6 +1,7 @@
+import { withAuth } from 'lib/withAuth'
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from "react-redux";
-import { Form, Input, Select, InputNumber, Button, Cascader, Space, Upload, Row, Col, Radio, message } from 'antd'
+import { Form, Input, InputNumber, Button, Space, Upload, Row, Col, Radio, message } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -9,28 +10,30 @@ import cx from 'classnames'
 import isIn from 'validator/lib/isIn'
 import isEmpty from 'validator/lib/isEmpty'
 import Card from 'react-bootstrap/Card'
-import axios, { jsonHeaderHandler, formHeaderHandler, resNotification, signature_exp } from 'lib/axios'
+import axios, { jsonHeaderHandler, formHeaderHandler, resNotification, signature_exp, formErrorMessage } from 'lib/axios'
 
 import getIndex from 'lib/getIndex'
 import { formImage, formImageIsValid } from 'formdata/formImage'
 import { imagePreview, uploadButton } from 'lib/imageUploader'
-import { imageValidationProduct } from 'lib/imageProductUploader'
+import { imageValidationProduct, multipleImageValidation, checkVariantImage } from 'lib/imageProductUploader'
 import SizeGuideModal from 'components/Modal/Admin/Products/SizeGuide'
 
+import InformationProducts from 'components/Admin/Products/InformationProducts'
+import NoVariantComponent from 'components/Admin/Products/NoVariant'
+import TableGrosir from 'components/Admin/Products/Grosir'
+
 import ErrorTooltip from "components/ErrorMessage/Tooltip";
-// import ErrorMessage from "components/ErrorMessage";
 import TableVariant from 'components/Admin/Variant/TableVariant'
 import AddStyleAdmin from 'components/Admin/addStyle'
 
-// import { categoryData } from 'components/Header/categoryData'
-// import { brandData } from 'data/brand'
+import { initialColumn } from 'data/productsAdmin'
 
-import { formItemLayout, initialColumn } from 'data/productsAdmin'
-
+import { not_active } from 'components/Card/Admin/Product/Promo/statusType'
 import { formInformationProduct, formNoVariant } from 'formdata/formProduct'
 import { formNoVariantIsValid, formVa1OptionSingleVariantIsValid, formTableIsValid, formVariantTitleIsValid } from 'formdata/formProduct'
 import { formVa2OptionDoubleVariantIsValid, formTitleIsValid } from 'formdata/formProduct'
 import { isValidProductInformation } from 'formdata/formProduct'
+import { validateFormGrosirPrice, validateFormGrosirQty } from 'formdata/formGrosir.js'
 
 import * as actions from "store/actions";
 
@@ -44,10 +47,17 @@ import * as actions from "store/actions";
  * delete each variant not syncron with the image variant ✅
  * improve variant component 
  * connect to backend ✅
+ * change to use one component ✅
+ * connect grosir to backend
  */
 
 const initialVaOption = { va1Option: [], va2Option: [], va1Total: 0, va2Total: 0 }
 const initialActiveVariation = { active: false, countVariation: 0 }
+const initialActiveGrosir = { activeGrosir: false, countGrosir: 0 }
+const formGrosirPrice = { price: { value: "", isValid: true, message: null } }
+const checkMessage = "Pastikan kolom sudah terisi semua."
+const stockMessage = "Stok tidak boleh kurang dari 0."
+const priceMessage = "Harga harus lebih dari 1."
 
 const NewProduct = () => {
   const dispatch = useDispatch()
@@ -69,9 +79,12 @@ const NewProduct = () => {
   const [dataSource, setDataSource] = useState([])
   const [vaOption, setVaOption] = useState(initialVaOption)
   const [isActiveVariation, setIsActiveVariation] = useState(initialActiveVariation)
+  const [isActiveGrosir, setIsActiveGrosir] = useState(initialActiveGrosir)
 
   const [informationProduct, setInformationProduct] = useState(formInformationProduct)
   const [noVariant, setNoVariant] = useState(formNoVariant)
+  const [grosirPrice, setGrosirPrice] = useState(formGrosirPrice)
+  const [grosir, setGrosir] = useState([])
 
   const [cascaderIsShow, setCascaderIsShow] = useState(false)
   const [cascaderValue, setCascaderValue] = useState([])
@@ -79,19 +92,15 @@ const NewProduct = () => {
   const collapsed = useSelector(state => state.layout.adminCollapsed)
   const isMobile = useSelector(state => state.layout.adminIsMobile)
 
-  const brandsData = useSelector(state => state.brand.brand)
   const allCategoriesData = useSelector(state => state.categories.allCategories)
 
+  const { activeGrosir } = isActiveGrosir
   const { va1Option, va1Total, va2Total } = vaOption
 
   /* Destructuring Object Product */
   const { name, desc, item_sub_category_id, brand_id, condition, weight, preorder, video } = informationProduct;
   const { va1_price, va1_stock, va1_code, va1_barcode } = noVariant
   /* Destructuring Object Product */
-
-  const fetchBrands = () => {
-    dispatch(actions.getBrand())
-  }
 
   const fetchCategories = () => {
     dispatch(actions.getAllCategories())
@@ -196,6 +205,14 @@ const NewProduct = () => {
       }
       setNoVariant(data)
     }
+    if((item == "va1_stock" && (e < 0 || e === "" || e == null)) || (item == "va1_price" && (e < 1 || e === "" || e == null))) {
+      const data = {
+        ...noVariant,
+        [item]: { ...noVariant[item], value: e, isValid: false, message: item == "va1_stock" ? stockMessage : priceMessage }
+      }
+      setNoVariant(data)
+    }
+    // console.log(e == "", item == "va1_stock" && e == null)
   }
   /* No variant product change handler */
 
@@ -271,9 +288,12 @@ const NewProduct = () => {
 
   const resetAllData = () => {
     setIsActiveVariation(initialActiveVariation)
+    setIsActiveGrosir(initialActiveGrosir)
     setColumns(initialColumn)
     setDataSource([])
     setVaOption(initialVaOption)
+    setGrosirPrice(formGrosirPrice)
+    setGrosir([])
 
     setInformationProduct(formInformationProduct)
     setNoVariant(formNoVariant)
@@ -291,7 +311,7 @@ const NewProduct = () => {
     setCascaderValue([])
   }
 
-  const onSubmitProduct = (ticket) => {
+  const onSubmitProduct = (ticket_variant, ticket_grosir) => {
     const formData = new FormData();
 
     formData.append("name", name.value);
@@ -299,15 +319,18 @@ const NewProduct = () => {
     formData.append("condition", condition.value);
     formData.append("weight", weight.value);
     formData.append("item_sub_category_id", item_sub_category_id.value);
-    formData.append("ticket_variant", ticket);
+    formData.append("ticket_variant", ticket_variant);
     imageList.file.value.forEach(file => {
       formData.append("image_product", file.originFileObj)
     })
 
     //optional
+    if(activeGrosir && ticket_grosir) formData.append("ticket_wholesale", ticket_grosir);
     if(!isEmpty(video.value)) formData.append("video", video.value);
     if(isPreorder && preorder.value !== null && !isEmpty(preorder.value.toString())) formData.append("preorder", preorder.value);
-    if(brand_id.value.length !== 0 && !isEmpty(brand_id.value.toString())) formData.append("brand_id", brand_id.value);
+    if(brand_id.value !== "" && brand_id.value.length !== 0 && !isEmpty(brand_id.value.toString())){
+      formData.append("brand_id", brand_id.value);
+    }
     if(isActiveVariation.active && imageVariants.file.value.length > 0){
       imageVariants.file.value.forEach(file => {
         if(file.hasOwnProperty("originFileObj")) formData.append("image_variant", file.originFileObj)
@@ -335,30 +358,22 @@ const NewProduct = () => {
         const errName = "The name has already been taken."
         if(errDetail == signature_exp){
           resNotification("success", "Success", "Successfully add a new product.")
+          resetAllData()
         } else if (typeof errDetail === "string" && errDetail === errName) {
           const state = JSON.parse(JSON.stringify(informationProduct));
           state.name.value = state.name.value;
           state.name.isValid = false;
           state.name.message = errDetail;
           setInformationProduct(state)
+          formErrorMessage(errDetail)
         } else if(typeof errDetail === "string" && errDetail === uniqueImage){
-          message.error({ 
-            content: errDetail, 
-            style: { marginTop: '10vh' },
-          });
+          formErrorMessage(errDetail)
         } else if(typeof errDetail === "string" && errDetail === variantImage){
-          message.error({ 
-            content: errDetail, 
-            style: { marginTop: '10vh' },
-          });
+          formErrorMessage(errDetail)
         } else {
           const state = JSON.parse(JSON.stringify(informationProduct));
           errDetail.map(data => {
             const key = data.loc[data.loc.length - 1];
-            /*
-             * TODO:
-             * Image validator from server
-             */
             if(key === "image_product"){
               message.error({ 
                 content: "image product " + data.msg, 
@@ -375,11 +390,79 @@ const NewProduct = () => {
               state[key].isValid = false;
               state[key].message = data.msg;
             }
-
+            if(key !== "image_product"){
+              formErrorMessage(checkMessage)
+            }
           })
           setInformationProduct(state)
         }
       })
+  }
+
+  const onSubmitGrosir = (ticket_variant) => {
+    if(!activeGrosir) return
+
+    const urlGrosir = "/wholesale/create-ticket"
+    const grosirList = grosir.map(data => {
+      const container = {}
+      container["min_qty"] = data.min_qty.value;
+      container["price"] = data.price.value.toString();
+      return container
+    })
+
+    if(validateFormGrosirPrice(grosir, setGrosir, grosirPrice.price, va1_price, isActiveVariation.active) && 
+       validateFormGrosirQty(grosir, setGrosir)
+    ){
+      const data = {
+        variant: ticket_variant,
+        items: grosirList
+      }
+      axios.post(urlGrosir, data, jsonHeaderHandler())
+        .then(res => {
+          onSubmitProduct(ticket_variant, res.data.ticket)
+        })
+        .catch(err => {
+          console.log(err.response.data)
+          const errDetail = err.response.data.detail;
+          if(errDetail == signature_exp){
+            axios.post(urlGrosir, data, jsonHeaderHandler())
+              .then(res => {
+                onSubmitProduct(ticket_variant, res.data.ticket)
+              })
+          } else if(typeof(errDetail) === "string" && errDetail !== signature_exp){
+            resNotification("error", "Error", errDetail)
+          } else {
+            errDetail.map(data => {
+              const newGrosir = [...grosir]
+              if(isIn(data.loc.join(" "), ["min_qty", "price"])){
+                const key = data.loc[data.loc.length - 1];
+                const idx = data.loc[data.loc.length - 2];
+                newGrosir[idx][key].isValid = false
+                newGrosir[idx][key].message = data.msg
+              } else {
+                if(isIn(data.msg, ["min_qty", "price"])){
+                  const key = data.msg.split(" ")[0]
+                  const idx = parseInt(data.msg.split(" ")[1])
+                  const msgSplit = data.msg.split(":")
+                  newGrosir[idx][key].isValid = false
+                  newGrosir[idx][key].message = msgSplit[0].split(" ")[0] + " " + (parseInt(msgSplit[0].split(" ")[1])+1) +":" + msgSplit[1]
+                } 
+                else if(isIn(data.loc[data.loc.length - 1], ["price", "min_qty"])){
+                  const key = data.loc[data.loc.length - 1];
+                  const idx = data.loc[data.loc.length - 2];
+                  newGrosir[idx][key].isValid = false
+                  newGrosir[idx][key].message = data.msg
+                }
+                else {
+                  formErrorMessage(checkMessage)
+                }
+              }
+              setGrosir(newGrosir)
+            })
+          }
+
+        })
+    }
   }
 
   const onSubmitHandler = e => {
@@ -392,31 +475,38 @@ const NewProduct = () => {
        formImageIsValid(imageList, setImageList, "Foto produk tidak boleh kosong")
     ){
       const data = {
-        va1_items: [
-          {
-            va1_price: va1_price.value,
-            va1_stock: va1_stock.value,
-            va1_code: va1_code.value || null,
-            va1_barcode: va1_barcode.value || null
-          }
-        ]
+        va1_items: [{
+          va1_price: va1_price.value.toString(),
+          va1_stock: va1_stock.value.toString(),
+          va1_code: va1_code.value || null,
+          va1_barcode: va1_barcode.value || null
+        }]
       }
 
       console.log(JSON.stringify(data, null, 2))
       axios.post(urlVariant, data, jsonHeaderHandler())
         .then(res => {
-          onSubmitProduct(res.data.ticket)
+          if(activeGrosir){
+            onSubmitGrosir(res.data.ticket)
+          } else {
+            onSubmitProduct(res.data.ticket, false)
+          }
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
           if(errDetail == signature_exp){
             axios.post(urlVariant, data, jsonHeaderHandler())
               .then(res => {
-                onSubmitProduct(res.data.ticket)
+                if(activeGrosir){
+                  onSubmitGrosir(res.data.ticket)
+                } else {
+                  onSubmitProduct(res.data.ticket, false)
+                }
               })
           } else if(typeof(errDetail) === "string" && errDetail !== signature_exp){
             resNotification("error", "Error", errDetail)
           } else {
+            formErrorMessage(checkMessage)
             const state = JSON.parse(JSON.stringify(noVariant));
             errDetail.map(data => {
               const key = data.loc[data.loc.length - 1];
@@ -440,6 +530,11 @@ const NewProduct = () => {
         })
     } // end of no variant
       // end of no variant
+    else {
+      if(!isActiveVariation.active){
+        formErrorMessage(checkMessage)
+      }
+    }
 
 
     if(isActiveVariation.active && isActiveVariation.countVariation === 1){
@@ -450,8 +545,8 @@ const NewProduct = () => {
       for(let i = 0; i < va1Total; i++){
         const item = {
           va1_option: va1Option[i].va1_option.value,
-          va1_price: +dataSource[i].price.value,
-          va1_stock: +dataSource[i].stock.value,
+          va1_price: dataSource[i].price.value.toString(),
+          va1_stock: dataSource[i].stock.value.toString(),
           va1_code: dataSource[i].code.value || null,
           va1_barcode: dataSource[i].barcode.value || null
         }
@@ -472,18 +567,28 @@ const NewProduct = () => {
         console.log(JSON.stringify(data, null, 2))
         axios.post(urlVariant, data, jsonHeaderHandler())
           .then(res => {
-            onSubmitProduct(res.data.ticket)
+            if(activeGrosir){
+              onSubmitGrosir(res.data.ticket)
+            } else {
+              onSubmitProduct(res.data.ticket, false)
+            }
           })
           .catch(err => {
             const errDetail = err.response.data.detail;
+            console.log(err.response)
             if(errDetail == signature_exp){
               axios.post(urlVariant, data, jsonHeaderHandler())
                 .then(res => {
-                  onSubmitProduct(res.data.ticket)
+                  if(activeGrosir){
+                    onSubmitGrosir(res.data.ticket)
+                  } else {
+                    onSubmitProduct(res.data.ticket, false)
+                  }
                 })
             } else if(typeof(errDetail) === "string" && errDetail !== signature_exp){
               resNotification("error", "Error", errDetail)
             } else {
+              formErrorMessage(checkMessage)
               errDetail.map(data => {
                 const key = data.loc[data.loc.length - 1];
                 const idx = data.loc[data.loc.length - 2];
@@ -513,6 +618,9 @@ const NewProduct = () => {
               })
             }
           })
+      }
+      else {
+        formErrorMessage(checkMessage)
       }
     } // end of single variant
       // end of single variant
@@ -548,8 +656,8 @@ const NewProduct = () => {
           if(val.va1_option === check){
             const va2_data = {
               va2_option: val.va2_option.split(" ")[0] === "Pilihan" ? "" : val.va2_option,
-              va2_price: +val.price.value,
-              va2_stock: +val.stock.value,
+              va2_price: val.price.value.toString(),
+              va2_stock: val.stock.value.toString(),
               va2_code: val.code.value || null,
               va2_barcode: val.barcode.value || null
             }
@@ -575,7 +683,11 @@ const NewProduct = () => {
 
         axios.post(urlVariant, data, jsonHeaderHandler())
           .then(res => {
-            onSubmitProduct(res.data.ticket)
+            if(activeGrosir){
+              onSubmitGrosir(res.data.ticket)
+            } else {
+              onSubmitProduct(res.data.ticket, false)
+            }
           })
           .catch(err => {
             const errDetail = err.response.data.detail;
@@ -583,11 +695,16 @@ const NewProduct = () => {
             if(errDetail == signature_exp){
               axios.post(urlVariant, data, jsonHeaderHandler())
                 .then(res => {
-                  onSubmitProduct(res.data.ticket)
+                  if(activeGrosir){
+                    onSubmitGrosir(res.data.ticket)
+                  } else {
+                    onSubmitProduct(res.data.ticket, false)
+                  }
                 })
             } else if(typeof(errDetail) === "string" && errDetail !== signature_exp){
               resNotification("error", "Error", errDetail)
             } else {
+              formErrorMessage(checkMessage)
               errDetail.map(data => {
                 const key = data.loc[data.loc.length - 1];
                 const idx = data.loc[data.loc.length - 2];
@@ -640,7 +757,9 @@ const NewProduct = () => {
             }
           })
       }
-
+      else {
+        formErrorMessage(checkMessage)
+      }
     } // end of two variant
   }
 
@@ -650,105 +769,24 @@ const NewProduct = () => {
     }
   }, [isActiveVariation])
 
+  useEffect(() => {
+    checkVariantImage(imageVariants.file.value)
+  }, [va1Total])
+
   const invalidProductImage = cx({ "invalid-upload": !imageList.file.isValid });
 
   return(
     <>
-      <Card className="border-0 shadow-sm card-add-product">
-        <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Informasi Produk</h5>
-        </Card.Body>
-        <Card.Body className="p-3">
-
-          <Form layout="vertical">
-            <Form.Item 
-              required
-              label="Nama Produk" 
-              validateStatus={!name.isValid && name.message && "error"}
-            >
-              <Input 
-                name="name"
-                placeholder="Nama Produk" 
-                className="h-35" 
-                value={name.value}
-                onChange={e => onInformationProductChange(e)}
-              />
-              <ErrorTooltip item={name} />
-            </Form.Item>
-            <Form.Item 
-              required
-              label="Deskripsi Produk" 
-              validateStatus={!desc.isValid && desc.message && "error"}
-            >
-              <Input.TextArea 
-                name="desc"
-                autoSize={{ minRows: 8, maxRows: 10 }} 
-                placeholder="Deskripsi produk" 
-                value={desc.value}
-                onChange={e => onInformationProductChange(e)}
-              />
-              <ErrorTooltip item={desc} />
-            </Form.Item>
-            <Form.Item 
-              required
-              label="Kategori" 
-              validateStatus={!item_sub_category_id.isValid && item_sub_category_id.message && "error"}
-            >
-              <Cascader 
-                changeOnSelect
-                allowClear={false}
-                value={cascaderValue}
-                popupVisible={cascaderIsShow}
-                showSearch={{ filter }}
-                onChange={onCascaderChange}
-                options={allCategoriesList} 
-                onFocus={onFocusCascader}
-                placeholder="Ketik dan cari / pilih Kategori" 
-                popupClassName="cascader-category-menus"
-              />
-              <ErrorTooltip item={item_sub_category_id} />
-            </Form.Item>
-            <Form.Item 
-              label="Brand"
-              validateStatus={!brand_id.isValid && brand_id.message && "error"}
-            >
-              <Select
-                showSearch
-                name="brand_id"
-                placeholder="Buat Brand"
-                value={brand_id.value}
-                onFocus={() => fetchBrands()}
-                onSelect={e => onInformationProductChange(e, "brand_id")}
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                }
-              >
-                {brandsData.map(data => (
-                  <Select.Option value={data.id} key={data.id}>{data.name}</Select.Option>
-                ))}
-              </Select>
-              <ErrorTooltip item={brand_id} />
-            </Form.Item>
-            <Form.Item 
-              required
-              label="Kondisi" 
-              validateStatus={!condition.isValid && condition.message && "error"}
-            >
-              <Select 
-                name="condition"
-                placeholder="Kondisi produk" 
-                value={condition.value}
-                onSelect={e => onInformationProductChange(e, "condition")}
-              >
-                <Select.Option value={true}>Baru</Select.Option>
-                <Select.Option value={false}>Bekas</Select.Option>
-              </Select>
-              <ErrorTooltip item={condition} />
-            </Form.Item>
-          </Form>
-
-        </Card.Body>
-      </Card>
+      <InformationProducts 
+        informationProduct={informationProduct}
+        onInformationProductChange={onInformationProductChange}
+        cascaderValue={cascaderValue}
+        cascaderIsShow={cascaderIsShow}
+        onCascaderChange={onCascaderChange}
+        allCategoriesList={allCategoriesList} 
+        onFocusCascader={onFocusCascader}
+        filter={filter}
+      />
 
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
@@ -757,75 +795,11 @@ const NewProduct = () => {
         <Card.Body className="p-3">
 
           {!isActiveVariation.active && (
-            <Form layout="vertical" {...formItemLayout}>
-              <Form.Item 
-                required
-                label="Harga" 
-                validateStatus={!va1_price.isValid && va1_price.message && "error"}
-              >
-                <div className="ant-input-group-wrapper">
-                  <div className="ant-input-wrapper ant-input-group">
-                    <span className="ant-input-group-addon noselect">Rp</span>
-                    <InputNumber
-                      min={1}
-                      name="va_1price"
-                      className="w-100 bor-left-rad-0 h-33-custom-input"
-                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                      parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
-                      value={va1_price.value}
-                      onChange={e => onNoVariantChangeHandler(e, "va1_price")}
-                    />
-                  </div>
-                </div>
-                <ErrorTooltip item={va1_price} />
-              </Form.Item>
-
-              <Form.Item 
-                required
-                label="Stok" 
-                validateStatus={!va1_stock.isValid && va1_stock.message && "error"}
-              >
-                <InputNumber 
-                  min={0} 
-                  name="va1_stock"
-                  placeholder="Jumlah Stok"
-                  className="w-100 h-33-custom-input" 
-                  value={va1_stock.value}
-                  onChange={e => onNoVariantChangeHandler(e, "va1_stock")}
-                />
-                <ErrorTooltip item={va1_stock} />
-              </Form.Item>
-
-              <Form.Item 
-                label="Kode Variasi"
-                validateStatus={!va1_code.isValid && va1_code.message && "error"}
-              >
-                <Input 
-                  className="h-35" 
-                  name="va1_code"
-                  placeholder="Kode Variasi" 
-                  value={va1_code.value}
-                  onChange={e => onNoVariantChangeHandler(e)}
-                />
-                <ErrorTooltip item={va1_code} />
-              </Form.Item>
-
-              <Form.Item 
-                label="Barcode" 
-                className="mb-4"
-                validateStatus={!va1_barcode.isValid && va1_barcode.message && "error"}
-              >
-                <Input 
-                  className="h-35" 
-                  name="va1_barcode"
-                  placeholder="Barcode" 
-                  value={va1_barcode.value}
-                  onChange={e => onNoVariantChangeHandler(e)}
-                />
-                <ErrorTooltip item={va1_barcode} />
-              </Form.Item>
-
-            </Form>
+            <NoVariantComponent 
+              noVariant={noVariant}
+              onNoVariantChangeHandler={onNoVariantChangeHandler}
+              isActiveGrosir={isActiveGrosir}
+            />
           )}
 
           <TableVariant 
@@ -840,6 +814,26 @@ const NewProduct = () => {
             imageVariants={imageVariants}
             setImageVariants={setImageVariants}
             onRemoveVariant={onRemoveVariant}
+            initialFetch={{ isInit: false, dataVariant: null }}
+            setInitialFetch={() => {}}
+            activeGrosir={activeGrosir}
+            grosirPrice={grosirPrice}
+            setGrosirPrice={setGrosirPrice}
+            discountStatus={not_active}
+          />
+
+          <TableGrosir
+            isActiveVariation={isActiveVariation}
+            isActiveGrosir={isActiveGrosir}
+            setIsActiveGrosir={setIsActiveGrosir}
+            grosirPrice={grosirPrice}
+            setGrosirPrice={setGrosirPrice}
+            dataSource={dataSource}
+            setDataSource={setDataSource}
+            noVariant={noVariant}
+            onNoVariantChangeHandler={onNoVariantChangeHandler}
+            grosir={grosir}
+            setGrosir={setGrosir}
           />
 
         </Card.Body>
@@ -861,7 +855,7 @@ const NewProduct = () => {
                 onPreview={imagePreview}
                 fileList={imageList.file.value}
                 onChange={imageChangeHandler}
-                beforeUpload={(file) => imageValidationProduct(file, "image_product", "/products/create", "post", setLoadingImageProduct )}
+                beforeUpload={(file) => multipleImageValidation(file, imageList.file.value, "image_product", "/products/create", "post", setLoadingImageProduct)}
               >
                 {imageList.file.value.length >= 10 ? null : uploadButton(loadingImageProduct)}
               </Upload>
@@ -884,7 +878,7 @@ const NewProduct = () => {
                                   imageVariants.file.value.length > 0 && [imageVariants.file.value[i]]
                         }
                         onChange={imageVariantChangeHandler(i)}
-                        beforeUpload={(file) => imageValidationProduct(file, "image_variant", "/products/create", "post", setLoadingImageVariant )}
+                        beforeUpload={(file) => multipleImageValidation(file, imageVariants.file.value, "image_variant", "/products/create", "post", setLoadingImageVariant )}
                       >
                         {va1Total ? uploadButton(loadingImageVariant) : null}
                       </Upload>
@@ -1042,4 +1036,4 @@ const NewProduct = () => {
   )
 }
 
-export default NewProduct
+export default withAuth(NewProduct)

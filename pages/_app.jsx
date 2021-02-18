@@ -90,7 +90,7 @@ const App = ({ Component, pageProps, store }) => {
           color: #fbbc04;
         }
         .ant-rate-star:not(:last-child) {
-          margin-right: 4px;
+          margin-right: 2px;
         }
         /*ANT RATE*/
 
@@ -452,6 +452,9 @@ const App = ({ Component, pageProps, store }) => {
         .text-tridatu-light {
           color: #ff4d4f;
         }
+        .text-black {
+          color: rgba(0, 0, 0, 1); 
+        }
 
         /*CUSTOM BUTTON*/
         .btn-tridatu {
@@ -533,6 +536,9 @@ const App = ({ Component, pageProps, store }) => {
 
         .fw-500 {
           font-weight: 500 !important;
+        }
+        .fw-600 {
+          font-weight: 600 !important;
         }
 
         .invalid-upload > .ant-upload-list-picture-card > .ant-upload.ant-upload-select-picture-card {
@@ -738,7 +744,7 @@ const App = ({ Component, pageProps, store }) => {
 
 App.getInitialProps = async ({ Component, ctx }) => {
   const pageProps = Component.getInitialProps ? await Component.getInitialProps(ctx) : {};
-  await ctx.store.dispatch(actions.authCheckState(ctx));
+  // await ctx.store.dispatch(actions.authCheckState(ctx));
   return { pageProps };
 };
 

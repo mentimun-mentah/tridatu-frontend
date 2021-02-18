@@ -40,10 +40,10 @@ const Brand = () => {
         </Card.Body>
         <Card.Body className="p-3">
           {brands && brands.length > 0 ? (
-            <Row gutter={[16, 16]}>
+            <Row gutter={[10, 10]}>
               <AnimatePresence>
                 {brands.map(data => (
-                  <Col xl={4} lg={6} md={8} sm={8} xs={12} key={data.id} >
+                  <Col xl={4} lg={6} md={8} sm={12} xs={12} key={data.id}>
                     <CardBrand data={data} deleteHandler={() => deleteBrandHandler(data.id)} />
                   </Col>
                 ))}

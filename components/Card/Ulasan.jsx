@@ -4,19 +4,11 @@ import moment from 'moment';
 
 const UlasanContainer = () => {
   const [likes, setLikes] = useState(0);
-  const [dislikes, setDislikes] = useState(0);
   const [action, setAction] = useState(null);
 
   const like = () => {
     setLikes(1);
-    setDislikes(0);
     setAction('liked');
-  };
-
-  const dislike = () => {
-    setLikes(0);
-    setDislikes(1);
-    setAction('disliked');
   };
 
   const actions = [
@@ -24,12 +16,6 @@ const UlasanContainer = () => {
       <span onClick={like}>
         <i className={`${action === 'liked' ? 'fas ' : 'fal '} fa-thumbs-up`} />
         <span className="comment-action"> {likes}</span>
-      </span>
-    </Tooltip>,
-    <Tooltip key="comment-basic-dislike" title="Dislike">
-      <span onClick={dislike}>
-        <i className={`${action === 'disliked' ? 'fas ' : 'fal '} fa-thumbs-down`} />
-        <span className="comment-action"> {dislikes}</span>
       </span>
     </Tooltip>,
   ];

@@ -18,18 +18,18 @@ const itemRender = (_, type, originalElement) => {
   return originalElement;
 };
 
-const PaginationContainer = ({ total = 1, pageSize = 10, goTo = () => {}, current = 1, hideOnSinglePage = false }) => {
+const PaginationContainer = ({ total = 1, pageSize = 10, goTo = () => {}, current, hideOnSinglePage = false }) => {
   return (
     <>
       <Pagination
-        hideOnSinglePage={hideOnSinglePage}
+        responsive
+        current={current} //current page
         itemRender={itemRender}
         showSizeChanger={false}
         onChange={(e) => goTo(e)}
-        current={current} //current page
         pageSize={pageSize} //data per_page
         total={total} //max of iter_pages
-        responsive
+        hideOnSinglePage={hideOnSinglePage}
       />
       <style jsx>{`
         :global(.prev-next-pagination){
@@ -58,6 +58,9 @@ const PaginationContainer = ({ total = 1, pageSize = 10, goTo = () => {}, curren
         }
         :global(.va-1px){
           vertical-align: 1px;
+        }
+        :global(.ant-pagination-disabled, .ant-pagination-disabled:hover, .ant-pagination-disabled:focus){
+          color: #d9d9d9;
         }
       `}</style>
     </>

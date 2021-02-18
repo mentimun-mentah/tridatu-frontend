@@ -7,7 +7,7 @@ const SocialLogin = ({ text }) => {
     <>
       <Row>
         <Col md={12} lg={6}>
-          <a href="#" className="text-decoration-none">
+          <a href={`${process.env.NEXT_PUBLIC_API_URL}/login/google`} className="text-decoration-none">
             <button className="btn-login btn mb-2">
               <div className="btn-login-icon">
                 <LogoGoogle />
@@ -17,12 +17,12 @@ const SocialLogin = ({ text }) => {
           </a>
         </Col>
         <Col md={12} lg={6}>
-          <a href="#" className="text-decoration-none">
+          <a href={`${process.env.NEXT_PUBLIC_API_URL}/login/facebook`} className="text-decoration-none">
             <button className="btn-login btn mb-2">
               <div className="btn-login-icon">
                 <LogoFacebook />
               </div>
-              <span>{text} dengan Google</span>
+              <span>{text} dengan Facebook</span>
             </button>
           </a>
         </Col>

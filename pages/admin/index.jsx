@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { Row, Col, Tooltip, Table } from 'antd'
+import { Row, Col, Tooltip, Table, notification } from 'antd'
 
 import Chart from 'chart.js'
 import Card from 'react-bootstrap/Card'
@@ -57,6 +57,16 @@ const Dashboard = () => {
   const onCloseModalDetailReview = () => {
     setShowDetailReview(false)
   }
+
+  useEffect(() => {
+    notification["warning"]({
+      duration: 5,
+      closeIcon: <i className="far fa-times" />,
+      message: 'Perhatian',
+      description:
+      "Menghapus kategori atau brand juga akan menghapus produk yang menggunakan kategori atau brand tersebut.",
+    });
+  }, [])
 
   return(
     <>

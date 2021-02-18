@@ -33,6 +33,26 @@ const getUserFail = (error) => {
   };
 };
 
+
+/*
+ * GET WISHLIST USER
+ */
+const getWishlistStart = () => {
+  return { type: actionType.GET_WISHLIST_START }
+}
+const getWishlistSuccess = (wishlist) => {
+  return { 
+    type: actionType.GET_WISHLIST_SUCCESS,
+    wishlist: wishlist 
+  }
+}
+const getWishlistFail = (error) => {
+  return {
+    type: actionType.GET_WISHLIST_FAIL,
+    error: error
+  }
+}
+
 /*
  * GET USER FUNCTION
  */
@@ -129,3 +149,38 @@ export const logout = () => {
     }
   };
 };
+
+/*
+ * GET WISHLIST FUNCTION
+ */
+export const getWishlist = ({ page = 1, per_page = 10, q, order_by }) => {
+  let queryString = {}
+  if(page) queryString["page"] = page
+  if(per_page) queryString["per_page"] = per_page
+
+  if(q !== "" && q !== undefined) queryString["q"] = q
+  else delete queryString["q"]
+
+  if(order_by !== "") queryString["order_by"] = order_by
+  else delete queryString["order_by"]
+
+  return dispatch => {
+    dispatch(getWishlistStart())
+    axios.get(`/wishlists/user`, { params: queryString })
+      .then(res => {
+        dispatch(getWishlistSuccess(res.data))
+      })
+      .catch(err => {
+        if(err && err.response && err.response.data.detail === signature_exp){
+          axios.get(`/wishlists/user`, { params: queryString })
+            .then(res => {
+              dispatch(getWishlistSuccess(res.data))
+            })
+            .catch(() => {})
+        }
+        else {
+          dispatch(getWishlistFail(err.response))
+        }
+      })
+  }
+}

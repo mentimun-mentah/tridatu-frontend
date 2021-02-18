@@ -35,9 +35,9 @@ export const formItemLayout = {
   wrapperCol: {
     xs: { span: 24 },
     sm: { span: 24 },
-    md: { span: 18 },
-    lg: { span: 16 },
-    xl: { span: 14 },
+    md: { span: 24 },
+    lg: { span: 24 },
+    xl: { span: 24 },
   },
 };
 

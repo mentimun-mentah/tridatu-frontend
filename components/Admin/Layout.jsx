@@ -6,6 +6,7 @@ import { Layout, Menu, Dropdown, Avatar, Badge, Grid, Drawer } from 'antd';
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 
 import Image from "next/image";
+import isIn from 'validator/lib/isIn'
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Media from 'react-bootstrap/Media';
@@ -28,18 +29,21 @@ const routes = {
   produk: [
     {link: "/admin/products", text: "Produk Saya", icon: "far fa-shopping-bag"},
     {link: "/admin/products/new", text: "Tambah Produk", icon: "far fa-file-plus"},
+    {link: "/admin/products/promo", text: "Diskon Produk", icon: "far fa-percent"},
   ],
   brand: [
     {link: "/admin/brand", text: "Brand", icon: "far fa-layer-group"},
     {link: "/admin/brand/new", text: "Tambah Brand", icon: "far fa-layer-plus"},
   ],
   promo: [
-    {link: "/admin/voucher", text: "Voucher", icon: "far fa-ticket-alt"},
-    {link: "/admin/voucher/new", text: "Tambah Voucher", icon: "far fa-money-check"},
+    {link: "/admin/voucher", text: "Promo", icon: "far fa-ticket-alt"},
+    {link: "/admin/voucher/new-promo", text: "Tambah Promo", icon: "far fa-money-check"},
+    {link: "/admin/voucher/new-voucher", text: "Tambah Voucher", icon: "far fa-money-check"},
   ],
   administrasi: [
     {link: "/admin/review", text: "Ulasan Pembeli", icon: "far fa-smile-wink"},
     {link: "/admin/outlet", text: "Informasi Outlet", icon: "far fa-store"},
+    {link: "/admin/voucher/banner", text: "Banner Promo", icon: "far fa-money-check"},
   ],
 }
 
@@ -98,11 +102,12 @@ const isEmptyObject = obj => {
 const getActiveMenu = (routes, router) => {
   let rsSplit = routes.split('/')
   let rrSplit = router.split('/')
+
   let lastPathrr = rrSplit[rrSplit.length - 1]
   let lastPathrs = rsSplit[rrSplit.length - 1]
-  
+
   if(lastPathrr.startsWith('[')){
-    if(lastPathrs && lastPathrs.startsWith('new')){
+    if(lastPathrs && isIn(lastPathrs, ['new', 'promo'])){
       rsSplit.shift()
     }
   }
@@ -110,7 +115,18 @@ const getActiveMenu = (routes, router) => {
   let getRoutes = rsSplit[2]
   let getRouter = rrSplit[2]
 
-  if(getRoutes) return getRoutes.startsWith(getRouter)
+  if(getRoutes && getRoutes !== "products") {
+    return getRoutes.startsWith(getRouter)
+  }
+
+  if(getRoutes && getRoutes === "products") {
+    if(lastPathrr.startsWith('[slu')){
+      rrSplit.pop()
+      return rsSplit.join("/"), rrSplit.join("/")
+    } else {
+      return rsSplit.join("/") === rrSplit.join("/")
+    }
+  }
 }
 
 const AdminLayout = ({ children }) => {
@@ -226,7 +242,8 @@ const AdminLayout = ({ children }) => {
                 className={`${collapsed && 'text-center'} mobile-last-item`}
                 title={<span className="font-weight-bold fs-12"> {key.toUpperCase()} </span>}
               >
-                {val.map(route => (
+                {val.map(route => {
+                  return (
                   <Menu.Item 
                     text={key}
                     key={route.link} 
@@ -235,7 +252,8 @@ const AdminLayout = ({ children }) => {
                   >
                     {!collapsed && <>{route.text}</>}
                   </Menu.Item>
-                ))}
+                )
+                })}
               </Menu.ItemGroup>
             ))}
           </Menu>
@@ -556,7 +574,5 @@ const AdminLayout = ({ children }) => {
     </>
   )
 }
-
-AdminLayout.whyDidYouRender = true;
 
 export default AdminLayout

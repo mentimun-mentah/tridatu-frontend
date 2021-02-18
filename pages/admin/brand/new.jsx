@@ -72,6 +72,7 @@ const NewBrand = () => {
           setImageList(formImage)
         })
         .catch(err => {
+          console.log(err)
           const errDetail = err.response.data.detail;
           const errName = "The name has already been taken."
           if(errDetail == signature_exp){

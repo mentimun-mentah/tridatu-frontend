@@ -56,9 +56,8 @@ const CardPromo = ({ image }) => {
         </Card.Body>
 
         {isPromoAdmin && (
-          <Card.Body className="border-top py-3">
+          <Card.Body className="border-top py-3 text-center">
             <Space>
-              <Button size="small" danger>Live</Button>
               <Button size="small" type="primary">Ubah</Button>
               <Popconfirm title="Are you sure？" icon={<QuestionCircleOutlined style={{ color: 'red' }} />}>
                 <Button size="small" type="primary" danger>Hapus</Button>

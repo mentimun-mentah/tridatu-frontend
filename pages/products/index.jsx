@@ -1,112 +1,421 @@
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
-import { useSelector } from "react-redux";
-import { Menu, Rate, Tag, InputNumber, Checkbox, Drawer, Tabs, Select, Collapse, Col, Row, Empty } from 'antd';
+import { useSelector, useDispatch } from "react-redux";
+import { AnimatePresence, motion } from 'framer-motion'
+import { Select, Col, Row, Empty, Tag, Affix } from 'antd';
 
+import axios from 'lib/axios'
+import dynamic from 'next/dynamic'
+import Button from "antd-button-color";
 import RowB from "react-bootstrap/Row";
 import ColB from "react-bootstrap/Col";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
-import Badge from "react-bootstrap/Badge";
-import ButtonBoot from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
+import isBoolean from 'validator/lib/isBoolean';
+import isIn from 'validator/lib/isIn';
+import isEmpty from 'validator/lib/isEmpty';
 
-import CardProduct from "components/Card/Product";
+import SidebarLoading from "components/Products/SidebarLoading"
+import CardProductLoading from "components/Card/ProductLoading";
 import Pagination from "components/Pagination";
 import formFilter from "formdata/formFilter";
+import renameCategory from "lib/renameCategory"
 
+import { sortListProduct } from "data/products"
+import * as actions from "store/actions";
 import ProductsStyle from "components/Products/style";
 
+const SidebarLoadingMemo = React.memo(SidebarLoading);
+const CardProductLoadingMemo = React.memo(CardProductLoading);
+
+const SidebarContainer = dynamic(() => import("components/Products/Sidebar"), { ssr: false, loading: () => <SidebarLoadingMemo />  })
+const SidebarContainerMemo = React.memo(SidebarContainer);
+
+const CardProduct = dynamic(() => import("components/Card/Product"), { ssr: false, loading: () => <CardProductLoadingMemo />  })
 const CardProductMemo = React.memo(CardProduct);
 
-const renderTitle = (title) => <b className="text-dark">{title}</b> 
-const renderSubTitle = (title) => <span className="text-muted">{title}</span>
+const TagFilter = ({ onRemove, label }) => (
+  <Tag closable
+    onClose={onRemove}
+    className="filter-tag"
+    closeIcon={<i className="fas fa-times ml-1" />}
+  >
+    {label}
+  </Tag>
+)
 
-const brandList = ['Adidas', 'Billabong', 'Bershka', 'Converse', 'Deus', 'GAP', 'Giordano', 'Gucci', 'H&M', 'Mango', 'New Balance', 'Pull & Bear', 'Louis Vuitton', 'Levis', 'Nike', 'Top Man', 'Uniqlo', 'Supreme', 'Zara']
-const sortList = ['Paling Sesuai', 'Harga Tertinggi', 'Harga Terendah']
-const ratingList = ['4 Ketas', '3 Keatas']
-
-const ProductContainer = () => {
+const per_page = 20;
+const ProductContainer = ({ searchQuery, finalCategories }) => {
+  const dispatch = useDispatch()
   const router = useRouter();
-  const [visible, setVisible] = useState(false);
+
+  /* GLOBAL STATE */
+  const products = useSelector(state => state.products.products)
+  const loadingProduct = useSelector(state => state.products.loading)
+  const user = useSelector(state => state.auth.user)
+  /* GLOBAL STATE */
+
   const [activeFilter, setActiveFilter] = useState(formFilter);
 
-  const allCategories = useSelector(state => state.categories.allCategories)
+  const [brandList, setBrandList] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
+  const [preorderList, setPreorderList] = useState([]);
+  const [discountList, setDiscountList] = useState([]);
+  const [minPriceList, setMinPriceList] = useState([]);
+  const [maxPriceList, setMaxPriceList] = useState([]);
+  const [conditionList, setConditionList] = useState([]);
+  const [wholesaleList, setWholesaleList] = useState([]);
 
-  const { sort, category, rating, brand } = activeFilter;
+  const [categoryKeys, setCategoryKeys] = useState([searchQuery.ck]);
 
-  const showDrawer = () => { setVisible(true); };
-  const onClose = () => { setVisible(false); };
+  const [page, setPage] = useState(products.page);
+  const [treeData, setTreeData] = useState(finalCategories);
 
-  const onSortChange = e => {
-    const data = { ...activeFilter, sort: {...sort, value: [e]} }
-    setActiveFilter(data)
+  const { order_by, category, item_sub_cat, rating, brand } = activeFilter;
+  const { p_min, p_max, pre_order, is_discount, condition, wholesale } = activeFilter;
+
+  const onFilterChange = (e, item) => {
+    if(item){
+      const data = {
+        ...activeFilter,
+        [item]: { ...activeFilter[item], value: e }
+      }
+      setActiveFilter(data)
+    }
+    setPage(1)
   }
-  const onSortMobileChange = e => {
-    const data = { ...activeFilter, sort: {...sort, value: [e]} }
-    setActiveFilter(data)
+
+  const onConditionChange = (e, label) => {
+    if(label){
+      if(e.target.checked) setConditionList([e.target.label])
+      else setConditionList([])
+    } else {
+      const data = { ...activeFilter, condition: { ...condition, value: [e.slice(-1)[0]] } }
+      const emptydata = { ...activeFilter, condition: { ...condition, value: [] } }
+      if(e.slice(-1)[0] !== undefined) setActiveFilter(data)
+      else setActiveFilter(emptydata)
+    }
+    setPage(1)
   }
-  const onCategoryChange = (e, fn) => {
-    const data = { ...activeFilter, category: {...category, value: [e.key]} }
-    const emptydata = { ...activeFilter, category: {...category, value: []} }
-    if(fn === "select") setActiveFilter(data)
-    if(fn === "deselect") setActiveFilter(emptydata)
+
+  const onWholesaleChange = (e, label) => {
+    if(label){
+      if(e.target.checked) setWholesaleList([e.target.label])
+      else setWholesaleList([])
+    } else {
+      const data = { ...activeFilter, wholesale: { ...wholesale, value: [e.slice(-1)[0]] } }
+      const emptydata = { ...activeFilter, wholesale: { ...wholesale, value: [] } }
+      if(e.slice(-1)[0] !== undefined) setActiveFilter(data)
+      else setActiveFilter(emptydata)
+    }
+    setPage(1)
   }
-  const onCategoryChangeMobile = e => {
-    const data = { ...activeFilter, category: {...category, value: [e.slice(-1)[0]]} }
-    const emptydata = { ...activeFilter, category: {...category, value: []} }
-    if(e.slice(-1)[0] !== undefined) setActiveFilter(data)
-    else setActiveFilter(emptydata)
-  }
-  const onRatingChange = e => {
-    const data = { ...activeFilter, rating: {...rating, value: [e.slice(-1)[0]]} }
-    const emptydata = { ...activeFilter, rating: {...rating, value: []} }
-    if(e.slice(-1)[0] !== undefined) setActiveFilter(data)
-    else setActiveFilter(emptydata)
-  }
-  const onBrandChange = e => {
+
+  const onBrandChange = (e, label) => {
+    if(label){
+      if(e.target.checked) setBrandList(brand => brand.concat({key: e.target.value, label: e.target.label}))
+      else setBrandList(brandList.filter(brand => brand.key !== e.target.value))
+    }
     const data = { ...activeFilter, brand: {...brand, value: e} }
     setActiveFilter(data)
+    setPage(1)
   }
 
-  const onRemoveFilter = (key, value) => {
-    const state = JSON.parse(JSON.stringify(activeFilter));
-    state[key].value = state[key].value.filter(e => e !== value)
-    setActiveFilter(state)
-  }
-  const onRemoveAllFilter = () => {
-    setActiveFilter(formFilter)
+  const onDiscountChange = (e, label) => {
+    if(label){
+      if(e.target.checked) setDiscountList([e.target.label])
+      else setDiscountList([])
+    } else {
+      const data = { ...activeFilter, is_discount: { ...is_discount, value: [e.slice(-1)[0]] } }
+      const emptydata = { ...activeFilter, is_discount: { ...is_discount, value: [] } }
+      if(e.slice(-1)[0] !== undefined) setActiveFilter(data)
+      else setActiveFilter(emptydata)
+    }
+    setPage(1)
   }
 
-  const renderFilterList = () => {
-    let list = []
-    for(let key in activeFilter){
-      let tmp = []
-      if(key !== 'sort'){
-        if(activeFilter[key].hasOwnProperty("value")){
-          if(activeFilter[key].value.length > 0){
-            activeFilter[key].value.forEach(x => tmp.push({value: x, key: key}))
+  const onPreOrderChange = (e, label) => {
+    if(label){
+      if(e.target.checked) setPreorderList([e.target.label])
+      else setPreorderList([])
+    } else {
+      const data = { ...activeFilter, pre_order: { ...pre_order, value: [e.slice(-1)[0]] } }
+      const emptydata = { ...activeFilter, pre_order: { ...pre_order, value: [] } }
+      if(e.slice(-1)[0] !== undefined) setActiveFilter(data)
+      else setActiveFilter(emptydata)
+    }
+    setPage(1)
+  }
+
+  const onCategoryChange = (_, info) => {
+    let label = "", key = "", id = []
+    for(let val of info.selectedNodes){
+      if(val.children){
+        for(let val2 of val.children){
+          if(val2.children){
+            for(let val3 of val2.children){
+              id.push(val3.key)
+            }
           }
+          else id.push(val2.key)
         }
       }
-
-      tmp.forEach(x => list.push(
-        <Tag key={x.value} closable 
-          className="filter-tag"
-          closeIcon={<i className="fas fa-times" />}
-          onClose={() => onRemoveFilter(x.key, x.value)}
-        >
-          {x.value}
-        </Tag>
-      ))
+      else id.push(val.key)
     }
-     return list
+    if(info.node){
+      key = info.node.key
+      label = info.node.title
+    }
+    if(isIn(key.toString(), [categoryKeys])){
+      setCategoryKeys([])
+      const data = { ...activeFilter, category: {...category, value: []} }
+      setActiveFilter(data)
+    } else{
+      setCategoryKeys([key])
+      const data = { ...activeFilter, category: {...category, value: [key]} }
+      setActiveFilter(data)
+    }
+    if(isIn(label, categoryList)) setCategoryList([])
+    else setCategoryList([label])
+
+    const data = { ...activeFilter, item_sub_cat: {...item_sub_cat, value: id.join(",")} }
+    setActiveFilter(data)
+    setPage(1)
+  }
+
+  useEffect(() => {
+    if(products && products.data && !router.query.hasOwnProperty("page")){
+      setPage(products.page)
+    }
+    if(products && router.query.hasOwnProperty("page")){
+      setPage(+router.query.page)
+    }
+  }, [products])
+
+  useEffect(() => {
+    dispatch(actions.getBrand())
+  }, [])
+
+  useEffect(() => {
+    setTreeData(finalCategories)
+  }, [finalCategories])
+
+  useEffect(() => {
+    let queryString = router.query
+    if(page) queryString["page"] = page
+
+    if(order_by.value[0] !== "" || order_by.value !== "") queryString["order_by"] = order_by.value
+    else delete queryString["order_by"]
+    if(order_by.value === "" || order_by.value[0] === "") delete queryString["order_by"]
+
+    if(p_min.value) {
+      queryString["p_min"] = p_min.value
+      setMinPriceList(["Harga Minimum"])
+    } else {
+      delete queryString["p_min"]
+      setMinPriceList([])
+    }
+
+    if(p_max.value) {
+      queryString["p_max"] = p_max.value
+      setMaxPriceList(["Harga Maximum"])
+    } else {
+      delete queryString["p_max"]
+      setMaxPriceList([])
+    }
+
+    if(brand.value.length) queryString["brand"] = brand.value.join(",")
+    else delete queryString["brand"]
+
+    if(isBoolean(pre_order.value.toString())) queryString["pre_order"] = pre_order.value
+    else delete queryString["pre_order"]
+
+    if(isBoolean(condition.value.toString())) queryString["condition"] = condition.value
+    else delete queryString["condition"]
+
+    if(isBoolean(wholesale.value.toString())) queryString["wholesale"] = wholesale.value
+    else delete queryString["wholesale"]
+
+    if(isBoolean(is_discount.value.toString())) queryString["is_discount"] = is_discount.value
+    else delete queryString["is_discount"]
+
+    //for category auto active when refreshed
+    if(categoryKeys.length > 0 && categoryList.length > 0) {
+      queryString["ck"] = categoryKeys[0]
+      queryString["cn"] = categoryList[0]
+      if(!isEmpty(item_sub_cat.value)) queryString["item_sub_cat"] = item_sub_cat.value
+      else delete queryString["item_sub_cat"]
+    } else {
+      delete queryString["cn"]
+      delete queryString["ck"]
+      delete queryString["item_sub_cat"]
+    }
+
+    router.replace({
+      pathname: "/products",
+      query: queryString
+    })
+  }, [activeFilter, user, page, categoryKeys, categoryList])
+
+  useEffect(() => {
+    if(!searchQuery) return
+    const state = JSON.parse(JSON.stringify(activeFilter))
+    if(searchQuery.hasOwnProperty("page")) {
+      if(+searchQuery.page !== page) setPage(searchQuery.page)
+      else setPage(page)
+    }
+    if(searchQuery.hasOwnProperty("order_by")) {
+      state.order_by.value = [searchQuery.order_by]
+    }
+    if(searchQuery.hasOwnProperty("p_min")){
+      state.p_min.value = searchQuery.p_min
+      setMinPriceList(["Harga Minimum"])
+    }
+    if(searchQuery.hasOwnProperty("p_max")){
+      state.p_max.value = searchQuery.p_max
+      setMaxPriceList(["Harga Maximum"])
+    }
+    if(searchQuery.hasOwnProperty("brand")){
+      const brands = searchQuery.brand.split(",").map(x => parseInt(x))
+      state.brand.value = brands
+      for(let val of brands) {
+        axios.get(`/brands/get-brand/${val}`)
+          .then(res => {
+            const data = { key: res.data.id, label: res.data.name }
+            setBrandList(brand => brand.concat(data))
+          })
+      }
+    }
+    if(searchQuery.hasOwnProperty("pre_order")){
+      state.pre_order.value = [searchQuery.pre_order]
+      if(searchQuery.pre_order == "true") setPreorderList(["Pre Order"])
+      else setPreorderList(["Ready Stock"])
+    }
+    if(searchQuery.hasOwnProperty("condition")){
+      state.condition.value = [searchQuery.condition]
+      if(searchQuery.condition == "true") setConditionList(["Baru"])
+      else setConditionList(["Bekas"])
+    }
+    if(searchQuery.hasOwnProperty("wholesale")){
+      state.wholesale.value = [searchQuery.wholesale]
+      if(searchQuery.wholesale == "true") setWholesaleList(["Harga Grosir"])
+      else setWholesaleList([])
+    }
+    if(searchQuery.hasOwnProperty("is_discount")){
+      state.is_discount.value = [searchQuery.is_discount]
+      if(searchQuery.is_discount == "true") setDiscountList(["Diskon"])
+      else setDiscountList([])
+    }
+    //for category auto active when refreshed
+    if(searchQuery.hasOwnProperty("ck") && searchQuery.hasOwnProperty("cn")){
+      setCategoryKeys([searchQuery.ck])
+      setCategoryList([searchQuery.cn])
+      if(searchQuery.hasOwnProperty("item_sub_cat")){
+        state.item_sub_cat.value = searchQuery.item_sub_cat
+      }
+    }
+    setActiveFilter(state)
+  }, [])
+
+  const showPagination = products !== null && products && products.data && products.data.length > 0 && (products.next_num !== null || products.prev_num !== null);
+
+  const onRemoveAllFilter = () => {
+    setActiveFilter(formFilter)
+    setBrandList([])
+    setCategoryList([])
+    setCategoryKeys([])
+    setPreorderList([])
+    setMinPriceList([])
+    setMaxPriceList([])
+    setDiscountList([])
+    setConditionList([])
+    setWholesaleList([])
+  }
+
+  const renderActiveFilter = () => {
+    let category = [], brand = [], preorder = [], condition = [], wholesalefilter = [], discountFilter = [], 
+        minPriceFilter = [], maxPriceFilter = []
+
+    const onRemoveCategory = () => {
+      setCategoryList([])
+      setCategoryKeys([])
+    }
+    for(let val of categoryList){
+      category.push(<TagFilter key={val} onRemove={onRemoveCategory} label={val} />)
+    }
+
+    const onRemoveBrand = key => {
+      setBrandList(brandList.filter(brand => brand.key !== key))
+      const newBrand = activeFilter.brand.value.filter(b => b !== key)
+      const data = { ...activeFilter, brand: {value: newBrand} }
+      setActiveFilter(data)
+    }
+    for(let val of brandList){
+      brand.push(<TagFilter key={val.key} label={val.label} onRemove={() => onRemoveBrand(val.key)} />)
+    }
+
+    const onRemovePreorder = () => {
+      setPreorderList([])
+      const emptydata = { ...activeFilter, pre_order: { ...pre_order, value: [] } }
+      setActiveFilter(emptydata)
+    }
+    for(let val of preorderList){
+      preorder.push(<TagFilter key={val} label={val} onRemove={onRemovePreorder} />)
+    }
+
+    const onRemoveCondition = () => {
+      setConditionList([])
+      const emptydata = { ...activeFilter, condition: { ...condition, value: [] } }
+      setActiveFilter(emptydata)
+    }
+    for(let val of conditionList){
+      condition.push(<TagFilter key={val} label={val} onRemove={onRemoveCondition} />)
+    }
+
+    const onRemoveWholesale = () => {
+      setWholesaleList([])
+      const emptydata = { ...activeFilter, wholesale: { ...wholesale, value: [] } }
+      setActiveFilter(emptydata)
+    }
+    for(let val of wholesaleList){
+      wholesalefilter.push(<TagFilter key={val} label={val} onRemove={onRemoveWholesale} />)
+    }
+
+    const onRemoveDiscount = () => {
+      setDiscountList([])
+      const emptydata = { ...activeFilter, is_discount: { ...is_discount, value: [] } }
+      setActiveFilter(emptydata)
+    }
+    for(let val of discountList){
+      discountFilter.push(<TagFilter key={val} label={val} onRemove={onRemoveDiscount} />)
+    }
+
+    const onRemoveMinPrice = () => {
+      setMinPriceList([])
+      const emptydata = { ...activeFilter, p_min: { ...p_min, value: "" } }
+      setActiveFilter(emptydata)
+    }
+    for(let val of minPriceList){
+      minPriceFilter.push(<TagFilter key={val} label={val} onRemove={onRemoveMinPrice} />)
+    }
+
+    const onRemoveMaxPrice = () => {
+      setMaxPriceList([])
+      const emptydata = { ...activeFilter, p_max: { ...p_max, value: "" } }
+      setActiveFilter(emptydata)
+    }
+    for(let val of maxPriceList){
+      maxPriceFilter.push(<TagFilter key={val} label={val} onRemove={onRemoveMaxPrice} />)
+    }
+
+    return category.concat(minPriceFilter, maxPriceFilter, condition, wholesalefilter, discountFilter, brand, preorder)
   }
 
   return(
     <>
-      <Container className="pt-4 pb-2">
-
+      {/*ONLY SHOW ON DESKTOP || > 991px*/}
+      <Container className="pt-4 pb-2 d-none d-lg-block">
         <RowB>
           <ColB className="align-self-center">
             <span className="text-secondary fs-14-s">
@@ -118,316 +427,138 @@ const ProductContainer = () => {
               <Form.Label className="my-1 mr-2">
                 Urutkan:
               </Form.Label>
-              <Select value={sort.value} style={{ width: 150 }} onChange={onSortChange} dropdownClassName="idx-1020">
-                {sortList.map(x => (
-                  <Select.Option key={x} value={x}>{x}</Select.Option>
+              <Select 
+                value={order_by.value} 
+                style={{ width: 150 }} 
+                dropdownClassName="idx-1020"
+                onChange={e => onFilterChange(e, "order_by")} 
+              >
+                {sortListProduct.map(sort => (
+                  <Select.Option key={sort.value} value={sort.value}>{sort.label}</Select.Option>
                 ))}
               </Select>
             </Form>
           </ColB>
         </RowB>
       </Container>
-      <hr />
+      <hr className="d-none d-lg-block" />
+      {/*ONLY SHOW ON DESKTOP || > 991px*/}
 
-      <Container className="pb-3 pt-3">
+      <div className="filter-mobile d-lg-none">
+        <Affix offsetTop={67}>
+          <Card className="filter-mobile-card-container shadow-sm idx-1030">
+            <Container>
+              <Card.Body className="p-2">
+                <Row gutter={[5, 0]} wrap={false} align="middle">
+                  <Col flex="none" className="pr-2">
+                    <Button size="small" className="mobile-filter-button">Filter</Button>
+                  </Col>
+                  <Col flex="auto" className="active-filter-mobile">
+                    {[...Array(20)].map((_, i) => <Button size="small" className="mobile-filter-button" key={i}>{i**i}</Button>)}
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Container>
+          </Card>
+        </Affix>
+      </div>
+
+      <Container className="pb-5 pt-3">
         <RowB>
-          <ColB className="col-3 d-none d-lg-block ">
-            <h6>Filter</h6>
-            <Card className="border-0 shadow-filter">
-              <Menu
-                className="filter-menu noselect"
-                defaultOpenKeys={['kategori', 'rating', 'harga', 'brand']}
-                mode="inline"
-                multiple={true}
-                selectedKeys={category.value}
-                onSelect={(e) => onCategoryChange(e, "select")}
-                onDeselect={(e) => onCategoryChange(e, "deselect")}
-              >
-                <Menu.SubMenu 
-                  key="kategori" 
-                  className="title-filter" 
-                  title={renderTitle('Kategori')} 
-                >
-                  {allCategories.map(category => (
-                    <Menu.SubMenu key={category.id_category} title={renderSubTitle(category.name_category)}>
-                      {category.sub_categories.map(sub => (
-                        <Menu.SubMenu key={sub.id_sub_category} title={renderSubTitle(sub.name_sub_category)} className="pl-3">
-                          {sub.item_sub_categories.map(item => (
-                            <Menu.Item 
-                              key={item.id_item_sub_category} 
-                              className="text-secondary"
-                            >
-                              {item.name_item_sub_category}
-                            </Menu.Item>
-                          ))}
-                        </Menu.SubMenu>
-                      ))}
-                    </Menu.SubMenu>
-                  ))}
-                </Menu.SubMenu>
-
-                <Menu.SubMenu key="rating" className="filter-checkbox title-filter" title={renderTitle('Rating')}>
-                  <div className="p-l-20 p-r-20">
-                    <Checkbox.Group className="w-100" onChange={onRatingChange} value={rating.value}>
-                      {ratingList.map(x => (
-                        <Checkbox value={x} className="rating-checkbox" key={x}>
-                          <Rate disabled defaultValue={1} count={1} className="filter-rate fs-14" />
-                          <span className="text-secondary">{x}</span>
-                        </Checkbox>
-                      ))}
-                    </Checkbox.Group>
-                  </div>
-                </Menu.SubMenu>
-
-                <Menu.SubMenu key="harga" className="filter-checkbox title-filter" title={renderTitle('Harga')}>
-                  <div className="p-l-20 p-r-20 mt-3">
-                    <Form.Group>
-                      <Form.Label className="text-secondary m-b-13">Harga Minimum</Form.Label>
-                      <InputNumber formatter={value => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                        parser={value => value.replace(/\Rp\s?|(\.*)/g, "")}
-                        className={`w-100`}
-                      />
-                    </Form.Group>
-                    <Form.Group className="mb-2">
-                      <Form.Label className="text-secondary m-b-13">Harga Maksimum</Form.Label>
-                      <InputNumber formatter={value => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                        parser={value => value.replace(/\Rp\s?|(\.*)/g, "")}
-                        className={`w-100`}
-                      />
-                    </Form.Group>
-                  </div>
-                  <Menu.Item className="checkbox-item">
-                    <Checkbox>
-                      <span className="text-secondary">Diskon</span>
-                    </Checkbox>
-                  </Menu.Item>
-                </Menu.SubMenu>
-
-                <Menu.SubMenu key="brand" className="scrollable-submenu title-filter" title={renderTitle('Brand')}>
-                  <div className="p-l-20 p-r-20">
-                    <Checkbox.Group className="w-100" onChange={onBrandChange} value={brand.value}>
-                      {brandList.map(x => (
-                        <Checkbox value={x} className="rating-checkbox" key={x}>
-                          <span className="text-secondary">{x}</span>
-                        </Checkbox>
-                      ))}
-                    </Checkbox.Group>
-                  </div>
-                </Menu.SubMenu>
-
-              </Menu>
-            </Card>
-          </ColB> 
+          <SidebarContainerMemo
+            treeData={treeData}
+            filterState={activeFilter}
+            categoryKeys={categoryKeys}
+            onChange={onFilterChange}
+            onBrandChange={onBrandChange}
+            onPreOrderChange={onPreOrderChange}
+            onCategoryChange={onCategoryChange}
+            onConditionChange={onConditionChange}
+            onWholesaleChange={onWholesaleChange}
+            onDiscountChange={onDiscountChange}
+          />
 
           <ColB>
             <h4 className="mb-2 d-none d-lg-block">Produk</h4>
-            {renderFilterList().length > 0 && (
+            {renderActiveFilter().length > 0 && (
               <div className="mb-3 d-none d-lg-block noselect">
                 <span className="text-secondary font-weight-light">Filter aktif: </span>
-                {renderFilterList()}
+                {renderActiveFilter()}
                 <a className="text-tridatu fs-14" onClick={onRemoveAllFilter}>Hapus Semua</a>
               </div>
             )}
 
-            <Row gutter={[16, 16]}>
-              {[...Array(10)].map((_, i) => (
-                <Col key={i} lg={6} md={8} sm={12} xs={12}>
-                  <CardProductMemo />
-                </Col>
-              ))}
-            </Row>
+            <AnimatePresence>
+              <Row gutter={[16, 16]}>
+                {products && products.data && products.data.length > 0 && products.data.map(product => (
+                  <Col lg={6} md={8} sm={12} xs={12} key={product.products_id}>
+                    <CardProductMemo data={product} />
+                  </Col>
+                ))}
+                {loadingProduct && (
+                  <>
+                    {[...Array(16)].map((_,i) => (
+                      <Col lg={6} md={8} sm={12} xs={12} key={i}>
+                        <CardProductLoading />
+                      </Col>
+                    ))}
+                  </>
+                )}
+                {!loadingProduct && products && products.data && products.data.length == 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: ".2" }}
+                    className="w-100 mt-5"
+                  >
+                    <Empty className="my-5" 
+                      description={
+                        <>
+                          <span className="text-secondary mb-0 mt-2">Produk tidak tersedia</span>
+                          <br />
+                          {renderActiveFilter().length > 0 && <span className="text-secondary">Coba kurangi filter pencarian anda</span>}
+                        </>
+                      } 
+                    />
+                  </motion.div>
+                )}
+              </Row>
+            </AnimatePresence>
+
 
             <RowB className="mt-4">
               <ColB className="align-self-center text-center">
-                <Pagination />
+                {showPagination && (
+                  <Card.Body className="text-center">
+                    <Pagination
+                      current={page}
+                      hideOnSinglePage
+                      pageSize={per_page}
+                      total={products.total}
+                      goTo={val => setPage(val)}
+                    />
+                  </Card.Body>
+                )}
               </ColB>
             </RowB>
           </ColB>
         </RowB>
 
-        <RowB className="fixed-bottom text-center mb-3 d-lg-none">
-          <ColB>
-            <ButtonBoot variant="dark" className="badge-pill px-3 py-2 fs-14 shadow" onClick={showDrawer}>
-              {renderFilterList().length > 0 ? (
-                <Badge variant="light" className="mr-2">{renderFilterList().length}</Badge>
-              ) : (
-                <>
-                  <i className="far fa-filter mr-2" />
-                </>
-              )}
-              Filter
-            </ButtonBoot>
-          </ColB>
-        </RowB>
       </Container>
 
-      {/*FILTER MOBILE*/}
-
-      <Drawer
-        placement="bottom"
-        title="Filter"
-        closeIcon={
-          <span 
-            onClick={onRemoveAllFilter}
-            className="font-weight-lighter fs-14 text-tridatu"
-          >
-            Reset
-          </span>
-        }
-        onClose={onClose}
-        visible={visible}
-        bodyStyle={{padding: 0, backgroundColor:'#f5f5f5'}}
-        className="d-block d-sm-block d-md-block d-lg-none d-xl-none"
-        height="100%"
-        zIndex="1030"
-        headerStyle={{ border: '0px', boxShadow:'rgba(0,0,0,0.18) 0px 1px 15px', zIndex: '1' }}
-        footer={
-          <div style={{ textAlign: 'right' }} >
-           <ButtonBoot 
-             variant="link" 
-             className="mr-2 rounded-0 text-reset"
-             onClick={onClose}
-           >
-             Batal
-           </ButtonBoot>
-           <ButtonBoot 
-             className="btn-tridatu rounded-0"
-             onClick={onClose}
-           > 
-             Terapkan
-           </ButtonBoot>
-          </div>
-        }
-      >
-        <Card className="border-0 rounded-0 w-100 card-mobile-filter">
-          <Card.Body>
-            <h6 className="mb-3">Urutkan</h6>
-            {sortList.map(tag => (
-              <Tag.CheckableTag
-                key={tag}
-                checked={sort.value.indexOf(tag) > -1}
-                onChange={() => onSortMobileChange(tag)}
-                className="filter-tag filter-tag-mobile"
-              >
-                {tag}
-              </Tag.CheckableTag>
-            ))}
-          </Card.Body>
-        </Card>
-
-        <Card className="border-0 rounded-0 w-100 card-mobile-filter noselect">
-          <Card.Body>
-            <h6>Kategori</h6>
-            {allCategories.length == 0 && (
-              <Empty className="my-5" description={<span className="text-secondary">Kategori tidak tersedia</span>} />
-            )}
-            <Tabs>
-              {allCategories.map(category => (
-                <Tabs.TabPane tab={category.name_category} key={category.id_category}>
-                  <Collapse className="category-mobile scrollable-submenu" expandIconPosition="right" accordion>
-                    {category.sub_categories.map(sub => (
-                      <Collapse.Panel header={sub.name_sub_category} key={sub.id_sub_category}>
-                        <Checkbox.Group
-                          className="w-100" 
-                          onChange={onCategoryChangeMobile} 
-                          value={category.value}
-                        >
-                          {sub.item_sub_categories.map(item => (
-                            <Checkbox value={item.name_item_sub_category} className="rating-checkbox" key={item.id_item_sub_category}>
-                              <span className="text-secondary">{item.name_item_sub_category}</span>
-                            </Checkbox>
-                          ))}
-                        </Checkbox.Group>
-                      </Collapse.Panel>
-                    ))}
-                  </Collapse>
-                </Tabs.TabPane>
-              ))}
-
-            </Tabs>
-          </Card.Body>
-        </Card>
-
-        <Card className="border-0 rounded-0 w-100 card-mobile-filter noselect">
-          <Card.Body>
-            <h6>Rating</h6>
-            <Checkbox.Group className="w-100" onChange={onRatingChange} value={rating.value}>
-              {ratingList.map(x => (
-                <Checkbox value={x} className="rating-checkbox" key={x}>
-                  <Rate disabled defaultValue={1} count={1} className="filter-rate" />
-                  <span className="text-secondary pl-1">{x}</span>
-                </Checkbox>
-              ))}
-            </Checkbox.Group>
-          </Card.Body>
-        </Card>
-
-        <Card className="border-0 rounded-0 w-100 card-mobile-filter">
-          <Card.Body>
-            <h6>Harga</h6>
-            <Form.Group>
-              <Form.Label className="text-secondary m-b-0">Minimum</Form.Label>
-              <InputNumber formatter={value => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                parser={value => value.replace(/\Rp\s?|(\.*)/g, "")}
-                className={`w-100`}
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label className="text-secondary m-b-0">Maksimum</Form.Label>
-              <InputNumber formatter={value => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-                parser={value => value.replace(/\Rp\s?|(\.*)/g, "")}
-                className={`w-100`}
-              />
-            </Form.Group>
-            <Form.Group className="mb-1 noselect">
-              <Checkbox className="w-100">
-                <span className="text-secondary">Diskon</span>
-              </Checkbox>
-            </Form.Group>
-          </Card.Body>
-        </Card>
-
-        <Card className="border-0 rounded-0 w-100 card-mobile-filter noselect">
-          <Card.Body>
-            <h6>Brand</h6>
-            <Checkbox.Group className="w-100 scrollable-submenu" onChange={onBrandChange} value={brand.value}>
-              {brandList.map(x => (
-                <Checkbox value={x} className="rating-checkbox" key={x}>
-                  <span className="text-secondary">{x}</span>
-                </Checkbox>
-              ))}
-            </Checkbox.Group>
-          </Card.Body>
-        </Card>
-
-      </Drawer>
-
       <style jsx>{ProductsStyle}</style>
-      <style jsx>{`
-        :global(.filter-tag-mobile.ant-tag-checkable){
-          border: 1px solid #d9d9d9;
-        }
-        :global(.rating-checkbox){
-          width: 100%;
-          line-height: 30px;
-          display: block;
-          margin-left: 0px!important;
-          margin-top: 4px;
-          margin-bottom: 5px;
-        }
-        :global(.category-mobile){
-          background-color: white;
-          border: 0;
-        }
-        :global(.ant-collapse.category-mobile > .ant-collapse-item:last-of-type){
-          border: 0;
-        }
-        :global(.ant-collapse-icon-position-right.category-mobile > .ant-collapse-item > .ant-collapse-header){
-          padding-left: 0;
-        }
-      `}</style>
     </>
   )
+}
+
+ProductContainer.getInitialProps = async ctx => {
+  const searchQuery = ctx.query
+  const categories = await axios.get("/categories/")
+  const finalCategories = await renameCategory(categories.data)
+  await ctx.store.dispatch(actions.getProducts({ ...searchQuery, per_page: per_page, live: "true" }))
+
+  return { searchQuery: searchQuery, finalCategories: finalCategories }
 }
 
 export default ProductContainer

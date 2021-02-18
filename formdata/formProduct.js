@@ -5,7 +5,6 @@ import isEquals from 'validator/lib/equals'
 import isBoolean from 'validator/lib/isBoolean'
 
 import getIndex from 'lib/getIndex'
-
 const emptyMessage = "Variasi tidak boleh kosong"
 const emptyColumnMessage = "Kolom tidak boleh kosong"
 const duplicateMessage = "Pilihan variasi harus berbeda."
@@ -32,10 +31,13 @@ export const formInformationProduct = {
 }
 
 export const formNoVariant = {
+  va1_id: { ...initStringVal, value: 0 },
   va1_price: initStringVal,
   va1_stock: { ...initStringVal, value: 0 },
   va1_code: initStringVal,
-  va1_barcode: initStringVal
+  va1_barcode: initStringVal,
+  va1_discount: { ...initStringVal, value: 0 },
+  va1_discount_active: { ...initStringVal, value: false }
 }
 
 export const isValidProductInformation = (state, setState, isPreorder) => {

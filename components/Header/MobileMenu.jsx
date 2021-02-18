@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from 'react';
 import { Drawer, Avatar, Input, Grid } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,21 +7,24 @@ import Link from 'next/link';
 import Col from 'react-bootstrap/Col';
 import Nav from 'react-bootstrap/Nav';
 import Form from 'react-bootstrap/Form';
-import Card from 'react-bootstrap/Card'
+import Card from 'react-bootstrap/Card';
+import isEmpty from 'validator/lib/isEmpty';
 
+import * as actions from "store/actions";
 import CategoryMenu from './CategoryMenu';
 
 const useBreakpoint = Grid.useBreakpoint;
 
-const dummyResponse = ['baju', 'baju anak', 'baju pria', 'baju wanita', 'baju tidur', 'baju kasual', 'baju kemeja panjang']
-
 const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, setSearchQuery, routes }) => {
   const router = useRouter()
+  const dispatch = useDispatch()
   const screens = useBreakpoint();
+
   const [showSearch, setShowSearch] = useState(false)
   const [showCategory, setShowCategory] = useState(false)
 
   const user = useSelector(state => state.auth.user)
+  const searchNameValue = useSelector(state => state.products.searchName)
 
   const showCategoryHandler = () => setShowCategory(true)
   const closeCategoryHandler = () => setShowCategory(false)
@@ -65,22 +68,36 @@ const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, set
 
   const onSearchChange = e => {
     const value = e.target.value;
+    dispatch(actions.searchName(value))
     setSearchQuery(value)
   }
 
   const onPressEnter = e => {
     e.preventDefault()
+    const queryString = {}
+    queryString["page"] = 1
+    queryString["q"] = searchQuery
+    if(isEmpty(searchQuery)) delete queryString["q"]
+
+    router.push({
+      pathname: "/products",
+      query: queryString
+    })
     setShowSearch(false)
-    let url = `/products?q=${searchQuery}`
-    router.push(url, url)
     document.body.classList.remove("overflow-hidden");
   }
 
   const onSelectSuggestionHandler = e => {
-    setSearchQuery(e.target.text)
+    const queryString = {}
+    setSearchQuery(e)
+
+    queryString["q"] = e
+    if(isEmpty(searchQuery)) delete queryString["q"]
+    router.push({
+      pathname: "/products",
+      query: queryString
+    })
     setShowSearch(false)
-    let url = `/products?q=${e.target.text}`
-    router.push(url, url)
     document.body.classList.remove("overflow-hidden");
   }
 
@@ -131,6 +148,13 @@ const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, set
 
           {user && (
             <>
+              {user.role === "admin" && (
+                <Link href="/admin" as="/admin">
+                  <Nav.Link as="a" onClick={close}>
+                    Admin
+                  </Nav.Link>
+                </Link>
+              )}
               {routes.map((route, i) => (
                 <Link href={route.link} as={route.link} key={i}>
                   <Nav.Link as="a" onClick={close}>
@@ -179,10 +203,10 @@ const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, set
                   </Form>
                 </div>
 
-                <Card.Body className="overflow-auto vh-100 max-vh-100 pt-0 px-3">
-                  {dummyResponse.map((data, x) => (
-                    <div className="search-result-list" key={x} onClick={onSelectSuggestionHandler}>
-                      <a className="w-100" text={data}>{data}</a>
+                <Card.Body className="overflow-auto vh-100 max-vh-100 pt-0 px-3 fs-12 p-b-180">
+                  {searchNameValue.map((x, i) => (
+                    <div className="search-result-list" key={i} onClick={() => onSelectSuggestionHandler(x.value)}>
+                      <a className="w-100">{x.label}</a>
                     </div>
                   ))}
                 </Card.Body>

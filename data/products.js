@@ -1,16 +1,25 @@
+import formatNumber from "lib/formatNumber";
+
 export const productsData = [
   "Jaket GAP Grey",
   "Flannel Uniqlo Biru",
   "Kemeja Converse Panjang",
 ];
 
+export const sortListProduct = [
+  { value: "", label: "Paling Sesuai" }, 
+  { value: "newest", label: "Terbaru" }, 
+  { value: "high_price", label: "Harga Tertinggi" }, 
+  { value: "low_price", label: "Harga Terendah" }
+] 
+
 export const formItemLayout = {
   wrapperCol: {
     xs: { span: 24 },
     sm: { span: 24 },
-    md: { span: 18 },
-    lg: { span: 14 },
-    xl: { span: 12 },
+    md: { span: 24 },
+    lg: { span: 24 },
+    xl: { span: 24 },
   },
 };
 
@@ -41,5 +50,20 @@ export const initialColumn = [
     editable: true,
     align: "center",
     width: 150,
+  },
+];
+
+export const columnsGrosir = [
+  {
+    title: "Beli",
+    dataIndex: "wholesale_min_qty",
+    key: "sell",
+    render: (item) => <span className="fs-12">≥ {item}</span>,
+  },
+  {
+    title: "Harga/pcs",
+    dataIndex: "wholesale_price",
+    key: "price",
+    render: (item) => <span className="fs-12">Rp.{formatNumber(item)}</span>,
   },
 ];

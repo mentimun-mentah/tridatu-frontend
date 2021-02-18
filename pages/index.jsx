@@ -1,8 +1,10 @@
-import { Col, Row } from "antd";
-import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { Col, Row, Empty } from "antd";
+import { useSelector, useDispatch } from "react-redux";
+import { AnimatePresence, motion } from 'framer-motion'
 
 import Link from "next/link";
-import Image from "next/image";
+import dynamic from 'next/dynamic'
 import RowB from "react-bootstrap/Row";
 import ColB from "react-bootstrap/Col";
 import Button from "react-bootstrap/Button";
@@ -10,27 +12,48 @@ import Container from "react-bootstrap/Container";
 import Slider from "react-slick";
 
 import axios from "lib/axios";
-import CardProduct from "components/Card/Product";
-import CardBrand from "components/Card/Brand";
-import CardBanner from "components/Card/Banner";
-
 import * as actions from "store/actions";
 
+import CardBrandLoading from "components/Card/BrandLoading";
+import CardBannerLoading from "components/Card/BannerLoading";
+import OutletImageLoading from "components/Card/OutletLoading";
+import CardProductLoading from "components/Card/ProductLoading";
+
+const CardBrandLoadingMemo = React.memo(CardBrandLoading);
+const CardBannerLoadingMemo = React.memo(CardBannerLoading);
+const OutletImageLoadingMemo = React.memo(OutletImageLoading);
+const CardProductLoadingMemo = React.memo(CardProductLoading);
+
+const CardProduct = dynamic(() => import("components/Card/Product"), { ssr: false, loading: () => <CardProductLoadingMemo />  })
 const CardProductMemo = React.memo(CardProduct);
+const CardBrand = dynamic(() => import("components/Card/Brand"), { ssr: false, loading: () => <CardBrandLoadingMemo />  })
 const CardBrandMemo = React.memo(CardBrand);
+const CardBanner = dynamic(() => import("components/Card/Banner"), { ssr: false, loading: () => <CardBannerLoadingMemo />  })
 const CardBannerMemo = React.memo(CardBanner);
+const OutletImage = dynamic(() => import("components/Card/Outlet"), { ssr: false, loading: () => <OutletImageLoadingMemo />  })
+const OutletImageMemo = React.memo(OutletImage);
 
 import { brandSettings, bannerSettings, infoStoreSettings, infoStoreSettingsMobile } from "lib/slickSetting";
-import { brandData } from "data/brand";
 
 let banners = ['/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/2.jpeg', '/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/4.jpeg', '/static/images/banner/5.jpeg', '/static/images/banner/5.jpeg']
 
 const infoStores = [...Array(4)].map(() => '/static/images/info-store/placeholder.png')
 const emptyBrands = [...Array(5)].map(() => '/static/images/brand/placeholder.png')
 
+const per_page = 10
+const params = { page: 1, per_page: per_page, live: "true", order_by: "visitor" }
 const Home = () => {
+  const dispatch = useDispatch()
   const outlets = useSelector(state => state.outlet.outlet)
   const brands = useSelector(state => state.brand.brand)
+
+  const user = useSelector(state => state.auth.user)
+  const products = useSelector(state => state.products.products)
+  const loadingProduct = useSelector(state => state.products.loading)
+
+  useEffect(() => {
+    dispatch(actions.getProducts({ ...params }))
+  }, [user])
 
   return (
     <>
@@ -39,35 +62,39 @@ const Home = () => {
           <ColB lg={10} md={12}>
             <section className="banner-section">
               <h4 className="fs-20-s">Promo</h4>
-              <Slider {...bannerSettings}>
-                {banners.map((data, i) => (
-                  <ColB key={i} className="px-0">
-                    <CardBannerMemo image={data} />
-                  </ColB>
-                ))}
-              </Slider>
+              <AnimatePresence>
+                <Slider {...bannerSettings}>
+                  {banners.map((data, i) => (
+                    <ColB key={i} className="px-0">
+                      <CardBannerMemo image={data} />
+                    </ColB>
+                  ))}
+                </Slider>
+              </AnimatePresence>
             </section>
 
             {/*INFORMASI BRAND*/}
             <section className="brand-section">
               <h4 className="fs-20-s mb-4">Brand</h4>
-              {brands && brands.length > 0 ? (
-                <Slider {...brandSettings} infinite={brands.length > 5}>
-                  {brands.map(data => (
-                    <ColB key={data.id} className="px-0">
-                      <CardBrandMemo image={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${data.image}`} name={data.name} />
-                    </ColB>
-                  ))}
-                </Slider>
-              ) : (
-                <Slider {...brandSettings} infinite={true}>
-                  {emptyBrands.map((data, i) => (
-                    <ColB key={i} className="px-0">
-                      <CardBrandMemo image={data} name="Brand" />
-                    </ColB>
-                  ))}
-                </Slider>
-              )}
+              <AnimatePresence>
+                {brands && brands.length > 0 ? (
+                  <Slider {...brandSettings} infinite={brands.length > 5} autoplay={false}>
+                    {brands.map(data => (
+                      <ColB key={data.id} className="px-0">
+                        <CardBrandMemo image={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${data.image}`} name={data.name} />
+                      </ColB>
+                    ))}
+                  </Slider>
+                ) : (
+                  <Slider {...brandSettings} infinite={true}>
+                    {emptyBrands.map((data, i) => (
+                      <ColB key={i} className="px-0">
+                        <CardBrandMemo image={data} name="Brand" />
+                      </ColB>
+                    ))}
+                  </Slider>
+                )}
+              </AnimatePresence>
             </section>
             {/*INFORMASI BRAND*/}
           </ColB>
@@ -76,23 +103,25 @@ const Home = () => {
           <ColB lg={2} md={12} sm={12} className="d-none d-lg-block">
             <section className="info-store">
               <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
-              {outlets && outlets.length > 0 ? (
-                <Slider {...infoStoreSettings} infinite={outlets.length > 4}>
-                  {outlets.map(data => (
-                    <div className="mb-1" key={data.id}>
-                      <Image width={145} height={145} src={`${process.env.NEXT_PUBLIC_API_URL}/static/outlets/${data.image}`} className="info-store-img" alt="Tridatu Bali ID" />
-                    </div>
-                  ))}
-                </Slider>
-              ) : (
-                <Slider {...infoStoreSettings} infinite={true}>
-                  {infoStores.map((data, i) => (
-                    <div className="mb-1" key={i}>
-                      <Image width={145} height={145} src={data} className="info-store-img" alt="Tridatu Bali ID" />
-                    </div>
-                  ))}
-                </Slider>
-              )}
+              <AnimatePresence>
+                {outlets && outlets.length > 0 ? (
+                  <Slider {...infoStoreSettings} infinite={outlets.length > 4}>
+                    {outlets.map(data => (
+                      <div className="mb-1" key={data.id}>
+                        <OutletImageMemo image={`${process.env.NEXT_PUBLIC_API_URL}/static/outlets/${data.image}`} size={145} />
+                      </div>
+                    ))}
+                  </Slider>
+                ) : (
+                  <Slider {...infoStoreSettings} infinite={true}>
+                    {infoStores.map((data, i) => (
+                      <div className="mb-1" key={i}>
+                        <OutletImageMemo image={data} size={145} />
+                      </div>
+                    ))}
+                  </Slider>
+                )}
+              </AnimatePresence>
             </section>
           </ColB>
           {/*INFORMASI OUTLET*/}
@@ -104,13 +133,13 @@ const Home = () => {
           {outlets && outlets.length > 0 ? (
             <Slider {...infoStoreSettingsMobile} infinite={outlets.length > 4}>
               {outlets.map(data => (
-                <Image width={151} height={151} src={`${process.env.NEXT_PUBLIC_API_URL}/static/outlets/${data.image}`} className="info-store-img" alt="Tridatu Bali ID" key={data.id} />
+                <OutletImageMemo image={`${process.env.NEXT_PUBLIC_API_URL}/static/outlets/${data.image}`} size={151} key={data.id} />
               ))}
             </Slider>
           ) : (
             <Slider {...infoStoreSettingsMobile} infinite={true}>
               {infoStores.map((data, i) => (
-                <Image width={151} height={151} src={data} className="info-store-img" alt="Tridatu Bali ID" key={i} />
+                <OutletImageMemo image={data} size={151} key={i} />
               ))}
             </Slider>
           )}
@@ -119,22 +148,43 @@ const Home = () => {
 
         <section>
           <h4 className="fs-20-s mb-4">Paling Banyak Dilihat</h4>
-          <Row gutter={[16, 16]}>
-            {[...Array(10)].map((_, i) => (
-              <Col key={i} lg={5} md={6} sm={8} xs={12} className="modif-col">
-                <CardProductMemo />
-              </Col>
-            ))}
-          </Row>
+          <AnimatePresence>
+            <Row gutter={[16, 16]}>
+              {products && products.data && products.data.length > 0 && products.data.map(product => (
+                <Col lg={5} md={6} sm={8} xs={12} className="modif-col" key={product.products_id}>
+                  <CardProductMemo data={product} />
+                </Col>
+              ))}
+              {loadingProduct && (
+                <>
+                  {[...Array(per_page)].map((_,i) => (
+                    <Col lg={6} md={8} sm={12} xs={12} key={i}>
+                      <CardProductLoading />
+                    </Col>
+                  ))}
+                </>
+              )}
+              {!loadingProduct && products && products.data && products.data.length == 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: ".2" }}
+                  className="w-100"
+                >
+                  <Empty className="my-5" description={<span className="text-secondary">Produk tidak tersedia</span>} />
+                </motion.div>
+              )}
+            </Row>
+          </AnimatePresence>
 
-          <div className="text-center mb-5 mt-3">
-            <Link href="/products" as="/products">
-              <Button size="lg" className="btn-dark-tridatu-outline d-none d-lg-block mx-auto">Lihat Semua Produk</Button>
-            </Link>
-            <Link href="/products" as="/products">
-              <Button className="btn-dark-tridatu-outline d-lg-none mx-auto">Lihat Semua Produk</Button>
-            </Link>
-          </div>
+          {products && products.data && products.data.length > 0 && (
+            <div className="text-center mb-5 mt-3">
+              <Link href="/products" as="/products">
+                <Button className="btn-dark-tridatu-outline mx-auto">Lihat Semua Produk</Button>
+              </Link>
+            </div>
+          )}
         </section>
 
       </Container>

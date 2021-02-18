@@ -245,7 +245,7 @@ const Category = () => {
   return(
     <>
       <Card className="border-0 shadow-none card-add-product">
-        <Card.Body className="p-3 border-bottom">
+        <Card.Body className="p-3">
           <Tabs className="order-tabs noselect" activeKey={activeTab} onTabClick={onTabClick}>
 
             <Tabs.TabPane tab="Kategori" key={CATEGORIES}>

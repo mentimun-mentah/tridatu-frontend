@@ -1,5 +1,10 @@
 import { useContext, useState, useEffect, useRef } from 'react'
-import { Input, InputNumber, Form } from 'antd'
+import { Input, InputNumber, Form, Tooltip } from 'antd'
+import { countDiscPrice } from 'lib/utility'
+import { ongoing, will_come } from 'components/Card/Admin/Product/Promo/statusType'
+
+import isIn from 'validator/lib/isIn'
+import formatNumber from "lib/formatNumber"
 import ErrorTooltip from "components/ErrorMessage/Tooltip";
 
 const EditableCell = ({
@@ -15,6 +20,8 @@ const EditableCell = ({
   index,
   onBlur,
   maxCode,
+  disabled,
+  discountStatus,
   ...restProps
 }) => {
 
@@ -39,28 +46,51 @@ const EditableCell = ({
     childNode = (
       <Form>
         {inputType === "price" && (
-          <Form.Item 
-            name="price" 
-            className="mb-0 h-30 input-form-variant"
-          >
-            <div>
-              <div className="ant-input-group-wrapper">
-                <div className="ant-input-wrapper ant-input-group input-group-variant" style={{ zIndex: 1 }}>
-                  <span className="ant-input-group-addon noselect fs-12 bg-transparent">Rp</span>
-                  <InputNumber
-                    {...initProps}
-                    min={1}
-                    name="price"
-                    placeholder="Masukkan harga"
-                    className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                    parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
-                  />
-                </div>
+          <>
+            {isIn(discountStatus, [ongoing, will_come]) && record.discount_active.value ? (
+              <div className="text-muted fs-12 noselect">
+                <p className="mb-0">
+                  Rp.{formatNumber(countDiscPrice(record.discount.value, record[inputType].value))}
+                  <Tooltip color="#fff"
+                    title={<span className="text-dark fs-13 text-nowrap">Produk ini sedang dalam masa promosi</span>} 
+                  >
+                    <span className="ml-1 text-muted"><i className="far fa-info-circle" /></span>
+                  </Tooltip>
+                </p>
+                <p className="mb-0">
+                  <s>Rp.{formatNumber(record[inputType].value)}</s>
+                </p>
+                <p className="mb-0">
+                  {record.discount.value}% DISKON
+                </p>
               </div>
-              <ErrorTooltip item={record[inputType]} />
-            </div>
-          </Form.Item>
+            ) : (
+              <Form.Item 
+                name="price" 
+                className="mb-0 h-30 input-form-variant"
+              >
+                <div>
+                <div className="ant-input-group-wrapper">
+                  <div className="ant-input-wrapper ant-input-group input-group-variant" style={{ zIndex: 1 }}>
+                    <span className={`ant-input-group-addon noselect fs-12 ${disabled ? "disabled-input-price" : "bg-transparent"}`}>Rp</span>
+                    <InputNumber
+                      {...initProps}
+                      min={1}
+                      name="price"
+                      placeholder="Masukkan harga"
+                      disabled={disabled}
+                      readOnly={disabled}
+                      className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
+                      parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
+                    />
+                  </div>
+                </div>
+                <ErrorTooltip item={record[inputType]} />
+                </div>
+              </Form.Item>
+            )}
+          </>
         )}
         {inputType === "stock" && (
           <Form.Item 
@@ -118,7 +148,11 @@ const EditableCell = ({
           border-right: 1px solid #f0f0f0;
           padding: 5px;
           padding-right: 8px;
-          color: #6c757d!important;
+          color: #6c757d;
+        }
+        :global(.disabled-input-price){
+          background-color: #f5f5f5 !important;
+          color: #bfbfbf !important;
         }
         :global(.input-number-variant){
           border: 0 !important;

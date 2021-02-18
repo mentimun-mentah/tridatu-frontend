@@ -1,3 +1,4 @@
+import { withAuth } from 'lib/withAuth'
 import Router from 'next/router'
 
 const Account = () => null;
@@ -12,4 +13,4 @@ Account.getInitialProps = (ctx) => {
   }
 };
 
-export default Account
+export default withAuth(Account)
