@@ -1,5 +1,9 @@
+import { parseCookies } from "nookies"
 import { Space, Avatar, Tooltip } from "antd";
 import Button from "antd-button-color";
+
+import id from 'locales/id/admin/product/new'
+import en from 'locales/en/admin/product/new'
 
 export const createNewArr = (data) => {
   return data
@@ -41,44 +45,51 @@ export const formItemLayout = {
   },
 };
 
-const initCol = [
-  {
-    title: "Harga",
-    dataIndex: "price",
-    key: "price",
-    inputType: "price",
-    editable: true,
-    align: "center",
-    width: 150,
-  },
-  {
-    title: "Stok",
-    dataIndex: "stock",
-    key: "stock",
-    inputType: "stock",
-    editable: true,
-    align: "center",
-    width: 150,
-  },
-  {
-    title: "Kode",
-    dataIndex: "code",
-    key: "code",
-    inputType: "code",
-    editable: true,
-    align: "center",
-    width: 150,
-  },
-  {
-    title: "Barcode",
-    dataIndex: "barcode",
-    key: "barcode",
-    inputType: "barcode",
-    editable: true,
-    align: "center",
-    width: 150,
-  },
-];
+const initCol = () => {
+  const cookies = parseCookies()
+  const { NEXT_LOCALE } = cookies
+  const locale = NEXT_LOCALE ? NEXT_LOCALE : "id"
+  const t = locale === "en" ? en : id
+
+  return [
+    {
+      title: t.sales_information.variant.price,
+      dataIndex: "price",
+      key: "price",
+      inputType: "price",
+      editable: true,
+      align: "center",
+      width: 150,
+    },
+    {
+      title: t.sales_information.variant.stock,
+      dataIndex: "stock",
+      key: "stock",
+      inputType: "stock",
+      editable: true,
+      align: "center",
+      width: 150,
+    },
+    {
+      title: t.sales_information.variant.code,
+      dataIndex: "code",
+      key: "code",
+      inputType: "code",
+      editable: true,
+      align: "center",
+      width: 150,
+    },
+    {
+      title: t.sales_information.variant.barcode,
+      dataIndex: "barcode",
+      key: "barcode",
+      inputType: "barcode",
+      editable: true,
+      align: "center",
+      width: 150,
+    },
+  ]
+};
 
 export const initialColumn = initCol;
 

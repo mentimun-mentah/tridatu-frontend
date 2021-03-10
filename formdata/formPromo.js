@@ -1,6 +1,6 @@
 import moment from 'moment'
 import isIn from 'validator/lib/isIn'
-import { not_active, will_come, ongoing, have_ended } from 'components/Card/Admin/Product/Promo/statusType'
+import { will_come, ongoing } from 'components/Card/Admin/Product/Promo/statusType'
 
 export const initialValue = {value: "", isValid: true, message: null};
 
@@ -9,7 +9,7 @@ export const formPeriod = {
   end: { ...initialValue } 
 }
 
-export const formPeriodIsValid = (state, setState, discountStatus, products_discount_start) => {
+export const formPeriodIsValid = (state, setState, discountStatus, products_discount_start, t) => {
   const start = { ...state.start }
   const end = { ...state.end }
   let isGood = true
@@ -17,27 +17,27 @@ export const formPeriodIsValid = (state, setState, discountStatus, products_disc
   if(start.value === "" || end.value === ""){
     isGood = false
     start.isValid = false
-    start.message = "Periode promo tidak boleh kosong"
+    start.message = t.validation.empty
   }
   if(moment(end.value).diff(moment(start.value), "days") >= 180){
     isGood = false
     start.isValid = false
-    start.message = "Periode Promo harus kurang dari 180 hari"
+    start.message = t.modal.periode_note
   }
   if(isIn(will_come, [discountStatus]) && moment(start.value) < moment(products_discount_start)){
     isGood = false
     start.isValid = false
-    start.message = "Waktu mulai yang baru harus setelah waktu mulai yang sebelumnya diatur"
+    start.message = t.validation.err_start_time
   }
   if(!isIn(ongoing, [discountStatus]) && moment(start.value) < moment()){
     isGood = false
     start.isValid = false
-    start.message = "Waktu mulai harus setelah waktu saat ini"
+    start.message = t.validation.err_current_start_time
   }
   if(moment(end.value).format("L") === moment(start.value).format("L") && moment(end.value).subtract(1, "hour") < moment(start.value)){
     isGood = false
     start.isValid = false
-    start.message = "Waktu berakhir minimal satu jam lebih lama dari waktu mulai"
+    start.message = t.validation.err_end_time
   }
 
   if(!isGood) setState({ ...state, start, end })
@@ -45,7 +45,7 @@ export const formPeriodIsValid = (state, setState, discountStatus, products_disc
   return isGood
 }
 
-export const formTablePromoIsValid = (state, setState, idx) => {
+export const formTablePromoIsValid = (state, setState, idx, t) => {
   const newState = [...state]
   let isGood = true
 
@@ -57,28 +57,28 @@ export const formTablePromoIsValid = (state, setState, idx) => {
   if(priceValue < (normalPriceValue - (normalPriceValue * (95/100)))){
     isGood = false
     newState[idx]["product"]["price"].isValid = false
-    newState[idx]["product"]["price"].message = "Harga promo kurang dari 95% harga awal"
+    newState[idx]["product"]["price"].message = t.validation.err_price_morethan_95
   }
   if(priceValue > normalPriceValue){
     isGood = false
     newState[idx]["product"]["price"].isValid = false
-    newState[idx]["product"]["price"].message = "Harga tidak valid"
+    newState[idx]["product"]["price"].message = t.validation.invalid_price
   }
 
   if(discountValue > 95){
     isGood = false
     newState[idx]["product"]["discount"].isValid = false
-    newState[idx]["product"]["discount"].message = "Diskon masksimal 95%"
+    newState[idx]["product"]["discount"].message = t.validation.max_discount
   }
   if(activeValue && discountValue <= 0){
     isGood = false
     newState[idx]["product"]["discount"].isValid = false
-    newState[idx]["product"]["discount"].message = "Diskon minimal 1%"
+    newState[idx]["product"]["discount"].message = t.validation.min_discount
   }
   if(!activeValue && discountValue < 0 && discountValue >= 95){
     isGood = false
     newState[idx]["product"]["discount"].isValid = false
-    newState[idx]["product"]["discount"].message = "Diskon tidak valid"
+    newState[idx]["product"]["discount"].message = t.validation.invalid_discount
   }
 
   if(!isGood) setState(newState)

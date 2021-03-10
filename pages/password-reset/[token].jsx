@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Divider, notification } from "antd";
 import { AnimatePresence, motion } from "framer-motion";
 
+import id from 'locales/id/password-reset'
+import en from 'locales/en/password-reset'
+
 import axios from "lib/axios";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
@@ -17,6 +20,10 @@ import { formReset, formResetIsValid } from "formdata/formResetPassword";
 
 const ResetPassword = () => {
   const router = useRouter();
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [reset, setReset] = useState(formReset);
@@ -40,7 +47,7 @@ const ResetPassword = () => {
 
   const submitHandler = (e) => {
     e.preventDefault();
-    if (formResetIsValid(reset, setReset) && isValidForm(reset)) {
+    if (formResetIsValid(reset, setReset, t) && isValidForm(reset)) {
       setLoading(true);
       const data = {
         email: email.value,
@@ -59,7 +66,7 @@ const ResetPassword = () => {
             description: res.data.detail,
             placement: "bottomRight",
           });
-          router.replace("/");
+          router.replace(`/${locale !== "id" ? locale : ""}`);
         })
         .catch((err) => {
           setLoading(false);
@@ -140,7 +147,7 @@ const ResetPassword = () => {
                 block
                 onClick={submitHandler}
               >
-                Ubah Password
+                {t.change_password}
                 <AnimatePresence>
                   {loading && (
                     <motion.div

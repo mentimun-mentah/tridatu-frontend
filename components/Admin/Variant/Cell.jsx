@@ -22,6 +22,7 @@ const EditableCell = ({
   maxCode,
   disabled,
   discountStatus,
+  t,
   ...restProps
 }) => {
 
@@ -52,7 +53,7 @@ const EditableCell = ({
                 <p className="mb-0">
                   Rp.{formatNumber(countDiscPrice(record.discount.value, record[inputType].value))}
                   <Tooltip color="#fff"
-                    title={<span className="text-dark fs-13 text-nowrap">Produk ini sedang dalam masa promosi</span>} 
+                    title={<span className="text-dark fs-13 text-nowrap">{t.sales_information.no_variant.sale_text}</span>} 
                   >
                     <span className="ml-1 text-muted"><i className="far fa-info-circle" /></span>
                   </Tooltip>
@@ -61,7 +62,7 @@ const EditableCell = ({
                   <s>Rp.{formatNumber(record[inputType].value)}</s>
                 </p>
                 <p className="mb-0">
-                  {record.discount.value}% DISKON
+                  {record.discount.value}% {t.sales_information.no_variant.discount}
                 </p>
               </div>
             ) : (
@@ -77,7 +78,7 @@ const EditableCell = ({
                       {...initProps}
                       min={1}
                       name="price"
-                      placeholder="Masukkan harga"
+                      placeholder={t.sales_information.variant.placeholder.price}
                       disabled={disabled}
                       readOnly={disabled}
                       className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
@@ -94,7 +95,7 @@ const EditableCell = ({
         )}
         {inputType === "stock" && (
           <Form.Item 
-            name="stock" 
+            name="stock"
             className="mb-0 h-30 input-form-variant"
           >
             <div>
@@ -102,7 +103,7 @@ const EditableCell = ({
                 {...initProps}
                 min={0} 
                 name="stock"
-                placeholder="Masukkan stok" 
+                placeholder={t.sales_information.variant.placeholder.stock}
                 className="w-100 fs-12 input-number-variant"
               />
               <ErrorTooltip item={record[inputType]} />
@@ -115,7 +116,7 @@ const EditableCell = ({
               <Input.TextArea 
                 {...propsTextArea}
                 name="code" 
-                placeholder="Kode" 
+                placeholder={t.sales_information.variant.code} 
               />
               <ErrorTooltip item={record[inputType]} />
             </div>
@@ -127,7 +128,7 @@ const EditableCell = ({
               <Input.TextArea 
                 {...propsTextArea}
                 name="barcode" 
-                placeholder="Barcode" 
+                placeholder={t.sales_information.variant.barcode} 
               />
               <ErrorTooltip item={record[inputType]} />
             </div>

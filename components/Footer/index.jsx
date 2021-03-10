@@ -1,5 +1,11 @@
-import Container from 'react-bootstrap/Container'
+import { useRouter } from 'next/router'
+import { useState, useEffect } from 'react'
+
 import Image from 'next/image'
+import Container from 'react-bootstrap/Container'
+
+import id from 'locales/id/footer'
+import en from 'locales/en/footer'
 
 let year = new Date()
 year = year.getFullYear()
@@ -12,6 +18,23 @@ const courier_list = ['jne', 'jet', 'lion', 'pos', 'tiki']
 const payment_list = ['mandiri', 'permata', 'bni', 'bri', 'bca', 'go-pay', 'ovo']
 
 const Footer = () => {
+  const router = useRouter()
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
+  const [localeState, setLocalState] = useState(locale)
+
+  const changeLanguage = e => {
+    const locale = e.target.value
+    setLocalState(locale)
+  }
+
+  useEffect(() => {
+    setTimeout(() => {
+      router.replace(router.asPath, router.asPath, { locale: localeState, scroll: false })
+    }, 450)
+  }, [localeState])
+
   return(
     <>
       <footer className="border-top">
@@ -53,11 +76,33 @@ const Footer = () => {
                   </small>
                   <br />
                   <small>All Right Reserved</small>
+                  <br />
+                  <div className="change-language-container bor-rad-5px mt-2">
+                    <div className="card bg-transparent p-1 bor-rad-5px w-100 border-0">
+                      <form className="tabber idx-1">
+                        <label htmlFor="t1" className={`${localeState === "id" && "text-white"}`}>Indonesia</label>
+                        <input 
+                          id="t1" value="id" 
+                          name="lang" type="radio" 
+                          onChange={changeLanguage} 
+                          defaultChecked={localeState === "id"} 
+                        />
+                        <label htmlFor="t2" className={`${localeState === "en" && "text-white"}`}>English</label>
+                        <input 
+                          id="t2" value="en" 
+                          name="lang" type="radio" 
+                          onChange={changeLanguage} 
+                          defaultChecked={localeState === "en"} 
+                        />
+                        <div className="blob"></div>
+                      </form>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="col-md-12 col-lg-3 col-12 my-0">
                   <ul className="list-unstyled">
-                    <li className="mt-md-3 mt-4">Kontak</li>
+                    <li className="mt-md-3 mt-4">{t.contact}</li>
                     <li>
                       <i className="fab fa-whatsapp mr-2 fs-18" />
                       +628113885929
@@ -75,17 +120,17 @@ const Footer = () => {
 
                 <div className="col-md-12 col-lg-3 col-12 my-sm-0 mt-5 mt-0-s">
                   <ul className="list-unstyled ml-5 ml-0-s">
-                    <li className="mt-md-3 mt-4">Informasi</li>
-                    <li>Tentang Kami</li>
-                    <li>Panduan Belanja</li>
-                    <li>Syarat &amp; Ketentuan</li>
-                    <li>Kebijakan Privasi</li>
+                    <li className="mt-md-3 mt-4">{t.information}</li>
+                    <li>{t.information_data.about_us}</li>
+                    <li>{t.information_data.shopping_guide}</li>
+                    <li>{t.information_data.term}</li>
+                    <li>{t.information_data.privacy}</li>
                   </ul>
                 </div>
 
                 <div className="col-md-12 col-lg-3 col-12 my-sm-0 mt-5 mt-0-s">
                   <ul className="list-unstyled multi-bank">
-                    <li className="mt-md-3 mt-4 mb-2">Metode Pembayaran</li>
+                    <li className="mt-md-3 mt-4 mb-2">{t.payment_method}</li>
                     <div className="img-bank">
                       {payment_list.map((data, i) => (
                         <Image
@@ -100,7 +145,7 @@ const Footer = () => {
                     </div>
                   </ul>
                   <ul className="list-unstyled multi-bank">
-                    <li className="mt-md-3 mt-4 mb-2">Metode Pengiriman</li>
+                    <li className="mt-md-3 mt-4 mb-2">{t.shipping_method}</li>
                     <div className="img-bank ml-n3">
                       {courier_list.map((data, i) => (
                         <Image
@@ -190,6 +235,127 @@ const Footer = () => {
             margin-top: 0!important;
           }
         }
+
+        /* LANGUAGE CHANGER */
+        .change-language-container {
+          display: flex;
+          background-color: rgb(243, 244, 245);
+        }
+        .tabber {
+          position: relative;
+          display: flex;
+          align-items: stretch;
+          justify-content: stretch;
+        }
+        .tabber label {
+          -webkit-user-select: none;
+             -moz-user-select: none;
+              -ms-user-select: none;
+                  user-select: none;
+          padding: .2rem 1rem;
+          margin-bottom: 0;
+          cursor: pointer;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: bold;
+          will-change: transform;
+          transform: translateZ(0px);
+          transition: transform 100ms ease-in-out, filter 100ms ease-in-out;
+          width: 100%;
+          text-align: center;
+        }
+        .tabber input[type=radio] {
+          display: none;
+        }
+        .tabber input[type=radio]#t1 ~ .blob {
+          transform-origin: right center;
+        }
+        .tabber input[type=radio]#t2 ~ .blob {
+          transform-origin: left center;
+        }
+        .tabber input[type=radio]#t1:checked ~ .blob {
+          background-color: #ff4d4f;
+          -webkit-animation-name: stretchyRev;
+                  animation-name: stretchyRev;
+        }
+        .tabber input[type=radio]#t2:checked ~ .blob {
+          background-color: #ff4d4f;
+          -webkit-animation-name: stretchy;
+                  animation-name: stretchy;
+        }
+        .tabber .blob {
+          top: 0;
+          left: 0;
+          width: 50%;
+          height: 100%;
+          position: absolute;
+          z-index: -1;
+          border-radius: .25rem;
+          -webkit-animation-duration: 0.5s;
+                  animation-duration: 0.5s;
+          -webkit-animation-direction: forwards;
+                  animation-direction: forwards;
+          -webkit-animation-iteration-count: 1;
+                  animation-iteration-count: 1;
+          -webkit-animation-fill-mode: forwards;
+                  animation-fill-mode: forwards;
+          transition: transform 100ms ease, background 100ms ease;
+        }
+        .tabber .blob:before {
+          left: 0;
+          -webkit-animation-delay: 0.15s;
+                  animation-delay: 0.15s;
+        }
+        .tabber .blob:after {
+          right: 0;
+        }
+
+        @-webkit-keyframes stretchy {
+          0% {
+            transform: translateX(0) scaleX(1);
+          }
+          50% {
+            transform: translateX(0) scaleX(2);
+          }
+          100% {
+            transform: translateX(100%) scaleX(1);
+          }
+        }
+
+        @keyframes stretchy {
+          0% {
+            transform: translateX(0) scaleX(1);
+          }
+          50% {
+            transform: translateX(0) scaleX(2);
+          }
+          100% {
+            transform: translateX(100%) scaleX(1);
+          }
+        }
+        @-webkit-keyframes stretchyRev {
+          0% {
+            transform: translateX(100%) scaleX(1);
+          }
+          50% {
+            transform: translateX(0) scaleX(2);
+          }
+          100% {
+            transform: translateX(0) scaleX(1);
+          }
+        }
+        @keyframes stretchyRev {
+          0% {
+            transform: translateX(100%) scaleX(1);
+          }
+          50% {
+            transform: translateX(0) scaleX(2);
+          }
+          100% {
+            transform: translateX(0) scaleX(1);
+          }
+        }
+        /* LANGUAGE CHANGER */
       `}</style>
     </>
   )

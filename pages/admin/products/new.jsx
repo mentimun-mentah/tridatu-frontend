@@ -1,9 +1,13 @@
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from "react-redux";
 import { Form, Input, InputNumber, Button, Space, Upload, Row, Col, Radio, message } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import { AnimatePresence, motion } from "framer-motion";
+
+import id from 'locales/id/admin/product/new'
+import en from 'locales/en/admin/product/new'
 
 import _ from 'lodash'
 import cx from 'classnames'
@@ -55,12 +59,17 @@ const initialVaOption = { va1Option: [], va2Option: [], va1Total: 0, va2Total: 0
 const initialActiveVariation = { active: false, countVariation: 0 }
 const initialActiveGrosir = { activeGrosir: false, countGrosir: 0 }
 const formGrosirPrice = { price: { value: "", isValid: true, message: null } }
-const checkMessage = "Pastikan kolom sudah terisi semua."
-const stockMessage = "Stok tidak boleh kurang dari 0."
-const priceMessage = "Harga harus lebih dari 1."
 
 const NewProduct = () => {
+  const router = useRouter()
   const dispatch = useDispatch()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
+  const checkMessage = t.sales_information.validation.check_message;
+  const stockMessage = t.sales_information.validation.stock;
+  const priceMessage = t.sales_information.validation.price;
 
   const [imageList, setImageList] = useState(formImage);
   const [imageVariants, setImageVariants] = useState(formImage);
@@ -353,22 +362,22 @@ const NewProduct = () => {
         setLoading(false)
         const errDetail = err.response.data.detail;
         console.log(errDetail)
-        const uniqueImage = "Each image must be unique."
-        const variantImage = "You must fill all variant images or even without images."
-        const errName = "The name has already been taken."
+        const uniqueImage = ["Each image must be unique.", "Setiap gambar harus unik."]
+        const variantImage = ["You must fill all variant images or even without images.", "Anda harus mengisi semua gambar varian atau bahkan tanpa gambar."]
+        const errName = ["The name has already been taken.", "Nama sudah dipakai."]
         if(errDetail == signature_exp){
-          resNotification("success", "Success", "Successfully add a new product.")
+          resNotification("success", "Success", t.success_add_response)
           resetAllData()
-        } else if (typeof errDetail === "string" && errDetail === errName) {
+        } else if (typeof errDetail === "string" && isIn(errDetail,errName)) {
           const state = JSON.parse(JSON.stringify(informationProduct));
           state.name.value = state.name.value;
           state.name.isValid = false;
           state.name.message = errDetail;
           setInformationProduct(state)
           formErrorMessage(errDetail)
-        } else if(typeof errDetail === "string" && errDetail === uniqueImage){
+        } else if(typeof errDetail === "string" && isIn(errDetail, uniqueImage)){
           formErrorMessage(errDetail)
-        } else if(typeof errDetail === "string" && errDetail === variantImage){
+        } else if(typeof errDetail === "string" && isIn(errDetail, variantImage)){
           formErrorMessage(errDetail)
         } else {
           const state = JSON.parse(JSON.stringify(informationProduct));
@@ -410,8 +419,8 @@ const NewProduct = () => {
       return container
     })
 
-    if(validateFormGrosirPrice(grosir, setGrosir, grosirPrice.price, va1_price, isActiveVariation.active) && 
-       validateFormGrosirQty(grosir, setGrosir)
+    if(validateFormGrosirPrice(grosir, setGrosir, grosirPrice.price, va1_price, isActiveVariation.active, t) && 
+       validateFormGrosirQty(grosir, setGrosir, t)
     ){
       const data = {
         variant: ticket_variant,
@@ -470,10 +479,11 @@ const NewProduct = () => {
     const urlVariant = "/variants/create-ticket"
 
     if(!isActiveVariation.active && 
-       isValidProductInformation(informationProduct, setInformationProduct, isPreorder) &&
-       formNoVariantIsValid(noVariant, setNoVariant) &&
-       formImageIsValid(imageList, setImageList, "Foto produk tidak boleh kosong")
+       isValidProductInformation(informationProduct, setInformationProduct, isPreorder, t) &&
+       formNoVariantIsValid(noVariant, setNoVariant, t) &&
+       formImageIsValid(imageList, setImageList, t.sales_information.validation.empty_photos)
     ){
+
       const data = {
         va1_items: [{
           va1_price: va1_price.value.toString(),
@@ -551,16 +561,16 @@ const NewProduct = () => {
           va1_barcode: dataSource[i].barcode.value || null
         }
         items.push(item)
-        formIsValid = formVa1OptionSingleVariantIsValid(vaOption, setVaOption, i)
-        tableIsValid = formTableIsValid(dataSource, setDataSource, i)
+        formIsValid = formVa1OptionSingleVariantIsValid(vaOption, setVaOption, i, t)
+        tableIsValid = formTableIsValid(dataSource, setDataSource, i, t)
       }
-      if(formVariantTitleIsValid(columns, setColumns) && 
-         isValidProductInformation(informationProduct, setInformationProduct) &&
+      if(formVariantTitleIsValid(columns, setColumns, t) && 
+         isValidProductInformation(informationProduct, setInformationProduct, isPreorder, t) &&
          formIsValid && tableIsValid && !isIn("false", variantIsValid) &&
-         formImageIsValid(imageList, setImageList, "Foto produk tidak boleh kosong")
+         formImageIsValid(imageList, setImageList, t.sales_information.validation.empty_photos)
       ){
         const data = {
-          va1_name: columns[0].title == "Nama" ?  "" : columns[0].title,
+          va1_name: columns[0].title == t.sales_information.variant.name ?  "" : columns[0].title,
           va1_items: items
         }
 
@@ -634,13 +644,13 @@ const NewProduct = () => {
       const variant2IsValid = vaOption[`va2Option`].map(data => data[`va2_option`].isValid)
 
       for(let i = 0; i < va1Total; i++){
-        formVa1IsValid = formVa1OptionSingleVariantIsValid(vaOption, setVaOption, i)
+        formVa1IsValid = formVa1OptionSingleVariantIsValid(vaOption, setVaOption, i, t)
       }
       for(let i = 0; i < va2Total; i++){
-        formVa2IsValid = formVa2OptionDoubleVariantIsValid(vaOption, setVaOption, i)
+        formVa2IsValid = formVa2OptionDoubleVariantIsValid(vaOption, setVaOption, i, t)
       }
       for(let i = 0; i < dataSource.length; i++){
-        tableIsValid = formTableIsValid(dataSource, setDataSource, i)
+        tableIsValid = formTableIsValid(dataSource, setDataSource, i, t)
       }
 
       let va1 = dataSource.map(x => x.va1_option)
@@ -649,13 +659,13 @@ const NewProduct = () => {
       let variants = []
       for(let check of va1){
         const va1_items = {
-          va1_option: check.split(" ")[0] === "Pilihan" ? "" : check,
+          va1_option: check.split(" ")[0] === t.sales_information.variant.option ? "" : check,
           va2_items: []
         }
         for(let val of dataSource){
           if(val.va1_option === check){
             const va2_data = {
-              va2_option: val.va2_option.split(" ")[0] === "Pilihan" ? "" : val.va2_option,
+              va2_option: val.va2_option.split(" ")[0] === t.sales_information.variant.option ? "" : val.va2_option,
               va2_price: val.price.value.toString(),
               va2_stock: val.stock.value.toString(),
               va2_code: val.code.value || null,
@@ -667,15 +677,15 @@ const NewProduct = () => {
         variants.push(va1_items)
       }
 
-      if(formTitleIsValid(columns, setColumns) && 
+      if(formTitleIsValid(columns, setColumns, t) && 
          formVa1IsValid && formVa2IsValid && tableIsValid && 
          !isIn("false", variant1IsValid) && !isIn("false", variant2IsValid) &&
-         isValidProductInformation(informationProduct, setInformationProduct) &&
-         formImageIsValid(imageList, setImageList, "Foto produk tidak boleh kosong")
+         isValidProductInformation(informationProduct, setInformationProduct, isPreorder, t) &&
+         formImageIsValid(imageList, setImageList, t.sales_information.validation.empty_photos)
       ){
         const data = {
-          va1_name: columns[0].title == "Nama" ?  "" : columns[0].title,
-          va2_name: columns[1].title == "Nama" ?  "" : columns[1].title,
+          va1_name: columns[0].title == t.sales_information.variant.name ?  "" : columns[0].title,
+          va2_name: columns[1].title == t.sales_information.variant.name ?  "" : columns[1].title,
           va1_items: variants
         }
 
@@ -786,16 +796,18 @@ const NewProduct = () => {
         allCategoriesList={allCategoriesList} 
         onFocusCascader={onFocusCascader}
         filter={filter}
+        t={t}
       />
 
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Informasi Penjualan</h5>
+          <h5 className="mb-0 fs-16-s">{t.sales_information.title}</h5>
         </Card.Body>
         <Card.Body className="p-3">
 
           {!isActiveVariation.active && (
             <NoVariantComponent 
+              t={t}
               noVariant={noVariant}
               onNoVariantChangeHandler={onNoVariantChangeHandler}
               isActiveGrosir={isActiveGrosir}
@@ -803,6 +815,7 @@ const NewProduct = () => {
           )}
 
           <TableVariant 
+            t={t}
             isActiveVariation={isActiveVariation}
             setIsActiveVariation={setIsActiveVariation}
             columns={columns}
@@ -823,6 +836,7 @@ const NewProduct = () => {
           />
 
           <TableGrosir
+            t={t}
             isActiveVariation={isActiveVariation}
             isActiveGrosir={isActiveGrosir}
             setIsActiveGrosir={setIsActiveGrosir}
@@ -841,12 +855,12 @@ const NewProduct = () => {
 
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Pengaturan Media</h5>
+          <h5 className="mb-0 fs-16-s">{t.media_settings.title}</h5>
         </Card.Body>
         <Card.Body className="p-3">
 
           <Form layout="vertical">
-            <Form.Item label="Foto Produk" className="" required>
+            <Form.Item label={t.media_settings.product_photos} className="" required>
               <Upload
                 accept="image/*"
                 listType="picture-card"
@@ -862,7 +876,7 @@ const NewProduct = () => {
             </Form.Item>
 
             {isActiveVariation.active && (
-              <Form.Item label={columns[0].title.split(" ")[0] === "Nama" ? "Variasi 1" : columns[0].title} className="mb-0">
+              <Form.Item label={columns[0].title.split(" ")[0] === t.sales_information.variant.name ? `${t.sales_information.variant.title} 1` : columns[0].title} className="mb-0">
                 <Row gutter={[8, 16]}>
                   {va1Option.map((va, i) => (
                     <Col key={i} id={`variant-upload-${i}`}>
@@ -883,7 +897,7 @@ const NewProduct = () => {
                         {va1Total ? uploadButton(loadingImageVariant) : null}
                       </Upload>
                       <p className="text-center noselect">
-                        {va.va1_option.value || "Pilihan"} {imageList.file.value.length == va1Total}
+                        {va.va1_option.value || t.sales_information.variant.option} {imageList.file.value.length == va1Total}
                       </p>
                     </Col>
                   ))}
@@ -891,7 +905,7 @@ const NewProduct = () => {
               </Form.Item>
             )}
 
-            <Form.Item label="Panduan Ukuran" className="mb-0">
+            <Form.Item label={t.media_settings.size_guide} className="mb-0">
               <div className="w-min-content">
                 <Upload
                   accept="image/*"
@@ -905,19 +919,19 @@ const NewProduct = () => {
                 >
                   {imageSizeGuide.file.value.length >= 1 ? null : uploadButton(loadingImageSizeGuide)}
                 </Upload>
-                <p className="text-center text-secondary noselect hover-pointer" onClick={() => setShowSizeGuide(true)}>Contoh</p>
+                <p className="text-center text-secondary noselect hover-pointer" onClick={() => setShowSizeGuide(true)}>{t.media_settings.example}</p>
               </div>
             </Form.Item>
 
             <Form.Item 
-              label="Video Produk" 
+              label={t.media_settings.product_video}
               className="mb-0"
               validateStatus={!video.isValid && video.message && "error"}
             >
               <Input 
                 className="h-35" 
                 name="video"
-                placeholder="Youtube embed link" 
+                placeholder="Youtube embed link"
                 value={video.value}
                 onChange={e => onInformationProductChange(e)}
               />
@@ -930,14 +944,14 @@ const NewProduct = () => {
 
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Pengiriman</h5>
+          <h5 className="mb-0 fs-16-s">{t.shipping.title}</h5>
         </Card.Body>
         <Card.Body className="p-3">
 
           <Form layout="vertical">
             <Form.Item 
               required
-              label="Berat" 
+              label={t.shipping.weight}
               validateStatus={!weight.isValid && weight.message && "error"}
             >
               <div className="ant-input-group-wrapper">
@@ -945,7 +959,7 @@ const NewProduct = () => {
                   <InputNumber
                     min={1}
                     name="weight"
-                    placeholder="Berat paket"
+                    placeholder={t.shipping.placeholder.weight}
                     className="w-100 bor-right-rad-0 h-33-custom-input"
                     value={weight.value}
                     onChange={e => onInformationProductChange(e, "weight")}
@@ -957,12 +971,12 @@ const NewProduct = () => {
             </Form.Item>
 
             <Form.Item 
-              label="Preorder"
+              label={t.shipping.preorder}
               validateStatus={!preorder.isValid && preorder.message && "error"}
             >
               <Radio.Group value={isPreorder} onChange={onPreorderChange}>
-                <Radio className="noselect" value={false}>Tidak</Radio>
-                <Radio className="noselect" value={true}>Ya</Radio>
+                <Radio className="noselect" value={false}>{t.no}</Radio>
+                <Radio className="noselect" value={true}>{t.yes}</Radio>
               </Radio.Group>
               <AnimatePresence>
                 {isPreorder && (
@@ -978,12 +992,12 @@ const NewProduct = () => {
                           min={1}
                           max={500}
                           name="preorder"
-                          placeholder="Preorder"
+                          placeholder={t.shipping.preorder}
                           className="w-100 bor-right-rad-0 h-33-custom-input"
                           value={preorder.value}
                           onChange={e => onInformationProductChange(e, "preorder")}
                         />
-                        <span className="ant-input-group-addon noselect">hari</span>
+                        <span className="ant-input-group-addon noselect">{t.shipping.day}</span>
                       </div>
                     </div>
                     <ErrorTooltip item={preorder} />
@@ -998,9 +1012,9 @@ const NewProduct = () => {
 
       <Space>
         <Button className="btn-tridatu" onClick={onSubmitHandler} disabled={loading}>
-          {loading ? <LoadingOutlined /> : "Simpan"}
+          {loading ? <LoadingOutlined /> : t.save}
         </Button>
-        <Button onClick={resetAllData}>Batal</Button>
+        <Button onClick={resetAllData}>{t.cancel}</Button>
       </Space>
 
       <SizeGuideModal 

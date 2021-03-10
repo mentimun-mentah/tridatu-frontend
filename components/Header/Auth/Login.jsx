@@ -13,7 +13,7 @@ import ErrorMessage from "components/ErrorMessage";
 import * as actions from "store/actions";
 import { formLogin, formLoginIsValid } from "formdata/formLogin";
 
-const Login = ({ show, handler, close, switchToExtraAuth }) => {
+const Login = ({ show, handler, close, switchToExtraAuth, t }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [login, setLogin] = useState(formLogin);
@@ -42,7 +42,7 @@ const Login = ({ show, handler, close, switchToExtraAuth }) => {
 
   const submitHandler = (e) => {
     e.preventDefault();
-    if (formLoginIsValid(login, setLogin)) {
+    if (formLoginIsValid(login, setLogin, t)) {
       setLoading(true);
       const data = {
         email: email.value,
@@ -102,13 +102,13 @@ const Login = ({ show, handler, close, switchToExtraAuth }) => {
         closeIcon={<i className="fas fa-times" />}
       >
         <h4 className="fs-20-s">
-          Masuk
+          {t.login}
           <a
             href="#"
             className="fs-12 float-right text-secondary pt-2"
             onClick={handler}
           >
-            Daftar
+            {t.register}
           </a>
         </h4>
 
@@ -143,7 +143,7 @@ const Login = ({ show, handler, close, switchToExtraAuth }) => {
                 className="text-dark hov_pointer"
                 onClick={() => switchToExtraAuth("reset")}
               >
-                <a className="fs-12 text-reset text-muted">Lupa Password ?</a>
+                <a className="fs-12 text-reset text-muted">{t.forgot_password} ?</a>
               </span>
             </Col>
             <Col md={12} className="text-right">
@@ -152,14 +152,14 @@ const Login = ({ show, handler, close, switchToExtraAuth }) => {
                 onClick={() => switchToExtraAuth("resend")}
               >
                 <a className="fs-12 text-reset text-muted">
-                  Kirim ulang verifikasi
+                  {t.resend_verification}
                 </a>
               </span>
             </Col>
           </Row>
 
           <Button className="mt-4 btn-tridatu" block onClick={submitHandler}>
-            Masuk
+            {t.login}
             <AnimatePresence>
               {loading && (
                 <motion.div
@@ -174,10 +174,10 @@ const Login = ({ show, handler, close, switchToExtraAuth }) => {
         </Form>
 
         <Divider className="mb-4" plain>
-          <span className="text-muted">atau masuk dengan</span>
+          <span className="text-muted">{t.or_login_with}</span>
         </Divider>
 
-        <SocialLogin text="Masuk" />
+        <SocialLogin text={t.login_with} />
       </Modal>
     </>
   );

@@ -3,6 +3,7 @@ import { Modal, Button, Form, Input, Select } from 'antd'
 import { LoadingOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 
+import isIn from 'validator/lib/isIn'
 import Card from 'react-bootstrap/Card'
 
 import * as actions from "store/actions";
@@ -11,7 +12,7 @@ import ErrorMessage from "components/ErrorMessage";
 
 import { formItemSubCategories, formItemSubCategoriesIsValid } from 'formdata/formCategories'
 
-const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
+const EditItemSubCategory = ({ t, show, close, currentItemSubCategory }) => {
   const dispatch = useDispatch()
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false)
@@ -48,7 +49,7 @@ const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
 
   const submitItemSubCategoriesHandler = e => {
     e.preventDefault()
-    if(formItemSubCategoriesIsValid(itemSubCategories, setItemSubCategories)){
+    if(formItemSubCategoriesIsValid(itemSubCategories, setItemSubCategories, t)){
       setLoading(true)
       const data = { sub_category_id: sub_category_id.value, name: name.value }
 
@@ -61,20 +62,20 @@ const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
-          const errName = "The name has already been taken in the item sub-category."
+          const errName = ["The name has already been taken.", "Nama sudah dipakai."]
           if(errDetail == signature_exp){
             setLoading(false)
             closeModalHandler()
             dispatch(actions.getAllCategories())
-            resNotification("success", "Success", "Successfully update the item sub-category.")
-          } else if (typeof errDetail === "string" && errDetail === errName) {
+            // resNotification("success", "Success", "Successfully update the item sub-category.")
+          } else if (typeof errDetail === "string" && isIn(errDetail, errName)) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(itemSubCategories));
             state.name.value = state.name.value;
             state.name.isValid = false;
             state.name.message = errDetail;
             setItemSubCategories(state)
-          } else if(typeof(errDetail) === "string" && errDetail !== errName) {
+          } else if(typeof(errDetail) === "string" && !isIn(errDetail, errName)) {
             setLoading(false)
             resNotification("error", "Error", errDetail)
           } else {
@@ -109,7 +110,7 @@ const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
     <>
       <Modal
         centered
-        title="Update Item Sub Kategori"
+        title={`Update Item Sub ${t.category}`}
         visible={show}
         onOk={submitItemSubCategoriesHandler}
         onCancel={closeModalHandler}
@@ -119,7 +120,7 @@ const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
         className="modal-rad-10"
         footer={[
           <Button key="back" onClick={closeModalHandler}>
-            Batal
+            {t.cancel}
           </Button>,
           <Button 
             key="submit" 
@@ -129,19 +130,19 @@ const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
             style={{ width: 80 }} 
             disabled={loading}
           >
-            {loading ? <LoadingOutlined /> : "Simpan"}
+            {loading ? <LoadingOutlined /> : t.save}
           </Button>,
         ]}
       >
         {show && (
           <Card className="border-0">
             <Form form={form} layout="vertical">
-              <Form.Item label="Sub Kategori" required>
+              <Form.Item label={`Sub ${t.category}`} required>
                 <Select
                   showSearch
                   className="w-100"
                   name="sub_category_id"
-                  placeholder="Pilih sub kategori"
+                  placeholder={t.choose_sub_category}
                   optionFilterProp="children"
                   onFocus={() => fetchCategories(true)}
                   value={sub_category_id.value}
@@ -159,13 +160,13 @@ const EditItemSubCategory = ({ show, close, currentItemSubCategory }) => {
                 </Select>
                 <ErrorMessage item={sub_category_id} />
               </Form.Item>
-              <Form.Item label="Nama Item Sub Kategori" required>
+              <Form.Item label={t.item_sub_category_name} required>
                 <Input 
                   className="h-33"
                   name="name"
                   value={name.value}
                   onChange={e => inputItemSubCategoriesHandler(e)}
-                  placeholder="Contoh: Kemeja, Kaos, Polo dll" 
+                  placeholder={t.item_sub_category_input_placeholder} 
                 />
                 <ErrorMessage item={name} />
               </Form.Item>

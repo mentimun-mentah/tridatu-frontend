@@ -6,11 +6,11 @@ export const productsData = [
   "Kemeja Converse Panjang",
 ];
 
-export const sortListProduct = [
-  { value: "", label: "Paling Sesuai" }, 
-  { value: "newest", label: "Terbaru" }, 
-  { value: "high_price", label: "Harga Tertinggi" }, 
-  { value: "low_price", label: "Harga Terendah" }
+export const sortListProduct = (t) => [
+  { value: "", label: t.sort.most_suitable }, 
+  { value: "newest", label: t.sort.newest }, 
+  { value: "high_price", label: t.sort.high_price }, 
+  { value: "low_price", label: t.sort.low_price }
 ] 
 
 export const formItemLayout = {
@@ -55,13 +55,13 @@ export const initialColumn = [
 
 export const columnsGrosir = [
   {
-    title: "Beli",
+    title: "Jumlah",
     dataIndex: "wholesale_min_qty",
     key: "sell",
     render: (item) => <span className="fs-12">≥ {item}</span>,
   },
   {
-    title: "Harga/pcs",
+    title: "Harga Satuan",
     dataIndex: "wholesale_price",
     key: "price",
     render: (item) => <span className="fs-12">Rp.{formatNumber(item)}</span>,

@@ -3,7 +3,7 @@ import { Button, Popconfirm } from 'antd'
 import Card from 'react-bootstrap/Card'
 import Image from "next/image";
 
-const CardOutlet = ({ data, deleteHandler }) => {
+const CardOutlet = ({ data, deleteHandler, t }) => {
   return(
     <>
       <motion.div 
@@ -22,14 +22,14 @@ const CardOutlet = ({ data, deleteHandler }) => {
         />
         <Card.Body className="p-3 text-center">
           <Popconfirm 
-            title="Hapus outlet ini?"
+            title={`${t.delete_outlet}?`}
             onConfirm={deleteHandler}
-            okText="Ya"
-            cancelText="Batal"
+            okText={t.yes}
+            cancelText={t.cancel}
             placement="bottom"
             arrowPointAtCenter
           >
-            <Button danger type="primary" size="small">Hapus</Button>
+            <Button danger type="primary" size="small">{t.delete_text}</Button>
           </Popconfirm>
         </Card.Body>
       </motion.div>

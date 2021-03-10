@@ -5,7 +5,7 @@ import Col from 'react-bootstrap/Col'
 import Badge from 'react-bootstrap/Badge'
 import Media from 'react-bootstrap/Media'
 
-const AddressList = ({ data, showEditHandler, deleteHandler, changeMainAddress }) => {
+const AddressList = ({ t, data, showEditHandler, deleteHandler, changeMainAddress }) => {
   let phone = "";
   if(data.phone){
     phone = data.phone.split(" ").join("")
@@ -17,12 +17,12 @@ const AddressList = ({ data, showEditHandler, deleteHandler, changeMainAddress }
       <Row className="address-card">
         <Col lg={3}>
           <Media>
-            <Tooltip title={<small>Jadikan Alamat Utama</small>}>
+            <Tooltip title={<small>{t.default_address}</small>}>
               <Radio value={data.main_address} text={data.id} className="d-none d-lg-block" />
             </Tooltip>
             <Media.Body className="w-100">
               <div className="text-left">
-                <h4 className="fs-16 text-secondary mb-sm-0">Penerima</h4>
+                <h4 className="fs-16 text-secondary mb-sm-0">{t.receiver}</h4>
                 <p className="fs-14 mb-0 fw-500">{data.receiver}</p>
                 <p className="fs-14 mb-lg-0">{phone}</p>
               </div>
@@ -31,26 +31,26 @@ const AddressList = ({ data, showEditHandler, deleteHandler, changeMainAddress }
         </Col>
         <Col lg={3}>
           <div className="text-left">
-            <h4 className="fs-16 text-secondary mb-sm-0">Alamat Penerima</h4>
+            <h4 className="fs-16 text-secondary mb-sm-0">{t.recipment_address}</h4>
             <p className="fs-14 mb-0 fw-500">
-              {data.label} {data.main_address && <Badge variant="primary">Utama</Badge>}
+              {data.label} {data.main_address && <Badge variant="primary">{t.main_address}</Badge>}
             </p>
             <p className="fs-14 mb-lg-0">{data.recipient_address}</p>
           </div>
         </Col>
         <Col lg={4}>
           <div className="text-left">
-            <h4 className="fs-16 text-secondary mb-sm-0">Daerah Penerima</h4>
+            <h4 className="fs-16 text-secondary mb-sm-0">{t.receiving_area}</h4>
             <p className="fs-14 mb-lg-0">{data.region}, {data.postal_code}</p>
           </div>
         </Col>
         <Col lg={2}>
           <div className="text-center">
             <Popconfirm
-              title="Jadikan Alamat Utama?"
+              title={t.default_address}
               onConfirm={changeMainAddress}
-              okText="Ya"
-              cancelText="Batal"
+              okText={t.yes}
+              cancelText={t.cancel}
               placement="bottom"
               arrowPointAtCenter
               disabled={data.main_address}
@@ -67,10 +67,10 @@ const AddressList = ({ data, showEditHandler, deleteHandler, changeMainAddress }
               icon={<i className="far fa-pen" />} 
             />
             <Popconfirm
-              title="Hapus alamat ini?"
+              title={`${t.delete_address}?`}
               onConfirm={deleteHandler}
-              okText="Ya"
-              cancelText="Batal"
+              okText={t.yes}
+              cancelText={t.cancel}
               placement="bottom"
               arrowPointAtCenter
             >

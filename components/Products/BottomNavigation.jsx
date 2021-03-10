@@ -3,17 +3,29 @@ import { Space, Button } from "antd";
 import { motion } from "framer-motion"
 import { useSelector, useDispatch } from "react-redux";
 
+import { countDiscPrice } from 'lib/utility'
+import { ongoing } from 'components/Card/Admin/Product/Promo/statusType'
+
 import Image from 'next/image'
 import Nav from 'react-bootstrap/Nav'
 import Media from 'react-bootstrap/Media'
 import Navbar from 'react-bootstrap/Navbar'
 import Container from 'react-bootstrap/Container'
+import isEmpty from 'validator/lib/isEmpty';
 
 import formatNumber from "lib/formatNumber";
 
 const BottomNavigation = ({ product, love, loveHandler, quantity, selected }) => {
 
-  const { products_id, products_name, products_image_product, products_slug } = product
+  const { products_id, products_name, products_image_product, products_slug, products_discount_status } = product
+
+  const { price, discount, isWholesale } = selected
+
+  const calcTotalPrice = (prc, disc, sale) => {
+    let price = prc
+    if(products_discount_status == ongoing && disc && !sale) price = countDiscPrice(disc, prc)
+    return price
+  }
 
   return (
     <>
@@ -37,10 +49,12 @@ const BottomNavigation = ({ product, love, loveHandler, quantity, selected }) =>
 
           <Nav className="ml-auto">
             <Space>
-              <div className="mr-2">
-                <p className="mb-0 fs-12 text-muted fw-500" style={{ lineHeight: '15px' }}>Total</p>
-                <span className="fs-14 fw-600">Rp.{formatNumber(selected.price*quantity)}</span>
-              </div>
+              {((Array.isArray(price) && price.length < 2 && Boolean(quantity)) || (!Array.isArray(price) && Boolean(quantity))) && (
+                <div className="mr-2">
+                  <p className="mb-0 fs-12 text-muted fw-500" style={{ lineHeight: '15px' }}>Total</p>
+                  <span className="fs-14 fw-600">Rp.{formatNumber(calcTotalPrice(price, discount, isWholesale)*quantity)}</span>
+                </div>
+              )}
               <Button 
                 size="large"
                 className="btn-love p-0"

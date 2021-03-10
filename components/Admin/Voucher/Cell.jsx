@@ -61,6 +61,7 @@ const VoucherCellEditable = ({ index, record, editable, onRemove, discountTypeHa
                 <div className="ant-input-wrapper ant-input-group input-group-variant" style={{ zIndex: 1 }}>
                   <span className={`ant-input-group-addon noselect fs-12 bg-transparent`}>Rp</span>
                   <InputNumber
+                    defaultValue="0"
                     placeholder="Minimum Transaksi"
                     className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}

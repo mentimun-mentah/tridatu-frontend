@@ -1,8 +1,11 @@
+import { Avatar, Drawer } from 'antd'
+import { useRouter } from 'next/router'
 import { useSelector } from 'react-redux'
 import { useState, useEffect } from 'react'
-import { Avatar, Drawer } from 'antd'
 
-import { useRouter } from 'next/router'
+import id from 'locales/id/account/profile'
+import en from 'locales/en/account/profile'
+
 import Nav from 'react-bootstrap/Nav'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -18,6 +21,10 @@ const MORE = 'more'
 
 const AccountLayout = ({ children, pathname }) => {
   const router = useRouter()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const [showDrawer, setShowDrawer] = useState(false)
 
   const user = useSelector(state => state.auth.user)
@@ -56,42 +63,42 @@ const AccountLayout = ({ children, pathname }) => {
               <Nav.Link eventKey={PROFILE} className="side-nav-link">
                 <span>
                   <i className="far fa-user-circle mr-2" />
-                  Akun Saya
+                  {t.my_account}
                 </span>
               </Nav.Link>
 
               <Nav.Link eventKey={ORDERS} className="side-nav-link">
                 <span>
                   <i className="far fa-clipboard-list mr-2" />
-                  Pesanan Saya
+                  {t.my_order}
                 </span>
               </Nav.Link>
 
               <Nav.Link eventKey={FAVORITE} className="side-nav-link">
                 <span>
                   <i className="far fa-heart mr-2" />
-                  Favorit
+                  {t.favorite}
                 </span>
               </Nav.Link>
 
               <Nav.Link eventKey={REVIEW} className="side-nav-link">
                 <span>
                   <i className="far fa-file-signature mr-2" />
-                  Ulasan
+                  {t.reviews}
                 </span>
               </Nav.Link>
 
               <Nav.Link eventKey={ADDRESS} className="side-nav-link">
                 <span>
                   <i className="far fa-address-book mr-2" />
-                  Daftar Alamat
+                  {t.address_list}
                 </span>
               </Nav.Link>
 
               <Nav.Link eventKey={PASSWORD} className="side-nav-link">
                 <span>
                   <i className="far fa-lock mr-2" />
-                  Atur Password
+                  {t.set_password}
                 </span>
               </Nav.Link>
 
@@ -114,35 +121,35 @@ const AccountLayout = ({ children, pathname }) => {
                 <Nav.Link eventKey={PROFILE} className="mobile-btn">
                   <i className="far fa-user-circle fs-24" />
                   <br />
-                  Akun
+                  {t.account}
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="fs-10">
                 <Nav.Link eventKey={ORDERS} className="mobile-btn">
                   <i className="far fa-clipboard-list fs-24" />
                   <br />
-                  Pesanan
+                  {t.order}
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="fs-10">
                 <Nav.Link eventKey={FAVORITE} className="mobile-btn">
                   <i className="far fa-heart fs-24" />
                   <br />
-                  Favorit
+                  {t.favorite}
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="fs-10">
                 <Nav.Link eventKey={REVIEW} className="mobile-btn">
                   <i className="far fa-file-signature fs-24" />
                   <br />
-                  Ulasan
+                  {t.reviews}
                 </Nav.Link>
               </Nav.Item>
               <Nav.Item className="fs-10">
                 <Nav.Link eventKey={MORE} className={`mobile-btn ${ADDRESS == pathname ? 'active' : PASSWORD == pathname ? 'active' : ''}`}>
                   <i className="far fa-ellipsis-h fs-24" />
                   <br />
-                  Lainnya
+                  {t.other}
                 </Nav.Link>
               </Nav.Item>
             </Nav>
@@ -169,14 +176,14 @@ const AccountLayout = ({ children, pathname }) => {
             <Nav.Link eventKey={ADDRESS} className="side-nav-link">
               <span>
                 <i className="far fa-address-book mr-2" />
-                Daftar Alamat
+                {t.address_list}
               </span>
             </Nav.Link>
 
             <Nav.Link eventKey={PASSWORD} className="side-nav-link">
               <span>
                 <i className="far fa-lock mr-2" />
-                Atur Password
+                {t.set_password}
               </span>
             </Nav.Link>
           </Nav>

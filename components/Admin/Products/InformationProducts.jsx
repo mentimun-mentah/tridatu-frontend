@@ -23,7 +23,7 @@ import * as actions from "store/actions";
 
 const InformationProducts = ({ 
   informationProduct, onInformationProductChange, cascaderValue, cascaderIsShow, onCascaderChange, allCategoriesList, onFocusCascader, 
-  filter 
+  filter, t
 }) => {
   const dispatch = useDispatch()
 
@@ -39,19 +39,19 @@ const InformationProducts = ({
     <>
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Informasi Produk</h5>
+          <h5 className="mb-0 fs-16-s">{t.product_information.title}</h5>
         </Card.Body>
         <Card.Body className="p-3">
 
           <Form layout="vertical">
             <Form.Item 
               required
-              label="Nama Produk" 
+              label={t.product_information.product_name}
               validateStatus={!name.isValid && name.message && "error"}
             >
               <Input 
                 name="name"
-                placeholder="Nama Produk" 
+                placeholder={t.product_information.product_name}
                 className="h-35" 
                 value={name.value}
                 onChange={e => onInformationProductChange(e)}
@@ -60,13 +60,13 @@ const InformationProducts = ({
             </Form.Item>
             <Form.Item 
               required
-              label="Deskripsi Produk" 
+              label={t.product_information.product_description}
               validateStatus={!desc.isValid && desc.message && "error"}
             >
               <Input.TextArea 
                 name="desc"
                 autoSize={{ minRows: 8, maxRows: 10 }} 
-                placeholder="Deskripsi produk" 
+                placeholder={t.product_information.product_description}
                 value={desc.value}
                 onChange={e => onInformationProductChange(e)}
               />
@@ -74,7 +74,7 @@ const InformationProducts = ({
             </Form.Item>
             <Form.Item 
               required
-              label="Kategori" 
+              label={t.product_information.category}
               validateStatus={!item_sub_category_id.isValid && item_sub_category_id.message && "error"}
             >
               <Cascader 
@@ -86,19 +86,19 @@ const InformationProducts = ({
                 onChange={onCascaderChange}
                 options={allCategoriesList} 
                 onFocus={onFocusCascader}
-                placeholder="Ketik dan cari / pilih Kategori" 
+                placeholder={t.product_information.placeholder.category}
                 popupClassName="cascader-category-menus"
               />
               <ErrorTooltip item={item_sub_category_id} />
             </Form.Item>
             <Form.Item 
-              label="Brand"
+              label={t.product_information.brand}
               validateStatus={!brand_id.isValid && brand_id.message && "error"}
             >
               <Select
                 showSearch
                 name="brand_id"
-                placeholder="Buat Brand"
+                placeholder={t.product_information.placeholder.brand}
                 value={brand_id.value}
                 onFocus={() => fetchBrands()}
                 onSelect={e => onInformationProductChange(e, "brand_id")}
@@ -106,7 +106,7 @@ const InformationProducts = ({
                   option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                 }
               >
-                <Select.Option value="" key={null}>Tidak ada brand</Select.Option>
+                <Select.Option value="" key={null}>{t.product_information.no_brand}</Select.Option>
                 {brandsData.map(data => (
                   <Select.Option value={data.id} key={data.id}>{data.name}</Select.Option>
                 ))}
@@ -115,17 +115,17 @@ const InformationProducts = ({
             </Form.Item>
             <Form.Item 
               required
-              label="Kondisi" 
+              label={t.product_information.condition}
               validateStatus={!condition.isValid && condition.message && "error"}
             >
               <Select 
                 name="condition"
-                placeholder="Kondisi produk" 
+                placeholder={t.product_information.placeholder.condition} 
                 value={condition.value}
                 onSelect={e => onInformationProductChange(e, "condition")}
               >
-                <Select.Option value={true}>Baru</Select.Option>
-                <Select.Option value={false}>Bekas</Select.Option>
+                <Select.Option value={true}>{t.product_information.condition_new}</Select.Option>
+                <Select.Option value={false}>{t.product_information.condition_used}</Select.Option>
               </Select>
               <ErrorTooltip item={condition} />
             </Form.Item>

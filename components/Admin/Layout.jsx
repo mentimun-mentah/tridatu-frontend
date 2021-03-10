@@ -5,6 +5,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Layout, Menu, Dropdown, Avatar, Badge, Grid, Drawer } from 'antd';
 import { MenuUnfoldOutlined, MenuFoldOutlined } from '@ant-design/icons';
 
+import id from 'locales/id/admin/layout'
+import en from 'locales/en/admin/layout'
+
 import Image from "next/image";
 import isIn from 'validator/lib/isIn'
 import Row from 'react-bootstrap/Row';
@@ -14,42 +17,45 @@ import * as actions from "store/actions";
 
 const useBreakpoint = Grid.useBreakpoint;
 
-const routes = {
-  umum: [
-    {link: "/admin", text: "Dashboard", icon: "far fa-house-flood"},
-    {link: "/", text: "Home", icon: "far fa-door-open"},
-  ],
-  pesanan: [
-    {link: "/admin/sale?type=all", text: "Pesanan Saya", icon: "far fa-clipboard-list"},
-  ],
-  kategori: [
-    {link: "/admin/category", text: "Kategori", icon: "far fa-sitemap"},
-    {link: "/admin/category/new", text: "Tambah Kategori", icon: "far fa-folder-tree"},
-  ],
-  produk: [
-    {link: "/admin/products", text: "Produk Saya", icon: "far fa-shopping-bag"},
-    {link: "/admin/products/new", text: "Tambah Produk", icon: "far fa-file-plus"},
-    {link: "/admin/products/promo", text: "Diskon Produk", icon: "far fa-percent"},
-  ],
-  brand: [
-    {link: "/admin/brand", text: "Brand", icon: "far fa-layer-group"},
-    {link: "/admin/brand/new", text: "Tambah Brand", icon: "far fa-layer-plus"},
-  ],
-  promo: [
-    {link: "/admin/voucher", text: "Promo", icon: "far fa-ticket-alt"},
-    {link: "/admin/voucher/new-promo", text: "Tambah Promo", icon: "far fa-money-check"},
-    {link: "/admin/voucher/new-voucher", text: "Tambah Voucher", icon: "far fa-money-check"},
-  ],
-  administrasi: [
-    {link: "/admin/review", text: "Ulasan Pembeli", icon: "far fa-smile-wink"},
-    {link: "/admin/outlet", text: "Informasi Outlet", icon: "far fa-store"},
-    {link: "/admin/voucher/banner", text: "Banner Promo", icon: "far fa-money-check"},
-  ],
+const routes = (t) => {
+  return {
+    [t.general.title]: [
+      {link: "/admin", text: t.general.dashboard, icon: "far fa-house-flood"},
+      {link: "/", text: t.general.home, icon: "far fa-door-open"},
+    ],
+    [t.order.title]: [
+      {link: "/admin/sale?type=all", text: t.order.my_order, icon: "far fa-clipboard-list"},
+    ],
+    [t.category.title]: [
+      {link: "/admin/category", text: t.category.category, icon: "far fa-sitemap"},
+      {link: "/admin/category/new", text: t.category.add_category, icon: "far fa-folder-tree"},
+    ],
+    [t.product.title]: [
+      {link: "/admin/products", text: t.product.my_product, icon: "far fa-shopping-bag"},
+      {link: "/admin/products/new", text: t.product.add_product, icon: "far fa-file-plus"},
+      {link: "/admin/products/discount", text: t.product.discount_product, icon: "far fa-percent"},
+    ],
+    [t.brand.title]: [
+      {link: "/admin/brand", text: t.brand.brand, icon: "far fa-layer-group"},
+      {link: "/admin/brand/new", text: t.brand.add_brand, icon: "far fa-layer-plus"},
+    ],
+    [t.promo.title]: [
+      {link: "/admin/promo", text: t.promo.promo, icon: "far fa-ticket-alt"},
+      {link: "/admin/promo/new-promo", text: t.promo.add_promo, icon: "far fa-gift-card"},
+      {link: "/admin/promo/new-voucher", text: t.promo.add_voucher, icon: "far fa-money-check"},
+      {link: "/admin/promo/update-voucher", text: "Update Voucher", icon: "far fa-money-check"},
+    ],
+    [t.administration.title]: [
+      {link: "/admin/review", text: t.administration.buyer_reviews, icon: "far fa-smile-wink"},
+      {link: "/admin/outlet", text: t.administration.outlet_information, icon: "far fa-store"},
+      {link: "/admin/promo/new-banner", text: t.administration.promo_banner, icon: "far fa-pennant"},
+    ],
+  }
 }
 
-const menu = (logoutHandler) => (
+const menu = (logoutHandler, t) => (
   <Menu>
-    <Menu.Item key="SignOut" onClick={logoutHandler}> Keluar </Menu.Item>
+    <Menu.Item key="SignOut" onClick={logoutHandler}>{t.logout}</Menu.Item>
   </Menu>
 )
 
@@ -107,7 +113,7 @@ const getActiveMenu = (routes, router) => {
   let lastPathrs = rsSplit[rrSplit.length - 1]
 
   if(lastPathrr.startsWith('[')){
-    if(lastPathrs && isIn(lastPathrs, ['new', 'promo'])){
+    if(lastPathrs && isIn(lastPathrs, ['new', 'discount'])){
       rsSplit.shift()
     }
   }
@@ -131,6 +137,10 @@ const getActiveMenu = (routes, router) => {
 
 const AdminLayout = ({ children }) => {
   const router = useRouter()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const dispatch = useDispatch()
   const screens = useBreakpoint()
   const [collapsed, setCollapsed] = useState(false)
@@ -236,7 +246,7 @@ const AdminLayout = ({ children }) => {
             selectedKeys={activeMenu}
             onSelect={onSelectSiderMenu}
           >
-            {Object.entries(routes).map(([key, val]) => (
+            {Object.entries(routes(t)).map(([key, val]) => (
               <Menu.ItemGroup 
                 key={key} 
                 className={`${collapsed && 'text-center'} mobile-last-item`}
@@ -265,7 +275,7 @@ const AdminLayout = ({ children }) => {
   const rightMenu = [
     <Dropdown 
       arrow
-      overlay={() => menu(logoutHandler)} 
+      overlay={() => menu(logoutHandler, t)} 
       trigger={['click']}
       placement="bottomRight" 
       key="user"

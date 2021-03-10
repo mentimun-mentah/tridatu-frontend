@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { Card as CardAnt, Typography, Space, Button, Popconfirm, Collapse } from 'antd';
+import { Card as CardAnt, Typography, Space, Button, Popconfirm, Collapse, Badge } from 'antd';
 import { QuestionCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import Link from 'next/link';
@@ -49,7 +49,15 @@ const AdminCardVoucher = ({ image, idx }) => {
           <div className="promotion-date">
             <div className="promotion-date-detail">
               <div className="promotion-box-label">Periode Promo</div>
-              <div className="promotion-box__value">10 Sep - 29 Okt 2020</div>
+              <div className="promotion-box__value mb-1">10 Sep - 29 Okt 2020</div>
+            </div>
+          </div>
+          <div className="promotion-date">
+            <div className="promotion-date-detail">
+              <div className="promotion-box-label">Status Promo</div>
+              <div className="promotion-box__value">
+                <Badge className="badge-green-processing" status="processing" color="green" text="Sedang Berjalan" />
+              </div>
             </div>
           </div>
 

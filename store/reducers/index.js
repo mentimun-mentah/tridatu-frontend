@@ -7,6 +7,7 @@ import categoriesRecuder from "./categories"
 import productsRecuder from "./products"
 import shippingRecuder from "./shipping"
 import discountReducer from "./discount"
+import commentsReducer from "./comments"
 
 import layoutReducer from "./layout"
 
@@ -19,6 +20,7 @@ const reducers = {
   products: productsRecuder,
   shipping: shippingRecuder,
   discounts: discountReducer,
+  comments: commentsReducer,
   layout: layoutReducer
 };
 

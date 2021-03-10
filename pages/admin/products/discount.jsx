@@ -1,9 +1,13 @@
+import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router';
 import { useState, useEffect  } from 'react'
 import { Table, Input, Select, Empty } from 'antd'
 import { useSelector, useDispatch } from "react-redux";
-import { useRouter } from 'next/router';
 
 import { orderList, columns } from 'data/discount'
+
+import id from 'locales/id/admin/product/discount'
+import en from 'locales/en/admin/product/discount'
 
 import axios, { signature_exp, resNotification } from "lib/axios";
 import * as actions from "store/actions";
@@ -21,15 +25,18 @@ import PromoModal from 'components/Modal/Admin/Products/SetupPromo'
 const components = { body: { cell: EditableCell } };
 const per_page = 10
 
-const EmptyProduct = () => (
-  <div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: ".2" }} className="w-100" >
-    <Empty className="my-5" description={<span className="text-secondary">Tidak ada produk</span>} />
+const EmptyProduct = ({t}) => (
+  <div className="w-100">
+    <Empty className="my-5" description={<span className="text-secondary">{t.empty_product}</span>} />
   </div>
 )
 
 const Discount = ({ searchQuery }) => {
   const router = useRouter()
   const dispatch = useDispatch()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
 
   const discounts = useSelector(state => state.discounts.discounts)
 
@@ -69,7 +76,7 @@ const Discount = ({ searchQuery }) => {
     setDiscountStatus("")
   }
 
-  const columnsProductList = columns.map(col => {
+  const columnsProductList = columns(t).map(col => {
     if(!col.action) return col
     let queryString = router.query
     return {
@@ -80,7 +87,8 @@ const Discount = ({ searchQuery }) => {
         action: col.action,
         onGetDiscount: (product_id) => getDiscountHandler(product_id),
         onSetDiscountStatus: (sts) => setDiscountStatus(sts),
-        onNonActiveDiscount: (product_id) => dispatch(actions.nonActiveDiscount(product_id, { ...queryString }))
+        onNonActiveDiscount: (product_id) => dispatch(actions.nonActiveDiscount(product_id, { ...queryString })),
+        t: t
       })
     }
   })
@@ -161,7 +169,7 @@ const Discount = ({ searchQuery }) => {
     <>
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Daftar Promo</h5>
+          <h5 className="mb-0 fs-16-s">{t.dicount_list}</h5>
         </Card.Body>
         <Card.Body className="p-3 border-bottom">
           <Form>
@@ -170,7 +178,7 @@ const Discount = ({ searchQuery }) => {
                 <Input 
                   className="h-35"
                   name="q"
-                  placeholder="Cari berdasarkan nama" 
+                  placeholder={t.search_placeholder} 
                   prefix={<i className="far fa-search" />}
                   value={q.value}
                   onChange={e => onFilterChange(e)}
@@ -185,7 +193,7 @@ const Discount = ({ searchQuery }) => {
                   value={status.value}
                   onChange={e => onFilterChange(e, "status")}
                 >
-                  {orderList.map((list, i) => (
+                  {orderList(t).map((list, i) => (
                     <Select.Option key={i} value={list.value}>{list.label}</Select.Option>
                   ))}
                 </Select>
@@ -199,7 +207,7 @@ const Discount = ({ searchQuery }) => {
             components={components}
             columns={columnsProductList} 
             dataSource={dataSourceProducts}
-            locale={{ emptyText: <EmptyProduct /> }}
+            locale={{ emptyText: <EmptyProduct t={t} /> }}
           />
 
           <Card.Body className="text-right">
@@ -216,6 +224,7 @@ const Discount = ({ searchQuery }) => {
 
 
       <PromoModal 
+        t={t}
         visible={show}
         onClose={closeModalSetPromoHandler}
         discount={discount}
@@ -246,4 +255,4 @@ Discount.getInitialProps = async ctx => {
   return { searchQuery: searchQuery }
 }
 
-export default Discount
+export default withAuth(Discount)

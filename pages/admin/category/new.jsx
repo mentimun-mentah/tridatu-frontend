@@ -1,9 +1,14 @@
-import { withAuth } from 'lib/withAuth'
 import { useState } from 'react'
+import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
 import { useDispatch, useSelector } from "react-redux";
 import { Tabs, Input, Form, Select, Button, Space } from 'antd'
 import { LoadingOutlined } from "@ant-design/icons";
 
+import id from 'locales/id/admin/category'
+import en from 'locales/en/admin/category'
+
+import isIn from 'validator/lib/isIn'
 import Card from 'react-bootstrap/Card'
 
 import * as actions from "store/actions";
@@ -18,6 +23,11 @@ const SUBCATEGORIES = "sub-categories"
 const ITEMSUBCATEGORIES = "item-sub-categories"
 
 const AddCategory = () => {
+  const router = useRouter()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const dispatch = useDispatch()
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false)
@@ -43,7 +53,7 @@ const AddCategory = () => {
 
   const submitCategoriesHandler = e => {
     e.preventDefault()
-    if(formCategoriesIsValid(categories, setCategories)){
+    if(formCategoriesIsValid(categories, setCategories, t)){
       setLoading(true)
       const data = { name: name_category.value }
 
@@ -55,19 +65,19 @@ const AddCategory = () => {
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
-          const errName = "The name has already been taken."
+          const errName = ["The name has already been taken.", "Nama sudah dipakai."]
           if(errDetail == signature_exp){
             setLoading(false)
             setCategories(formCategories)
-            resNotification("success", "Success", "Successfully add a new category.")
-          } else if (typeof errDetail === "string" && errDetail === errName) {
+            // resNotification("success", "Success", "Successfully add a new category.")
+          } else if (typeof errDetail === "string" && isIn(errDetail, errName)) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(categories));
             state.name.value = state.name.value;
             state.name.isValid = false;
             state.name.message = errDetail;
             setCategories(state);
-          } else if(typeof(errDetail) === "string" && errDetail !== errName) {
+          } else if(typeof(errDetail) === "string" && !isIn(errDetail, errName)) {
             setLoading(false)
             resNotification("error", "Error", errDetail)
           } else {
@@ -111,7 +121,7 @@ const AddCategory = () => {
 
   const submitSubCategoriesHandler = e => {
     e.preventDefault()
-    if(formSubCategoriesIsValid(subCategories, setSubCategories)){
+    if(formSubCategoriesIsValid(subCategories, setSubCategories, t)){
       setLoading(true)
 
       const data = { category_id: category_id.value, name: name_sub_category.value }
@@ -124,19 +134,20 @@ const AddCategory = () => {
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
-          const errName = "The name has already been taken in sub category."
+          // const errName = "The name has already been taken in sub category."
+          const errName = ["The name has already been taken.", "Nama sudah dipakai."]
           if(errDetail == signature_exp){
             setLoading(false)
             setSubCategories(formSubCategories)
-            resNotification("success", "Success", "Successfully add a new sub-category.")
-          } else if (typeof errDetail === "string" && errDetail === errName) {
+            // resNotification("success", "Success", "Successfully add a new sub-category.")
+          } else if (typeof errDetail === "string" && isIn(errDetail, errName)) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(subCategories));
             state.name.value = state.name.value;
             state.name.isValid = false;
             state.name.message = errDetail;
             setSubCategories(state)
-          } else if(typeof(errDetail) === "string" && errDetail !== errName) {
+          } else if(typeof(errDetail) === "string" && !isIn(errDetail, errName)) {
             setLoading(false)
             resNotification("error", "Error", errDetail)
           } else {
@@ -180,7 +191,7 @@ const AddCategory = () => {
 
   const submitItemSubCategoriesHandler = e => {
     e.preventDefault()
-    if(formItemSubCategoriesIsValid(itemSubCategories, setItemSubCategories)){
+    if(formItemSubCategoriesIsValid(itemSubCategories, setItemSubCategories, t)){
       setLoading(true)
 
       const data = { sub_category_id: sub_category_id.value, name: name_item_sub_category.value }
@@ -193,19 +204,20 @@ const AddCategory = () => {
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
-          const errName = "The name has already been taken in the item sub-category."
+          // const errName = "The name has already been taken in the item sub-category."
+          const errName = ["The name has already been taken.", "Nama sudah dipakai."]
           if(errDetail == signature_exp){
             setLoading(false)
             setItemSubCategories(formItemSubCategories)
-            resNotification("success", "Success", "Successfully add a new item sub-category.")
-          } else if (typeof errDetail === "string" && errDetail === errName) {
+            // resNotification("success", "Success", "Successfully add a new item sub-category.")
+          } else if (typeof errDetail === "string" && isIn(errDetail, errName)) {
             setLoading(false)
             const state = JSON.parse(JSON.stringify(itemSubCategories));
             state.name.value = state.name.value;
             state.name.isValid = false;
             state.name.message = errDetail;
             setItemSubCategories(state)
-          } else if(typeof(errDetail) === "string" && errDetail !== errName) {
+          } else if(typeof(errDetail) === "string" && !isIn(errDetail, errName)) {
             setLoading(false)
             resNotification("error", "Error", errDetail)
           } else {
@@ -245,24 +257,24 @@ const AddCategory = () => {
         <Card.Body className="p-3">
           <Tabs className="order-tabs noselect" activeKey={activeTab} onTabClick={onTabClick}>
 
-            <Tabs.TabPane tab="Tambah Kategori" key={CATEGORIES}>
+            <Tabs.TabPane tab={`${t.add} ${t.category}`} key={CATEGORIES}>
               <Form form={form} layout="vertical">
-                <Form.Item label="Nama Kategori" required>
+                <Form.Item label={t.category_name} required>
                   <Input 
                     value={name_category.value}
                     onChange={inputCategoriesHandler}
                     className="h-33"
-                    placeholder="Contoh: Pria, Wanita, Anak-anak dll" 
+                    placeholder={t.category_input_placeholder} 
                   />
                   <ErrorMessage item={name_category} />
                 </Form.Item>
               </Form>
               <Space>
                 <Button type="submit" className="btn-tridatu" onClick={submitCategoriesHandler} style={{ width: 80 }} disabled={loading}>
-                  {loading ? <LoadingOutlined /> : "Simpan"}
+                  {loading ? <LoadingOutlined /> : t.save}
                 </Button> 
                 <Button onClick={() => cancelHandler(formCategories, setCategories)}>
-                  Batal
+                  {t.cancel}
                 </Button>
               </Space>
             </Tabs.TabPane>
@@ -270,14 +282,14 @@ const AddCategory = () => {
 
 
             
-            <Tabs.TabPane tab="Tambah Sub Kategori" key={SUBCATEGORIES}>
+            <Tabs.TabPane tab={`${t.add} Sub ${t.category}`} key={SUBCATEGORIES}>
               <Form form={form} layout="vertical">
-                <Form.Item label="Kategori" required>
+                <Form.Item label={t.category} required>
                   <Select
                     showSearch
                     className="w-100"
                     name="category_id"
-                    placeholder="Pilih kategori"
+                    placeholder={t.choose_category}
                     optionFilterProp="children"
                     onFocus={() => fetchCategories(false)}
                     onBlur={resetCategoriesData}
@@ -293,37 +305,37 @@ const AddCategory = () => {
                   </Select>
                   <ErrorMessage item={category_id} />
                 </Form.Item>
-                <Form.Item label="Nama Sub Kategori" required>
+                <Form.Item label={t.sub_category_name} required>
                   <Input 
                     className="h-33"
                     name="name"
                     value={name_sub_category.value}
                     onChange={e => inputSubCategoriesHandler(e)}
-                    placeholder="Contoh: Baju, Celana, Jaket dll" 
+                    placeholder={t.sub_category_input_placeholder} 
                   />
                   <ErrorMessage item={name_sub_category} />
                 </Form.Item>
               </Form>
               <Space>
                 <Button type="submit" className="btn-tridatu" onClick={submitSubCategoriesHandler} style={{ width: 80 }} disabled={loading}>
-                  {loading ? <LoadingOutlined /> : "Simpan"}
+                  {loading ? <LoadingOutlined /> : t.save}
                 </Button> 
                 <Button onClick={() => cancelHandler(formSubCategories, setSubCategories)}>
-                  Batal
+                  {t.cancel}
                 </Button>
               </Space>
             </Tabs.TabPane>
 
 
 
-            <Tabs.TabPane tab="Tambah Item Sub Kategori" key={ITEMSUBCATEGORIES}>
+            <Tabs.TabPane tab={`${t.add} Item Sub ${t.category}`} key={ITEMSUBCATEGORIES}>
               <Form form={form} layout="vertical">
-                <Form.Item label="Sub Kategori" required>
+                <Form.Item label={`Sub ${t.category}`} required>
                   <Select
                     showSearch
                     className="w-100"
                     name="sub_category_id"
-                    placeholder="Pilih sub kategori"
+                    placeholder={t.choose_sub_category}
                     optionFilterProp="children"
                     onFocus={() => fetchCategories(true)}
                     onBlur={resetCategoriesData}
@@ -341,13 +353,13 @@ const AddCategory = () => {
                   </Select>
                   <ErrorMessage item={sub_category_id} />
                 </Form.Item>
-                <Form.Item label="Nama Item Sub Kategori" required>
+                <Form.Item label={t.item_sub_category_name} required>
                   <Input 
                     className="h-33"
                     name="name"
                     value={name_item_sub_category.value}
                     onChange={e => inputItemSubCategoriesHandler(e)}
-                    placeholder="Contoh: Kemeja, Kaos, Polo dll" 
+                    placeholder={t.item_sub_category_input_placeholder} 
                   />
                   <ErrorMessage item={name_item_sub_category} />
                 </Form.Item>
@@ -360,10 +372,10 @@ const AddCategory = () => {
                   style={{ width: 80 }} 
                   disabled={loading}
                 >
-                  {loading ? <LoadingOutlined /> : "Simpan"}
+                  {loading ? <LoadingOutlined /> : t.save}
                 </Button> 
                 <Button onClick={() => cancelHandler(formItemSubCategories, setItemSubCategories)}>
-                  Batal
+                  {t.cancel}
                 </Button>
               </Space>
             </Tabs.TabPane>

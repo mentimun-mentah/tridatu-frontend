@@ -1,10 +1,10 @@
 import React from "react";
 import { Provider } from "react-redux";
+import { setCookie } from "nookies"
 
 import Head from "next/head";
 import Layout from "components/Layout";
 
-import * as actions from "store/actions";
 import withReduxStore from "lib/with-redux-store";
 import whyDidYouRender from "@welldone-software/why-did-you-render";
 
@@ -83,7 +83,12 @@ const App = ({ Component, pageProps, store }) => {
           color: #d63031;
           background-color: #d6303130;
         }
-        /*BADGE BOOTSTRAP*/
+
+        /*BADGE ANT*/
+        .badge-green-processing > .ant-badge-status-processing::after{
+          border: 1px solid #53c519;
+        }
+
 
         /*ANT RATE*/
         .ant-rate {
@@ -132,6 +137,12 @@ const App = ({ Component, pageProps, store }) => {
         }
         .ant-checkbox-checked::after {
           border: 1px solid #ff4d4f;
+        }
+        .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after{
+          border-color: white;
+        }
+        .ant-checkbox-checked.ant-checkbox-disabled .ant-checkbox-inner{
+           border: 1px solid #ff4d4f!important;
         }
         /*ANT CHECKBOX*/
 
@@ -737,14 +748,23 @@ const App = ({ Component, pageProps, store }) => {
           background-color: #fff;
           box-shadow: 0rem 0.3rem 0.8rem 0rem rgba(0, 0, 0, 0.15) !important;
         }
+
+        .shadow-1 {
+          box-shadow: rgb(49 53 59 / 16%) 0px 1px 6px 0px !important;
+        }
       `}</style>
     </>
   );
 };
 
-App.getInitialProps = async ({ Component, ctx }) => {
+App.getInitialProps = async ({ Component, ctx, router }) => {
   const pageProps = Component.getInitialProps ? await Component.getInitialProps(ctx) : {};
-  // await ctx.store.dispatch(actions.authCheckState(ctx));
+  const { locale } = router
+
+  setCookie(ctx, 'NEXT_LOCALE', locale, {
+    maxAge: 30 * 24 * 60 * 60,
+    path: '/',
+  })
   return { pageProps };
 };
 

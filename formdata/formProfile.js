@@ -1,4 +1,3 @@
-import isMobilePhone from 'validator/lib/isMobilePhone'
 import isEmpty from 'validator/lib/isEmpty'
 import isLength from 'validator/lib/isLength'
 
@@ -9,7 +8,7 @@ export const formProfile = {
   gender: { value: [], isValid: true, message: "" },
 }
 
-export const formProfileIsValid = (state, setState) => {
+export const formProfileIsValid = (state, setState, t) => {
   const username = { ...state.username }
   const phone = { ...state.phone} 
   const gender = { ...state.gender} 
@@ -18,19 +17,19 @@ export const formProfileIsValid = (state, setState) => {
   if(!isLength(username.value, { min: 3, max: 100 })){
     isGood = false;
     username.isValid = false;
-    username.message = "ensure this value has at least 3 - 100 characters";
+    username.message = t.validation.username;
   }
 
-  if(!isMobilePhone("+62"+phone.value, ['id-ID'])){
+  if(isEmpty(phone.value ? phone.value : "")){
     isGood = false;
     phone.isValid = false;
-    phone.message = "Please provide a valid mobile phone number";
+    phone.message = t.validation.empty;
   }
 
   if(isEmpty(gender.value ? gender.value : "")){
     isGood = false;
     gender.isValid = false;
-    gender.message = "Gender can't be empty";
+    gender.message = t.validation.empty;
   }
 
   if(!isGood) setState({ ...state, username, phone, gender })

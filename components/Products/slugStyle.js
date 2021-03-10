@@ -45,12 +45,12 @@ const SlugStyle = css`
 .info-product-body-title{
   font-size: 14px;
 }
-.info-product-body-price{
+:global(.info-product-body-price){
   font-weight: 700;
   font-size: 22px;
   color: #d63031;
 }
-.info-product-body-price-disc{
+:global(.info-product-body-price-disc){
   font-weight: 400;
   color: #bbb;
   text-decoration: line-through;

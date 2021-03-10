@@ -15,7 +15,7 @@ import CategoryMenu from './CategoryMenu';
 
 const useBreakpoint = Grid.useBreakpoint;
 
-const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, setSearchQuery, routes }) => {
+const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, setSearchQuery, routes, t }) => {
   const router = useRouter()
   const dispatch = useDispatch()
   const screens = useBreakpoint();
@@ -129,20 +129,20 @@ const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, set
 
           {!user && (
             <>
-              <Nav.Link onClick={login}>Masuk</Nav.Link>
-              <Nav.Link onClick={register}>Daftar</Nav.Link>
+              <Nav.Link onClick={login}>{t.login}</Nav.Link>
+              <Nav.Link onClick={register}>{t.register}</Nav.Link>
             </>
           )}
 
           <Link href="/products" as="/products">
             <Nav.Link as="a" onClick={showCategoryHandler}>
-              Kategori
+              {t.category}
             </Nav.Link>
           </Link>
 
           <Link href="/promo" as="/promo">
             <Nav.Link as="a" onClick={close}>
-              Promo
+              {t.promo}
             </Nav.Link>
           </Link>
 
@@ -162,7 +162,7 @@ const MobileMenu  = ({ visible, close, register, login, logout, searchQuery, set
                   </Nav.Link>
                 </Link>
               ))}
-              <Nav.Link onClick={logout}>Keluar</Nav.Link>
+              <Nav.Link onClick={logout}>{t.logout}</Nav.Link>
             </>
           )}
         </Nav>

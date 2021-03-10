@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Button, Modal } from "antd";
-import { useSelector } from "react-redux";
-import { AnimatePresence, motion } from "framer-motion";
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
+import { useSelector } from "react-redux";
 import { LoadingOutlined } from "@ant-design/icons";
+import { AnimatePresence, motion } from "framer-motion";
+
+import id from 'locales/id/account/password'
+import en from 'locales/en/account/password'
 
 import axios, { jsonHeaderHandler, resNotification, signature_exp } from "lib/axios";
 import Col from "react-bootstrap/Col";
@@ -15,6 +19,11 @@ import ErrorMessage from "components/ErrorMessage";
 import { formConfigPassword, formVerifyPassword, formConfigPasswordIsValid, formVerifyPasswordIsValid } from "formdata/formConfigPassword";
 
 const Password = () => {
+  const router = useRouter();
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const [loading, setLoading] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formPassword, setFormPassword] = useState(formConfigPassword);
@@ -58,7 +67,7 @@ const Password = () => {
 
   const submitHandler = (e) => {
     e.persist()
-    if (formConfigPasswordIsValid(formPassword, setFormPassword, isUpdate)) {
+    if (formConfigPasswordIsValid(formPassword, setFormPassword, isUpdate, t)) {
       setLoading(true);
       let url = "/users/add-password";
       let method = "post";
@@ -117,7 +126,7 @@ const Password = () => {
 
   const submitVerifyPassword = (e) => {
     e.persist()
-    if (formVerifyPasswordIsValid(verifyPassword, setVerifyPassword)){
+    if (formVerifyPasswordIsValid(verifyPassword, setVerifyPassword, t)){
       setLoading(true);
       const data = {
         password: verify_password.value
@@ -170,10 +179,9 @@ const Password = () => {
     <>
       <Card className="card-container">
         <Card.Header className="bg-transparent border-bottom">
-          <h1 className="fs-16 mt-1 mb-0">Atur Password</h1>
+          <h1 className="fs-16 mt-1 mb-0">{t.set_password}</h1>
           <small>
-            Untuk keamanan akun Anda, mohon untuk tidak menyebarkan password
-            Anda ke orang lain.
+            {t.set_password_text}
           </small>
         </Card.Header>
         <Card.Body>
@@ -181,11 +189,11 @@ const Password = () => {
             {isUpdate && (
               <Form.Row>
                 <Form.Group as={Col} lg={8} md={8} sm={12}>
-                  <Form.Label>Password Saat Ini</Form.Label>
+                  <Form.Label>{t.current_password}</Form.Label>
                   <Form.Control
                     type="password"
                     name="old_password"
-                    placeholder="Password saat ini"
+                    placeholder={t.current_password}
                     value={old_password.value}
                     onChange={inputChangeHandler}
                   />
@@ -196,11 +204,11 @@ const Password = () => {
 
             <Form.Row>
               <Form.Group as={Col} lg={8} md={8} sm={12}>
-                <Form.Label>Password Yang Baru</Form.Label>
+                <Form.Label>{t.new_password}</Form.Label>
                 <Form.Control
                   type="password"
                   name="password"
-                  placeholder="Password yang baru"
+                  placeholder={t.new_password}
                   value={password.value}
                   onChange={inputChangeHandler}
                 />
@@ -210,11 +218,11 @@ const Password = () => {
 
             <Form.Row>
               <Form.Group as={Col} lg={8} md={8} sm={12}>
-                <Form.Label>Konfirmasi Password</Form.Label>
+                <Form.Label>{t.confirm_password}</Form.Label>
                 <Form.Control
                   type="password"
                   name="confirm_password"
-                  placeholder="Konfirmasi Password"
+                  placeholder={t.confirm_password}
                   value={confirm_password.value}
                   onChange={inputChangeHandler}
                 />
@@ -223,7 +231,7 @@ const Password = () => {
             </Form.Row>
 
             <Button className="btn-tridatu" onClick={submitHandler} style={{ width: 80 }}>
-              {!showConfirmPassword && loading ? <LoadingOutlined /> : "Simpan"}
+              {!showConfirmPassword && loading ? <LoadingOutlined /> : t.save}
             </Button>
           </Form>
         </Card.Body>
@@ -244,10 +252,10 @@ const Password = () => {
         maskStyle={{backgroundColor: "#000000c7"}}
       >
         <h4 className="fs-20-s">
-          Konfirmasi password
+          {t.confirm_password}
         </h4>
         <p className="text-muted fs-12-s">
-          Masukkan password saat ini untuk mengkonfirmasi perubahan password anda.
+          {t.confirm_password_modal_text}
         </p>
 
         <Form className="mt-3 mb-0">
@@ -264,11 +272,11 @@ const Password = () => {
           </Form.Group>
 
           <Button
-            className="mt-1 btn-tridatu mb-0"
             block
+            className="mt-1 btn-tridatu mb-0"
             onClick={submitVerifyPassword}
           >
-            {showConfirmPassword && loading ? <LoadingOutlined /> : "Konfirmasi Password"}
+            {showConfirmPassword && loading ? <LoadingOutlined /> : t.confirm_password}
           </Button>
         </Form>
 

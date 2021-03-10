@@ -37,7 +37,7 @@ const PaginationContainer = ({ total = 1, pageSize = 10, goTo = () => {}, curren
           border-radius: .25rem;
           border: 1px solid #d9d9d9;
         }
-        :global(.ant-pagination-item){
+        :global(.ant-pagination-item, .ant-pagination-prev .ant-pagination-item-link, .ant-pagination-next .ant-pagination-item-link){
           border-radius: .25rem;
         }
         :global(.ant-pagination-item-active, 
@@ -59,8 +59,23 @@ const PaginationContainer = ({ total = 1, pageSize = 10, goTo = () => {}, curren
         :global(.va-1px){
           vertical-align: 1px;
         }
-        :global(.ant-pagination-disabled, .ant-pagination-disabled:hover, .ant-pagination-disabled:focus){
+        :global(.ant-pagination-disabled, 
+                .ant-pagination-disabled:hover, 
+                .ant-pagination-disabled:focus){
           color: #d9d9d9;
+        }
+
+        :global(.ant-pagination-prev:focus .ant-pagination-item-link, 
+                .ant-pagination-next:focus .ant-pagination-item-link, 
+                .ant-pagination-prev:hover .ant-pagination-item-link, 
+                .ant-pagination-next:hover .ant-pagination-item-link){
+          color: #343a40;
+          border-color: #343a40;
+        }
+        :global(.ant-pagination-disabled.ant-pagination-prev:hover > .ant-pagination-item-link,
+                .ant-pagination-disabled.ant-pagination-next:hover > .ant-pagination-item-link){
+          color: #d9d9d9;
+          border-color: #d9d9d9;
         }
       `}</style>
     </>

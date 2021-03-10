@@ -22,7 +22,7 @@ import EditableCell from 'components/Card/Admin/Product/Promo/ModalCell'
 
 const components = { body: { cell: EditableCell } };
 
-const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) => {
+const DiscountModal = ({ t, visible, onClose, discount, productId, discountStatus }) => {
   if(!visible && !discount && !products_variant) return null
 
   const { products_name, products_variant, products_discount_start, products_discount_end } = discount
@@ -32,7 +32,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
   const [dataSource, setDataSource] = useState([])
   const [isDateDisable, setIsDateDisable] = useState([false, false])
   const [periode, setPeriode] = useState(formPeriod)
-  const [columns, setColumns] = useState(columnsProductVariant)
+  const [columns, setColumns] = useState(columnsProductVariant(t))
   const [countVariant, setCountVariant] = useState(0)
 
   const { start, end } = periode
@@ -57,7 +57,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
           variants.push({ key: +key, product: data })
         }
         setDataSource(variants)
-        setColumns(columnsProductNoVariant)
+        setColumns(columnsProductNoVariant(t))
         setCountVariant(0)
       }
 
@@ -77,7 +77,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
           variants.push({ key: +key, product: data })
         }
         setDataSource(variants)
-        setColumns(columnsProductVariant)
+        setColumns(columnsProductVariant(t))
         setCountVariant(1)
       }
 
@@ -103,7 +103,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
           }
         }
         setDataSource(variants)
-        setColumns(columnsProductVariant)
+        setColumns(columnsProductVariant(t))
         setCountVariant(2)
       }
     }
@@ -211,7 +211,8 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
         type: col.type,
         editable: col.editable,
         onChange: e => onTableChange(e, col.type, index, record.product.normal_price),
-        onBlur: () => formTablePromoIsValid(dataSource, setDataSource, index)
+        onBlur: () => formTablePromoIsValid(dataSource, setDataSource, index, t),
+        t: t
       })
     }
   })
@@ -222,9 +223,9 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
     axios.delete(`/discounts/non-active/${productId}`, jsonHeaderHandler())
       .then(res => {
         const resDetail = res.data.detail
-        const notFound = "Product not found!"
+        const notFound = ["Product not found!", "Produk tidak ditemukan!"]
 
-        if(resDetail === notFound){
+        if(isIn(resDetail, notFound)){
           resNotification("error", "Error", resDetail)
         } else {
           dispatch(actions.getDiscount({ ...queryString }))
@@ -236,7 +237,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
         const errDetail = err.response.data.detail;
         if(errDetail == signature_exp){
           dispatch(actions.getDiscount({ ...queryString }))
-          resNotification("success", "Success", "Successfully unset discount on the product.")
+          resNotification("success", "Success", t.success_response_inactive)
           onClose()
         } else {
           if(typeof(errDetail) === "string" && errDetail !== signature_exp) {
@@ -248,7 +249,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
 
   const onSubmitPromo = ticket_variant => {
     let queryString = router.query
-    if(formPeriodIsValid(periode, setPeriode, discountStatus, products_discount_start)){
+    if(formPeriodIsValid(periode, setPeriode, discountStatus, products_discount_start, t)){
       const data = {
         product_id: productId,
         ticket_variant: ticket_variant,
@@ -258,11 +259,11 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
 
       let url = "/discounts/update"
       let method = "put"
-      let resMsg = "Successfully updated discount on product."
+      let resMsg = t.success_response_update
       if(isIn(not_active, [discountStatus])) { 
         url = "/discounts/create"
         method = "post"
-        resMsg = "Successfully set discount on product."
+        resMsg = t.success_response_set
       }
 
       axios[method](url, data, jsonHeaderHandler())
@@ -273,14 +274,14 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
-          const errStartTime = "The new start time must be after the set start time."
+          const errStartTime = ["The new start time must be after the set start time.", "Waktu mulai baru harus setelah waktu mulai yang ditetapkan."]
           if(errDetail == signature_exp){
             dispatch(actions.getDiscount({ ...queryString }))
             resNotification("success", "Success", resMsg)
             onClose()
-          } else if(typeof errDetail === "string" && errDetail !== errStartTime){
+          } else if(typeof errDetail === "string" && !isIn(errDetail, errStartTime)){
             formErrorMessage(errDetail)
-          } else if(typeof errDetail === "string" && errDetail == errStartTime){
+          } else if(typeof errDetail === "string" && isIn(errDetail, errStartTime)){
             const state = JSON.parse(JSON.stringify(periode))
             state.start.isValid = false
             state.start.message = errDetail
@@ -306,10 +307,10 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
 
     let tableIsValid = []
     for(let i = 0; i < dataSource.length; i++){
-      tableIsValid.push(formTablePromoIsValid(dataSource, setDataSource, i))
+      tableIsValid.push(formTablePromoIsValid(dataSource, setDataSource, i, t))
     }
 
-    if(!isIn("false", tableIsValid) && formPeriodIsValid(periode, setPeriode, discountStatus, products_discount_start)){
+    if(!isIn("false", tableIsValid) && formPeriodIsValid(periode, setPeriode, discountStatus, products_discount_start, t)){
       const productVariant = {...products_variant}
       const newVariant = dataSource.map(x => x.product)
       const { va2_name, va1_items } = productVariant
@@ -334,8 +335,6 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
           }
         }
       }
-
-      console.log(JSON.stringify(productVariant, null, 2))
 
       axios.post("/variants/create-ticket", productVariant, jsonHeaderHandler())
         .then(res => {
@@ -396,17 +395,17 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
 
   let buttonActions = [
     <Button key="back" onClick={onClose}>
-      Tutup
+      {t.modal.close}
     </Button>,
     <Button key="submit" type="primary" className="btn-tridatu" onClick={onSubmitVariant}>
-      Simpan
+      {t.modal.save}
     </Button>,
   ]
 
   if(isIn(discountStatus, [ongoing, will_come])){
     buttonActions.unshift(
       <Button key="cancel" className="float-left text-danger fw-500" onClick={nonActiveDiscountHandler}>
-        <i className="fas fa-times mr-1" /> Nonaktifkan Diskon
+        <i className="fas fa-times mr-1" /> {t.modal.deactivate_discount}
       </Button>
     )
   }
@@ -422,7 +421,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
       >
         <Row gutter={[0,0]}>
           <Col lg={12} md={24} xs={24}>
-            <h5 className="mb-3 fs-16 text-truncate">Atur Diskon - {products_name}</h5>
+            <h5 className="mb-3 fs-16 text-truncate">{t.set_discount} - {products_name}</h5>
           </Col>
         </Row>
         <Table 
@@ -433,7 +432,7 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
           columns={columnsProduct} 
         />
 
-        <h5 className="my-3 fs-16">Periode Diskon</h5>
+        <h5 className="my-3 fs-16">{t.periode}</h5>
 
         <Form layout="vertical" {...formItemLayout} className="mb-0">
           <Form.Item
@@ -452,12 +451,12 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
                 disabledTime={(current, type) => disabledRangeTime(current, type, start.value)}
                 disabledDate={(current, start) => disabledDate(current, start, products_discount_start)}
                 value={[start.value !== "" && moment(start.value), end.value !== "" && moment(end.value)]}
-                onBlur={() => formPeriodIsValid(periode, setPeriode, discountStatus, products_discount_start)}
+                onBlur={() => formPeriodIsValid(periode, setPeriode, discountStatus, products_discount_start, t)}
               /> 
               <span className="ml-2">WITA</span>
               {start.isValid ? (
                 <small className="form-text text-left text-muted">
-                  Periode Promo harus kurang dari 180 hari
+                  {t.modal.periode_note}
                 </small>
               ) : (
                 <ErrorMessage item={start} />
@@ -471,4 +470,4 @@ const PromoModal = ({ visible, onClose, discount, productId, discountStatus }) =
   )
 }
 
-export default PromoModal
+export default DiscountModal 

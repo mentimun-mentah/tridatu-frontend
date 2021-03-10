@@ -1,9 +1,13 @@
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { Tabs, List, Skeleton, Popconfirm, Empty, Collapse, Input } from 'antd'
 import { useDispatch, useSelector } from "react-redux";
 import { AnimatePresence, motion } from 'framer-motion'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
+
+import id from 'locales/id/admin/category'
+import en from 'locales/en/admin/category'
 
 import ColB from 'react-bootstrap/Col'
 import Form from 'react-bootstrap/Form'
@@ -40,6 +44,11 @@ const SearchComponent = ({ placeholder, search, setSearch }) => (
 )
 
 const Category = () => {
+  const router = useRouter()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const dispatch = useDispatch()
   const [activeTab, setActiveTab] = useState(CATEGORIES)
   const [categories, setCategories] = useState(formCategories)
@@ -104,7 +113,7 @@ const Category = () => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           dispatch(actions.getCategories(false))
-          resNotification("success", "Success", "Successfully delete the category")
+          // resNotification("success", "Success", "Successfully delete the category")
         } else if(typeof(errDetail) === "string") {
           resNotification("error", "Error", errDetail)
         } else {
@@ -157,7 +166,7 @@ const Category = () => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           dispatch(actions.getCategories(true))
-          resNotification("success", "Success", "Successfully delete the sub-category.")
+          // resNotification("success", "Success", "Successfully delete the sub-category.")
         } else if(typeof(errDetail) === "string") {
           resNotification("error", "Error", errDetail)
         } else {
@@ -210,7 +219,7 @@ const Category = () => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           dispatch(actions.getAllCategories())
-          resNotification("success", "Success", "Successfully delete the item sub-category.")
+          // resNotification("success", "Success", "Successfully delete the item sub-category.")
         } else if(typeof(errDetail) === "string") {
           resNotification("error", "Error", errDetail)
         } else {
@@ -248,11 +257,11 @@ const Category = () => {
         <Card.Body className="p-3">
           <Tabs className="order-tabs noselect" activeKey={activeTab} onTabClick={onTabClick}>
 
-            <Tabs.TabPane tab="Kategori" key={CATEGORIES}>
+            <Tabs.TabPane tab={t.category} key={CATEGORIES}>
               <SearchComponent 
                 search={search} 
                 setSearch={setSearch} 
-                placeholder="Cari kategori" 
+                placeholder={t.category_search_placeholder} 
               />
               <div className="scrollable-category">
                 {activeTab === CATEGORIES && categoriesData.length > 0 && (
@@ -264,10 +273,10 @@ const Category = () => {
                         actions={[
                           <EditOutlined key="edit" onClick={() => editCategoryHandler(categories_id)} />,
                           <Popconfirm
-                            title="Hapus kategori ini?"
+                            title={t.delete_category}
                             onConfirm={() => deleteCategoryHandler(categories_id)}
-                            okText="Ya"
-                            cancelText="Batal"
+                            okText={t.yes}
+                            cancelText={t.cancel}
                             placement="bottomRight"
                             arrowPointAtCenter
                           >
@@ -304,11 +313,11 @@ const Category = () => {
 
             
             
-            <Tabs.TabPane tab="Sub Kategori" key={SUBCATEGORIES}>
+            <Tabs.TabPane tab={`Sub ${t.category}`} key={SUBCATEGORIES}>
               <SearchComponent 
                 search={search} 
                 setSearch={setSearch} 
-                placeholder="Cari sub kategori"
+                placeholder={t.sub_category_search_placeholder}
               />
               <div className="scrollable-category">
                 {categoriesData.length > 0 && (
@@ -320,10 +329,10 @@ const Category = () => {
                         actions={[
                           <EditOutlined key="edit" onClick={() => editSubCategoryHandler(sub_categories_id)} />,
                           <Popconfirm
-                            title="Hapus sub kategori ini?"
+                            title={t.delete_sub_category}
                             onConfirm={() => deleteSubCategoryHandler(sub_categories_id)}
-                            okText="Ya"
-                            cancelText="Batal"
+                            okText={t.yes}
+                            cancelText={t.cancel}
                             placement="bottomRight"
                             arrowPointAtCenter
                           >
@@ -362,11 +371,11 @@ const Category = () => {
 
 
 
-            <Tabs.TabPane tab="Item Sub Kategori" key={ITEMSUBCATEGORIES}>
+            <Tabs.TabPane tab={`Item Sub ${t.category}`} key={ITEMSUBCATEGORIES}>
               <SearchComponent 
                 search={search} 
                 setSearch={setSearch} 
-                placeholder="Cari item sub kategori"
+                placeholder={t.item_sub_category_search_placeholder}
               />
               <div className="scrollable-category">
                 {allCategoriesData.length > 0 && (
@@ -385,10 +394,10 @@ const Category = () => {
                                 actions={[
                                   <EditOutlined key="edit" onClick={() => editItemSubCategoryHandler(item_sub_categories_id)} />,
                                   <Popconfirm
-                                    title="Hapus item sub kategori ini?"
+                                    title={t.delete_item_sub_category}
                                     onConfirm={() => deleteItemSubCategoryHandler(item_sub_categories_id)}
-                                    okText="Ya"
-                                    cancelText="Batal"
+                                    okText={t.yes}
+                                    cancelText={t.cancel}
                                     placement="bottomRight"
                                     arrowPointAtCenter
                                   >
@@ -434,18 +443,21 @@ const Category = () => {
       </Card>
 
       <ModalEditCategory 
+        t={t}
         show={showEditCategory} 
         close={closeEditCategoryHandler}
         currentCategory={categories}
       />
 
       <ModalEditSubCategory
+        t={t}
         show={showEditSubCategory} 
         close={closeEditSubCategoryHandler}
         currentSubCategory={subCategories}
       />
 
       <ModalEditItemSubCategory
+        t={t}
         show={showEditItemSubCategory} 
         close={closeEditItemSubCategoryHandler}
         currentItemSubCategory={itemSubCategories}

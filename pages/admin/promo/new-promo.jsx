@@ -19,9 +19,6 @@ const Editor = dynamic(import('../../../components/Editor'), { ssr: false })
 import EditableCell from 'components/Admin/Voucher/Cell'
 import PageInfoPopover from 'components/Admin/Voucher/PageInfoPopover'
 
-import ProductModal from 'components/Modal/Admin/Vouchers/SetupProduct'
-
-
 const components = { body: { cell: EditableCell } };
 const CountChar = ({children}) => <span className="text-muted noselect border-left pl-2 fs-12">{children}</span>
 
@@ -163,13 +160,13 @@ const NewPromo = () => {
               <Radio.Group value={showPromo} onChange={e => setShowPromo(e.target.value)}>
                 <Radio value={true} className="noselect d-block h-30">
                   Tampilkan di semua halaman 
-                  <Popover content={PageInfoPopover}>
+                  <Popover placement="bottomLeft" content={PageInfoPopover}>
                     <i className="fal fa-question-circle ml-1" />
                   </Popover>
                 </Radio>
                 <Radio value={false} className="noselect d-block h-30">
                   Tidak Ditampilkan
-                  <Popover content={
+                  <Popover placement="bottomLeft" content={
                     <small className="form-text text-left text-muted mt-0 text-wrap text-center">
                       Promo tidak akan ditampilkan namun kamu dapat <br/>menambahkan kode voucher dan membagikannya kepada pembeli.
                     </small>
@@ -193,7 +190,7 @@ const NewPromo = () => {
           <Card.Body className="p-3">
             <Form layout="vertical">
 
-              <Form.Item label="Foto Promo (800 × 400 px)" required>
+              <Form.Item label="Foto Promo (800 × 400 px)">
                 <Upload
                   accept="image/*"
                   listType="picture-card"
@@ -205,7 +202,7 @@ const NewPromo = () => {
                 </Upload>
               </Form.Item>
 
-              <Form.Item label="Deskripsi Promo" required>
+              <Form.Item label="Deskripsi Promo">
                 <Input.TextArea 
                   name="desc"
                   autoSize={{ minRows: 8, maxRows: 10 }} 
@@ -213,7 +210,7 @@ const NewPromo = () => {
                 />
               </Form.Item>
               
-              <Form.Item label="Syarat dan Ketentuan" required>
+              <Form.Item label="Syarat dan Ketentuan">
                 <Editor 
                   initialValue=""
                   setContent={() => {}} 

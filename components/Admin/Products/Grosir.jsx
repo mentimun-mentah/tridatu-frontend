@@ -17,12 +17,13 @@ import { imagePreview, uploadButton } from 'lib/imageUploader'
 import { ongoing, will_come } from 'components/Card/Admin/Product/Promo/statusType'
 import { imageValidationProduct, multipleImageValidation } from 'lib/imageProductUploader'
 
-import { priceMessage, priceSmallerMessage, price50SmallerMessage, priceSmallerBefore } from 'formdata/formGrosir.js'
+import { initQtyGrosir, nextQtyGrosir, priceMessage, priceSmallerMessage } from 'formdata/formGrosir.js'
+import { price50SmallerMessage, priceSmallerBefore } from 'formdata/formGrosir.js'
 import { validateFormGrosirPrice, validateFormGrosirQty } from 'formdata/formGrosir.js'
 
 const Grosir = ({ 
   isActiveVariation, isActiveGrosir, setIsActiveGrosir, grosirPrice, setGrosirPrice, dataSource, setDataSource, 
-  noVariant, onNoVariantChangeHandler, grosir, setGrosir, discountStatus
+  noVariant, onNoVariantChangeHandler, grosir, setGrosir, discountStatus, t
 }) => {
   const [showModal, setShowModal] = useState(false)
 
@@ -58,7 +59,7 @@ const Grosir = ({
     if(e < 1 || e === "" || e == null || typeof e == "string") {
       const dataPrice = {
         ...grosirPrice,
-        price: { value: 1, isValid: false, message: priceMessage }
+        price: { value: 1, isValid: false, message: priceMessage(t) }
       }
       setGrosirPrice(dataPrice)
     } else {
@@ -82,14 +83,14 @@ const Grosir = ({
       if(idx == 0 && e < 2){
         newGrosir[idx][item].value = e
         newGrosir[idx][item].isValid = false
-        newGrosir[idx][item].message = "Min Qty untuk grosir harus lebih dari 1"
+        newGrosir[idx][item].message = initQtyGrosir(t)
       }
       if(idx > 0){
         const befrItemVal = newGrosir[idx - 1][item].value
         if(e <= befrItemVal){
           newGrosir[idx][item].value = e
           newGrosir[idx][item].isValid = false
-          newGrosir[idx][item].message = "Min Qty harus lebih besar dari sebelumnya"
+          newGrosir[idx][item].message = nextQtyGrosir(t)
         }
       } // idx > 0
     }
@@ -101,31 +102,31 @@ const Grosir = ({
       if(e >= checkPrice){
         newGrosir[idx][item].value = e
         newGrosir[idx][item].isValid = false
-        newGrosir[idx][item].message = priceSmallerMessage
+        newGrosir[idx][item].message = priceSmallerMessage(t)
       }
       if(e < initialPrice){
         newGrosir[idx][item].value = e
         newGrosir[idx][item].isValid = false
-        newGrosir[idx][item].message = price50SmallerMessage
+        newGrosir[idx][item].message = price50SmallerMessage(t)
       }
       if(idx > 0){
         const befrItemVal = newGrosir[idx - 1][item].value
         if(e >= befrItemVal){
           newGrosir[idx][item].value = e
           newGrosir[idx][item].isValid = false
-          newGrosir[idx][item].message = priceSmallerBefore
+          newGrosir[idx][item].message = priceSmallerBefore(t)
         }
         if(newGrosir[idx + 1]){
           const nextItemVal = newGrosir[idx + 1][item].value
           if(nextItemVal !== "" && e >= nextItemVal && e < befrItemVal){
             newGrosir[idx][item].value = e
             newGrosir[idx + 1][item].isValid = false
-            newGrosir[idx + 1][item].message = priceSmallerBefore
+            newGrosir[idx + 1][item].message = priceSmallerBefore(t)
           }
           if(nextItemVal !== "" && e >= nextItemVal && e >= befrItemVal){
             newGrosir[idx][item].value = e
             newGrosir[idx][item].isValid = false
-            newGrosir[idx][item].message = priceSmallerBefore
+            newGrosir[idx][item].message = priceSmallerBefore(t)
           }
         }
       } // idx > 0
@@ -197,7 +198,7 @@ const Grosir = ({
 
   useEffect(() => {
     if(activeGrosir){
-      validateFormGrosirPrice(grosir, setGrosir, price, va1_price, active)
+      validateFormGrosirPrice(grosir, setGrosir, price, va1_price, active, t)
     }
   }, [noVariant, price, va1_price, activeGrosir])
 
@@ -217,7 +218,7 @@ const Grosir = ({
         className="h-35" icon={<PlusCircleOutlined />}
         onClick={disabled ? () => {} : activeGrosirHandler}
       >
-        Tambah Harga Grosir
+        {t.sales_information.wholesale.add_wholesale_price}
       </Button>
     )
 
@@ -246,7 +247,7 @@ const Grosir = ({
     <>
       {!activeGrosir ? (
         <Form layout="vertical" {...formItemLayout} className="mt-4">
-          <Form.Item label="Grosir">
+          <Form.Item label={t.sales_information.wholesale.title}>
             <Card.Body className="p-0 pb-1">
               <RenderGrosirButton />
             </Card.Body>
@@ -254,13 +255,13 @@ const Grosir = ({
         </Form>
       ) : (
         <>
-          <p className="m-t-24 fs-14 mb-2 w-100">Grosir</p>
+          <p className="m-t-24 fs-14 mb-2 w-100">{t.sales_information.wholesale.title}</p>
 
           <Card.Body className="p-3 bg-light mb-3 bor-rad-5px">
             {active && (
               <Alert banner showIcon 
                 type="info" className="mb-2 shadow-sm bor-rad-5px"
-                message="Semua harga variasi otomatis mengikuti harga utama jika produk memiliki harga grosir." 
+                message={t.sales_information.wholesale.active_variant_info}
               />
             )}
 
@@ -268,7 +269,7 @@ const Grosir = ({
               {active ? (
                 <Form.Item 
                   required
-                  label="Harga Utama"
+                  label={t.sales_information.wholesale.main_price}
                   validateStatus={!price.isValid && price.message && "error"}
                 >
                   <div className="ant-input-group-wrapper">
@@ -289,14 +290,14 @@ const Grosir = ({
                   <ErrorTooltip item={price} />
                   {price.isValid && checkStatusDiscountVariant() && (
                     <small className="form-text text-left text-muted">
-                      Harga tidak dapat dimodifikasi ketika promosi sedang berlangsung.
+                      {t.sales_information.no_variant.sale_info}
                     </small>
                   )}
                 </Form.Item>
               ) : (
                 <Form.Item 
                   required
-                  label="Harga Utama"
+                  label={t.sales_information.wholesale.main_price}
                   validateStatus={!checkStatusDiscountNoVariant() && !va1_price.isValid && va1_price.message && "error"}
                 >
                   <div className="ant-input-group-wrapper">
@@ -317,7 +318,7 @@ const Grosir = ({
                   <ErrorTooltip item={va1_price} />
                   {va1_price.isValid && checkStatusDiscountNoVariant() && (
                     <small className="form-text text-left text-muted">
-                      Harga tidak dapat dimodifikasi ketika promosi sedang berlangsung.
+                      {t.sales_information.no_variant.sale_info}
                     </small>
                   )}
                 </Form.Item>
@@ -326,10 +327,10 @@ const Grosir = ({
 
             <Row gutter={[{ xs: 8, sm: 8, md: 16 }, 0]} align="middle">
               <Col xs={10} sm={10} md={10} lg={10} xl={10}>
-                <p className="fs-14 mb-2 w-100">Jumlah Min.</p>
+                <p className="fs-14 mb-2 w-100">{t.sales_information.wholesale.min_amount}</p>
               </Col>
               <Col xs={12} sm={12} md={12} lg={12} xl={12} offset={1}>
-                <p className="fs-14 mb-2 w-100">Harga Satuan</p>
+                <p className="fs-14 mb-2 w-100">{t.sales_information.wholesale.unit_price}</p>
               </Col>
             </Row>
 
@@ -351,8 +352,8 @@ const Grosir = ({
                               className="w-100 bor-left-rad-0 h-33-custom-input"
                               value={grosir[i].min_qty.value} 
                               onChange={onGrosirChangeHandler(i, "min_qty")}
-                              onBlur={() => validateFormGrosirQty(grosir, setGrosir)}
-                              onFocus={() => validateFormGrosirQty(grosir, setGrosir)}
+                              onBlur={() => validateFormGrosirQty(grosir, setGrosir, t)}
+                              onFocus={() => validateFormGrosirQty(grosir, setGrosir, t)}
                             />
                           </div>
                         </div>
@@ -384,8 +385,8 @@ const Grosir = ({
                               parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
                               value={grosir[i].price.value}
                               onChange={onGrosirChangeHandler(i, "price")}
-                              onBlur={() => validateFormGrosirPrice(grosir, setGrosir, price, va1_price, active)}
-                              onFocus={() => validateFormGrosirPrice(grosir, setGrosir, price, va1_price, active)}
+                              onBlur={() => validateFormGrosirPrice(grosir, setGrosir, price, va1_price, active, t)}
+                              onFocus={() => validateFormGrosirPrice(grosir, setGrosir, price, va1_price, active, t)}
                             />
                           </div>
                         </div>
@@ -409,7 +410,7 @@ const Grosir = ({
                   onClick={addGrosirHandler}
                   disabled={isValidButton()}
                 >
-                  Tambah Harga Grosir
+                  {t.sales_information.wholesale.add_wholesale_price}
                 </Button>
               </Form.Item>
             )}
@@ -428,14 +429,14 @@ const Grosir = ({
         className="modal-rad-10 text-center"
       >
         <div className="text-dark">
-          <h5 className="mb-3">Tambah Harga Grosir</h5>
+          <h5 className="mb-3">{t.sales_information.wholesale.add_wholesale_price}</h5>
           <p className="text-black-50">
-            Semua harga variasi otomatis mengikuti harga produk pertama jika produk memiliki harga grosir. Lanjutkan?
+            {t.sales_information.wholesale.modal_text}
           </p>
 
           <Space>
-            <Button onClick={() => setShowModal(false)}>Tidak</Button>
-            <Button type="primary" onClick={confirmModalHandler}>Ya</Button>
+            <Button onClick={() => setShowModal(false)}>{t.no}</Button>
+            <Button type="primary" onClick={confirmModalHandler}>{t.yes}</Button>
           </Space>
         </div>
       </Modal>

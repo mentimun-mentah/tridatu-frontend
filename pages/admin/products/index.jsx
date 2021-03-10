@@ -1,10 +1,13 @@
 import { withAuth } from 'lib/withAuth'
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from "react-redux";
 import { Tabs, Row, Col, Input, Select, Empty } from 'antd'
 import { EditOutlined, EllipsisOutlined } from '@ant-design/icons'
 import { AnimatePresence, motion } from 'framer-motion'
+
+import id from 'locales/id/admin/product'
+import en from 'locales/en/admin/product'
 
 import Card from 'react-bootstrap/Card'
 import Form from 'react-bootstrap/Form'
@@ -23,13 +26,13 @@ const ALL = 'all'
 const LIVE = 'live'
 const ARCHIVE = 'archive'
 
-const orderList = [
-  { name: "Terbaru", value: "newest" },
-  { name: "Harga Tertinggi", value: "high_price", },
-  { name: "Harga Terendah", value: "low_price", }
+const orderList = (t) => [
+  { label: t.order_list.newest, value: "newest" },
+  { label: t.order_list.high_price, value: "high_price", },
+  { label: t.order_list.low_price, value: "low_price", }
 ]
 
-const EmptyProduct = ({ loading, products }) => (
+const EmptyProduct = ({ loading, products, t }) => (
   <>
     {!loading && (products == null || products && products.total == 0) && (
       <motion.div
@@ -39,17 +42,18 @@ const EmptyProduct = ({ loading, products }) => (
         transition={{ duration: ".2" }}
         className="w-100"
       >
-        <Empty className="my-5" description={<span className="text-secondary">Tidak ada produk</span>} />
+        <Empty className="my-5" description={<span className="text-secondary">{t.empty_product}</span>} />
       </motion.div>
     )}
   </>
 )
 
-const ProductComponent = ({ products, dispatch, router }) => (
+const ProductComponent = ({ products, dispatch, router, t }) => (
   <>
     {products && products.data && products.data.length > 0 && products.data.map(product => (
       <Col xl={4} lg={6} md={8} sm={12} xs={24} key={product.products_id}>
         <CardProductMemo 
+          t={t}
           data={product} 
           aliveArchive={(id) => dispatch(actions.aliveArchiveProduct(id))}
           deleteProduct={(id) => dispatch(actions.deleteProduct(id, router.query))}
@@ -64,6 +68,9 @@ const Products = ({ searchQuery }) => {
   const dispatch = useDispatch();
   const router = useRouter();
 
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const loading = useSelector(state => state.products.loading)
   const aliveArchiving = useSelector(state => state.products.aliveArchiving)
   const products = useSelector(state => state.products.products)
@@ -72,13 +79,13 @@ const Products = ({ searchQuery }) => {
   const [page, setPage] = useState(products.page)
   const [live, setLive] = useState("")
   const [search, setSearch] = useState("")
-  const [order_by, setOrderBy] = useState(orderList[0].value)
+  const [order_by, setOrderBy] = useState("newest")
 
   const onTabClick = key => {
     setActiveTab(key)
     setPage(1)
     setSearch("")
-    setOrderBy(orderList[0].value)
+    setOrderBy(orderList(t)[0].value)
     if(key === ALL) setLive("")
     if(key === LIVE) setLive("true")
     if(key === ARCHIVE) setLive("false")
@@ -152,13 +159,13 @@ const Products = ({ searchQuery }) => {
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3">
           <Tabs className="order-tabs" activeKey={activeTab} onTabClick={onTabClick}>
-            <Tabs.TabPane tab="Semua" key={ALL}>
+            <Tabs.TabPane tab={t.tabs.all} key={ALL}>
               
               <Form>
                 <Form.Row>
                   <Form.Group as={ColB} lg={8} md={6}>
                     <Input 
-                      placeholder="Cari berdasarkan nama" 
+                      placeholder={t.search_placeholder} 
                       prefix={<i className="far fa-search" />}
                       value={search}
                       onChange={onSearchChange}
@@ -166,14 +173,14 @@ const Products = ({ searchQuery }) => {
                   </Form.Group>
                   <Form.Group as={ColB} lg={4} md={6}>
                     <Select 
-                      placeholder="Urutkan" 
+                      placeholder={t.sort_placeholder} 
                       style={{ width: "100%"}}
                       className="product-search-select"
                       value={order_by}
                       onChange={onOrderChange}
                     >
-                      {orderList.map((list, i) => (
-                        <Select.Option key={i} value={list.value}>{list.name}</Select.Option>
+                      {orderList(t).map((list, i) => (
+                        <Select.Option key={i} value={list.value}>{list.label}</Select.Option>
                       ))}
                     </Select>
                   </Form.Group>
@@ -181,8 +188,8 @@ const Products = ({ searchQuery }) => {
               </Form>
 
               <Row gutter={[10, 10]}>
-                <ProductComponent products={products} dispatch={dispatch} router={router} />
-                <EmptyProduct loading={loading} products={products} />
+                <ProductComponent products={products} dispatch={dispatch} router={router} t={t} />
+                <EmptyProduct loading={loading} products={products} t={t} />
               </Row>
 
               {showPagination && (
@@ -199,12 +206,12 @@ const Products = ({ searchQuery }) => {
             </Tabs.TabPane>
 
 
-            <Tabs.TabPane tab="Live" key={LIVE}>
+            <Tabs.TabPane tab={t.tabs.live} key={LIVE}>
               <Form>
                 <Form.Row>
                   <Form.Group as={ColB} lg={8} md={6}>
                     <Input 
-                      placeholder="Cari berdasarkan nama" 
+                      placeholder={t.search_placeholder} 
                       prefix={<i className="far fa-search" />}
                       value={search}
                       onChange={e => setSearch(e.target.value)}
@@ -212,14 +219,14 @@ const Products = ({ searchQuery }) => {
                   </Form.Group>
                   <Form.Group as={ColB} lg={4} md={6}>
                     <Select 
-                      placeholder="Urutkan" 
+                      placeholder={t.sort_placeholder} 
                       style={{ width: "100%"}}
                       className="product-search-select"
                       value={order_by}
                       onChange={e => setOrderBy(e)}
                     >
-                      {orderList.map((list, i) => (
-                        <Select.Option key={i} value={list.value}>{list.name}</Select.Option>
+                      {orderList(t).map((list, i) => (
+                        <Select.Option key={i} value={list.value}>{list.label}</Select.Option>
                       ))}
                     </Select>
                   </Form.Group>
@@ -228,8 +235,8 @@ const Products = ({ searchQuery }) => {
 
               <AnimatePresence>
                 <Row gutter={[10, 10]}>
-                  <ProductComponent products={products} dispatch={dispatch} router={router} />
-                  <EmptyProduct loading={loading} products={products} />
+                  <ProductComponent products={products} dispatch={dispatch} router={router} t={t} />
+                  <EmptyProduct loading={loading} products={products} t={t} />
                 </Row>
               </AnimatePresence>
 
@@ -247,12 +254,12 @@ const Products = ({ searchQuery }) => {
             </Tabs.TabPane>
 
 
-            <Tabs.TabPane tab="Diarsipkan" key={ARCHIVE}>
+            <Tabs.TabPane tab={t.tabs.archived} key={ARCHIVE}>
               <Form>
                 <Form.Row>
                   <Form.Group as={ColB} lg={8} md={6}>
                     <Input 
-                      placeholder="Cari berdasarkan nama" 
+                      placeholder={t.search_placeholder} 
                       prefix={<i className="far fa-search" />}
                       value={search}
                       onChange={e => setSearch(e.target.value)}
@@ -260,14 +267,14 @@ const Products = ({ searchQuery }) => {
                   </Form.Group>
                   <Form.Group as={ColB} lg={4} md={6}>
                     <Select 
-                      placeholder="Urutkan" 
+                      placeholder={t.sort_placeholder} 
                       style={{ width: "100%"}}
                       className="product-search-select"
                       value={order_by}
                       onChange={e => setOrderBy(e)}
                     >
-                      {orderList.map((list, i) => (
-                        <Select.Option key={i} value={list.value}>{list.name}</Select.Option>
+                      {orderList(t).map((list, i) => (
+                        <Select.Option key={i} value={list.value}>{list.label}</Select.Option>
                       ))}
                     </Select>
                   </Form.Group>
@@ -275,8 +282,8 @@ const Products = ({ searchQuery }) => {
               </Form>
 
               <Row gutter={[10, 10]}>
-                <ProductComponent products={products} dispatch={dispatch} router={router} />
-                <EmptyProduct loading={loading} products={products} />
+                <ProductComponent products={products} dispatch={dispatch} router={router} t={t} />
+                <EmptyProduct loading={loading} products={products} t={t} />
               </Row>
 
               {showPagination && (

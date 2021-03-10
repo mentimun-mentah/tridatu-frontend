@@ -15,7 +15,7 @@ import formatNumber from 'lib/formatNumber'
 const NormalPrice = ({ children }) => <span className="mb-0 fs-12 text-tridatu">Rp.{children}</span>
 const DiscPrice = ({ children }) => <span className="mb-0 fs-10 text-tridatu"> <s>Rp.{children}</s> </span>
 
-const CardProductAdmin = ({ data, aliveArchive, deleteProduct }) => {
+const CardProductAdmin = ({ data, aliveArchive, deleteProduct, t }) => {
   const { products_id, products_name, products_slug, products_image_product, products_live } = data;
   const { variants_min_price, variants_max_price, variants_discount, products_discount_status } = data;
 
@@ -76,10 +76,10 @@ const CardProductAdmin = ({ data, aliveArchive, deleteProduct }) => {
               overlay={
                 <Menu>
                   <Menu.Item onClick={() => aliveArchive(products_id)}>
-                    {products_live ? "Arisipkan" : "Tampilkan" }
+                    {products_live ? t.more_menu.archive : t.more_menu.show}
                   </Menu.Item>
                   <Menu.Item onClick={() => setShowModal(true)} className="text-danger">
-                    Hapus
+                    {t.more_menu.delete_product}
                   </Menu.Item>
                 </Menu>
               } 
@@ -113,8 +113,8 @@ const CardProductAdmin = ({ data, aliveArchive, deleteProduct }) => {
                     <h4 className="mb-2">
                       <i className="fas fa-lock-alt text-white" />
                     </h4>
-                    <p className="fs-12 mb-2">Diarsipkan</p>
-                    <Button ghost className="btn-product-overlay fs-12" onClick={() => aliveArchive(products_id)}>Tampilkan</Button>
+                    <p className="fs-12 mb-2">{t.tabs.archived}</p>
+                    <Button ghost className="btn-product-overlay fs-12" onClick={() => aliveArchive(products_id)}>{t.more_menu.show}</Button>
                   </div>
                   <div className="image-overlay"></div>
                 </motion.div>
@@ -160,13 +160,13 @@ const CardProductAdmin = ({ data, aliveArchive, deleteProduct }) => {
         className="modal-rad-10 text-center"
       >
         <div className="text-dark">
-          <h5 className="mb-3">Hapus produk?</h5>
+          <h5 className="mb-3">{t.modal.title}</h5>
           <p className="text-black-50 fs-14">{products_name}</p>
-          <p className="text-black-50">Penghapusan produk tidak dapat dibatalkan</p>
+          <p className="text-black-50">{t.modal.sub}</p>
 
           <Space>
-            <Button onClick={() => setShowModal(false)}>Batal</Button>
-            <Button type="primary" className="btn-tridatu" onClick={onDeleteProduct}>Hapus</Button>
+            <Button onClick={() => setShowModal(false)}>{t.modal.cancel}</Button>
+            <Button type="primary" className="btn-tridatu" onClick={onDeleteProduct}>{t.modal.delete_product}</Button>
           </Space>
         </div>
       </Modal>

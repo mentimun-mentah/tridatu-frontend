@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useRouter } from 'next/router';
-import { Card as CardAnt, Typography, Space, Button, Popconfirm, Collapse } from 'antd';
-import { QuestionCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card as CardAnt, Typography, Space, Button, Popconfirm, Collapse, Badge } from 'antd';
+import { SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -13,6 +13,14 @@ const AdminCardVoucher = ({ image, idx }) => {
   const [editableStr, setEditableStr] = useState('BCAEL500');
 
   const router = useRouter()
+
+  const genExtra = () => (
+    <SettingOutlined
+      onClick={event => {
+        event.stopPropagation();
+      }}
+    />
+  );
 
   return(
     <>
@@ -56,9 +64,17 @@ const AdminCardVoucher = ({ image, idx }) => {
               <div className="promotion-box__value">10 Sep - 29 Okt 2020</div>
             </div>
           </div>
+          <div className="promotion-date">
+            <div className="promotion-date-detail">
+              <div className="promotion-box-label">Status Promo</div>
+              <div className="promotion-box__value">
+                <Badge color="yellow" text="Akan Datang" />
+              </div>
+            </div>
+          </div>
 
-          <Collapse expandIconPosition="right">
-            <Collapse.Panel  header="3 Kode Promo" key="1">
+          <Collapse expandIconPosition="left">
+            <Collapse.Panel  header="3 Kode Promo" key="1" extra={genExtra()}>
               <div className="promotion-code">
                 <b>Diskon 5% hingga Rp150.000</b>
                 <p className="fs-12 text-muted mb-0">Minimum transaksi Rp500.000</p>
@@ -67,20 +83,7 @@ const AdminCardVoucher = ({ image, idx }) => {
                     MISECCAM2K
                   </Paragraph>
                 </div>
-                <ul className="ant-card-actions voucher-ant-card-actions">
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <EditOutlined key="edit" />
-                    </span>
-                  </li>
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <DeleteOutlined key="delete" />
-                    </span>
-                  </li>
-                </ul>
               </div>
-
 
               <div className="promotion-code">
                 <b>Diskon hingga Rp10.000</b>
@@ -90,18 +93,6 @@ const AdminCardVoucher = ({ image, idx }) => {
                     MISECCAM2K
                   </Paragraph>
                 </div>
-                <ul className="ant-card-actions voucher-ant-card-actions">
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <EditOutlined key="edit" />
-                    </span>
-                  </li>
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <DeleteOutlined key="delete" />
-                    </span>
-                  </li>
-                </ul>
               </div>
 
               <div className="promotion-code">
@@ -112,18 +103,6 @@ const AdminCardVoucher = ({ image, idx }) => {
                     GRATISONGK
                   </Paragraph>
                 </div>
-                <ul className="ant-card-actions voucher-ant-card-actions mb-0">
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <EditOutlined key="edit" />
-                    </span>
-                  </li>
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <DeleteOutlined key="delete" />
-                    </span>
-                  </li>
-                </ul>
               </div>
             </Collapse.Panel>
           </Collapse>
@@ -133,16 +112,16 @@ const AdminCardVoucher = ({ image, idx }) => {
       </CardAnt>
 
       <style jsx>{`
-      :global(.voucher-code .ant-card-actions > li){
-        margin-top: 0;
-        margin-bottom: 0;
-      }
+        :global(.voucher-code .ant-card-actions > li){
+          margin-top: 0;
+          margin-bottom: 0;
+        }
 
-      :global(.voucher-ant-card-actions){
-        border-bottom: 1px solid #f0f0f0;
-        margin-top: .2rem;
-        margin-bottom: 1rem;
-      }
+        :global(.voucher-ant-card-actions){
+          border-bottom: 1px solid #f0f0f0;
+          margin-top: .2rem;
+          margin-bottom: 1rem;
+        }
 
         :global(.copy-code){
           color: #d63031;
@@ -161,6 +140,11 @@ const AdminCardVoucher = ({ image, idx }) => {
           margin-bottom: 16px;
         }
 
+        .promotion-code:not(:last-child){
+          margin-bottom: .5rem;
+          padding-bottom: .5rem;
+          border-bottom: 1px solid #f0f0f0;
+        }
         .promotion-code .promotion-box-label{
           font-size: 12px;
           line-height: 16px;

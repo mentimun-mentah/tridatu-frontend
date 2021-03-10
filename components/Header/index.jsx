@@ -5,6 +5,9 @@ import { Input, Badge, Menu, Dropdown, Avatar, Tabs, AutoComplete, Empty } from 
 import { AnimatePresence, motion } from 'framer-motion'
 import { SearchOutlined } from "@ant-design/icons";
 
+import id from 'locales/id/header'
+import en from 'locales/en/header'
+
 import Link from "next/link";
 import Image from "next/image";
 import Nav from "react-bootstrap/Nav";
@@ -26,13 +29,13 @@ import CartItem from 'components/Cart/CartItemNavbar'
 
 import * as actions from "store/actions";
 
-const routes = [
-  {link: "/account/profile", text: "Akun Saya"},
-  {link: "/account/orders", text: "Pesanan Saya"},
-  {link: "/account/favorite", text: "Favorit"},
+const routes = (t) => [
+  {link: "/account/profile", text: t.my_account},
+  {link: "/account/orders", text: t.my_order},
+  {link: "/account/favorite", text: t.favorite},
 ]
 
-const accountMenu = (logoutHandler, { role }) => (
+const accountMenu = (logoutHandler, { role }, t) => (
   <Menu className="d-none d-lg-block">
     {role === "admin" && (
       <Menu.Item>
@@ -44,7 +47,7 @@ const accountMenu = (logoutHandler, { role }) => (
       </Menu.Item>
     )}
 
-    {routes.map((route, i) => (
+    {routes(t).map((route, i) => (
       <Menu.Item key={i}>
         <Link href={route.link} as={route.link}>
           <a className="text-decoration-none">
@@ -55,17 +58,17 @@ const accountMenu = (logoutHandler, { role }) => (
     ))}
 
     <Menu.Divider />
-    <Menu.Item onClick={logoutHandler}> <a className="text-decoration-none"> Keluar </a> </Menu.Item>
+    <Menu.Item onClick={logoutHandler}> <a className="text-decoration-none">{t.logout}</a> </Menu.Item>
   </Menu>
 );
 
-const notificationMenu = (
+const notificationMenu = (t) => (
   <Menu className="d-none d-lg-block">
     <Menu.ItemGroup 
       title={
         <>
-          <b className="text-dark">Notifikasi</b>
-          <a className="text-tridatu view-all-text-navbar">Baca Semua</a>
+          <b className="text-dark">{t.notification}</b>
+          <a className="text-tridatu view-all-text-navbar">{t.read_all}</a>
         </>
       }
     />
@@ -90,14 +93,14 @@ const notificationMenu = (
   </Menu>
 );
 
-const cartMenu = (
+const cartMenu = (t) => (
   <Menu className="d-none d-lg-block">
     <Menu.ItemGroup 
       title={
         <>
-          <b className="text-dark">Keranjang</b>
+          <b className="text-dark">{t.cart} (27)</b>
           <Link href="/cart" as="/cart">
-            <a className="text-tridatu view-all-text-navbar">Lihat Sekarang</a>
+            <a className="text-tridatu view-all-text-navbar">{t.cart_see_now}</a>
           </Link>
         </>
       }
@@ -122,6 +125,9 @@ const Header = () => {
   const user = useSelector(state => state.auth.user)
   const searchNameValue = useSelector(state => state.products.searchName)
   const allCategories = useSelector(state => state.categories.allCategories)
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
 
   const [searchQuery, setSearchQuery] = useState('')
   const [showLogin, setShowLogin] = useState(false)
@@ -305,7 +311,7 @@ const Header = () => {
         className="bg-white navbar-shadow-bottom py-2 noselect"
       >
         <Container>
-          <Navbar.Brand href="/" className="font-italic d-inline-flex">
+          <Navbar.Brand href={`/${locale !== "id" ? locale : ""}`} className="font-italic d-inline-flex">
             <Image
               height={42}
               width={29}
@@ -362,13 +368,13 @@ const Header = () => {
                   onMouseEnter={() => document.body.classList.add("overflow-hidden")}
                   onMouseLeave={() => document.body.classList.remove("overflow-hidden")}
                 >
-                  Kategori
+                  {t.category}
                 </Nav.Link>
               </Dropdown>
 
               <Link href="/promo" as="/promo">
                 <Nav.Link as="a" className="text-dark align-self-center">
-                  Promo
+                  {t.promo}
                 </Nav.Link>
               </Link>
               
@@ -396,7 +402,7 @@ const Header = () => {
 
               <Dropdown 
                 arrow
-                overlay={notificationMenu} 
+                overlay={notificationMenu(t)} 
                 trigger={['hover']}
                 placement="bottomCenter" 
                 overlayClassName="position-fixed top-50 w-340px"
@@ -412,7 +418,7 @@ const Header = () => {
 
               <Dropdown 
                 arrow
-                overlay={cartMenu} 
+                overlay={cartMenu(t)} 
                 trigger={['hover']}
                 placement="bottomCenter" 
                 overlayClassName="position-fixed top-50 w-340px"
@@ -428,7 +434,7 @@ const Header = () => {
               <span className="border-right mx-4"></span>
 
               {user ? (
-                <Dropdown overlay={() => accountMenu(logoutHandler, user)} placement="bottomRight">
+                <Dropdown overlay={() => accountMenu(logoutHandler, user, t)} placement="bottomRight">
                   <a className="text-truncate text-dark align-middle text-decoration-none" style={{width: 250}}>
                     <Avatar size="large" src={user && `${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} />
                     <span className="pl-2 align-middle text-capitalize">{user.username}</span>
@@ -437,10 +443,10 @@ const Header = () => {
               ) : (
                 <>
                   <Nav.Item id="id-btn-login" className="mr-2 align-self-center d-none d-lg-block" onClick={showLoginHandler}>
-                    <Button size="sm" className="btn-dark-tridatu-outline">Masuk</Button>
+                    <Button size="sm" className="btn-dark-tridatu-outline">{t.login}</Button>
                   </Nav.Item>
                   <Nav.Item className="align-self-center d-none d-lg-block" onClick={showRegisterHandler}>
-                    <Button size="sm" className="btn-tridatu">Daftar</Button>
+                    <Button size="sm" className="btn-tridatu">{t.register}</Button>
                   </Nav.Item>
                 </>
               )}
@@ -451,6 +457,7 @@ const Header = () => {
       </Navbar>
 
       <Login 
+        t={t}
         show={showLogin} 
         handler={showRegisterHandler} 
         close={closeModalHandler} 
@@ -458,12 +465,14 @@ const Header = () => {
       />
 
       <Register 
+        t={t}
         show={showRegister} 
         handler={showLoginHandler} 
         close={closeModalHandler} 
       />
 
       <ExtraAuth
+        t={t}
         type={showExtraAuth.type}
         show={showExtraAuth.show}
         handler={showRegisterHandler} 
@@ -471,7 +480,8 @@ const Header = () => {
       />
 
       <MobileMenu 
-        routes={routes}
+        t={t}
+        routes={routes(t)}
         visible={showMobileMenu} 
         close={closeMobileMenuHandler} 
         login={showLoginHandler} 

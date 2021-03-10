@@ -1,15 +1,26 @@
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
 import { useDispatch, useSelector } from "react-redux";
-import { Row, Col, Empty } from 'antd'
+import { Row, Col, Empty, Input } from 'antd'
 import { AnimatePresence, motion } from 'framer-motion'
 
+import id from 'locales/id/admin/brand'
+import en from 'locales/en/admin/brand'
+
+import ColB from 'react-bootstrap/Col'
 import Card from 'react-bootstrap/Card'
+import Form from 'react-bootstrap/Form'
 
 import axios, { jsonHeaderHandler, resNotification, signature_exp } from 'lib/axios'
 import * as actions from "store/actions";
 import CardBrand from "components/Card/Admin/Brands/Card"
 
 const Brand = () => {
+  const router = useRouter()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const dispatch = useDispatch()
   const brands = useSelector(state => state.brand.brand)
   
@@ -23,7 +34,7 @@ const Brand = () => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           dispatch(actions.getBrand())
-          resNotification("success", "Success", "Successfully delete the brand.")
+          resNotification("success", "Success", t.success_response)
         } else if(typeof(errDetail) === "string") {
           resNotification("error", "Error", errDetail)
         } else {
@@ -36,15 +47,29 @@ const Brand = () => {
     <>
       <Card className="border-0 shadow-none card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Kelola Brand</h5>
+          <h5 className="mb-0 fs-16-s">{t.manage_brand}</h5>
         </Card.Body>
         <Card.Body className="p-3">
+          <Form>
+            <Form.Row>
+              <Form.Group as={ColB} lg={12}>
+                <Input 
+                  // value={search}
+                  // onChange={e => setSearch(e.target.value)}
+                  placeholder="Cari brand"
+                  className="account-search h-100"
+                  prefix={<i className="far fa-search" />}
+                />
+              </Form.Group>
+            </Form.Row>
+          </Form>
+
           {brands && brands.length > 0 ? (
             <Row gutter={[10, 10]}>
               <AnimatePresence>
                 {brands.map(data => (
                   <Col xl={4} lg={6} md={8} sm={12} xs={12} key={data.id}>
-                    <CardBrand data={data} deleteHandler={() => deleteBrandHandler(data.id)} />
+                    <CardBrand data={data} deleteHandler={() => deleteBrandHandler(data.id)} t={t} />
                   </Col>
                 ))}
               </AnimatePresence>
@@ -56,7 +81,7 @@ const Brand = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: ".2" }}
             >
-              <Empty className="my-5" description={<span className="text-secondary">Kamu belum memiliki brand</span>} /> 
+              <Empty className="my-5" description={<span className="text-secondary">{t.empty_brand}</span>} /> 
             </motion.div>
           )}
         </Card.Body>

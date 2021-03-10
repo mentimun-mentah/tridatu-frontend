@@ -14,14 +14,14 @@ export const formItemSubCategories = {
   name: { value: "", isValid: true, message: "" },
 }
 
-export const formCategoriesIsValid = (state, setState) => {
+export const formCategoriesIsValid = (state, setState, t) => {
   const name = { ...state.name }
   let isGood = true
 
   if(!isLength(name.value, { min: 3, max: 100 })){
     isGood = false;
     name.isValid = false;
-    name.message = "ensure this value has at least 3 - 100 characters";
+    name.message = t.validation.category_length;
   }
 
   if(!isGood) setState({ ...state, name })
@@ -29,7 +29,7 @@ export const formCategoriesIsValid = (state, setState) => {
   return isGood
 }
 
-export const formSubCategoriesIsValid = (state, setState) => {
+export const formSubCategoriesIsValid = (state, setState, t) => {
   const category_id = { ...state.category_id }
   const name = { ...state.name }
   let isGood = true
@@ -37,13 +37,13 @@ export const formSubCategoriesIsValid = (state, setState) => {
   if(category_id.value.length < 1){
     isGood = false;
     category_id.isValid = false;
-    category_id.message = "Category can't be empty"
+    category_id.message = t.validation.empty;
   }
 
   if(!isLength(name.value, { min: 3, max: 100 })){
     isGood = false;
     name.isValid = false;
-    name.message = "ensure this value has at least 3 - 100 characters";
+    name.message = t.validation.category_length;
   }
 
   if(!isGood) setState({ ...state, category_id, name })
@@ -51,7 +51,7 @@ export const formSubCategoriesIsValid = (state, setState) => {
   return isGood
 }
 
-export const formItemSubCategoriesIsValid = (state, setState) => {
+export const formItemSubCategoriesIsValid = (state, setState, t) => {
   const sub_category_id = { ...state.sub_category_id }
   const name = { ...state.name }
   let isGood = true
@@ -59,13 +59,13 @@ export const formItemSubCategoriesIsValid = (state, setState) => {
   if(sub_category_id.value.length < 1){
     isGood = false;
     sub_category_id.isValid = false;
-    sub_category_id.message = "Sub Category can't be empty"
+    sub_category_id.message = t.validation.empty
   }
 
   if(!isLength(name.value, { min: 3, max: 100 })){
     isGood = false;
     name.isValid = false;
-    name.message = "ensure this value has at least 3 - 100 characters";
+    name.message = t.validation.category_length;
   }
 
   if(!isGood) setState({ ...state, sub_category_id, name })

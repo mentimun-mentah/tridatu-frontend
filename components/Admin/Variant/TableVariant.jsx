@@ -16,16 +16,6 @@ import { formVariantLayout, createNewArr } from 'data/productsAdmin'
 import { ongoing, will_come } from 'components/Card/Admin/Product/Promo/statusType'
 import { formImage } from 'formdata/formImage'
 
-const emptyMessage = "Variasi tidak boleh kosong"
-const emptyColumnMessage = "Kolom tidak boleh kosong"
-const duplicateMessage = "Pilihan variasi harus berbeda."
-const stockMessage = "Stok tidak boleh kurang dari 0."
-const priceMessage = "Harga harus lebih dari 1."
-
-const nameTitle1 = "Masukkan Nama Variasi, contoh: Warna, dll."
-const nameTitle2 = "Masukkan Nama Variasi, contoh: Ukuran, dll."
-const nameVariant1 = "Masukkan Pilihan Variasi, contoh: Merah, dll."
-const nameVariant2 = "Masukkan Pilihan Variasi, contoh: S, M, dll."
 const maxNameTitle = 15, maxNameVariant = 20, maxCode = 50;
 
 const arrProp = ["price", "stock", "code", "barcode", "discount", "discount_active", "id"]
@@ -43,10 +33,10 @@ export const additional = {
   discount_active: { ...initialValue, value: false },
 } 
 
-export const addColumVariantHandler = (variant, columns, setColumns) => {
+export const addColumVariantHandler = (variant, columns, setColumns, t) => {
   const copyColumns = [...columns]
   let data = {
-    title: `Nama`,
+    title: t.sales_information.variant.name,
     dataIndex: `va${variant}_option`,
     key: `va${variant}_option`,
     fixed: 'left',
@@ -76,8 +66,19 @@ export const addColumVariantHandler = (variant, columns, setColumns) => {
 const TableVariant = ({
   isActiveVariation, setIsActiveVariation, dataSource, setDataSource, columns, setColumns, vaOption, setVaOption, 
   imageVariants, setImageVariants, onRemoveVariant, initialFetch, setInitialFetch, activeGrosir, grosirPrice, setGrosirPrice, noVariant,
-  discountStatus
+  discountStatus, t
 }) => {
+  const emptyMessage = t.sales_information.validation.empty_variant
+  const emptyColumnMessage = t.sales_information.validation.empty_column
+  const duplicateMessage = t.sales_information.validation.duplicate
+  const stockMessage = t.sales_information.validation.stock
+  const priceMessage = t.sales_information.validation.price
+
+  const nameTitle1 = t.sales_information.variant.placeholder.variant_name_1
+  const nameTitle2 = t.sales_information.variant.placeholder.variant_name_2
+  const nameVariant1 = t.sales_information.variant.placeholder.variant_option_1
+  const nameVariant2 = t.sales_information.variant.placeholder.variant_option_2
+
   const [count, setCount] = useState(0)
   const [infoVariant, setInfoVariant] = useState(additional)
   const [isSetAll, setIsSetAll] = useState(false)
@@ -151,7 +152,7 @@ const TableVariant = ({
 
   const activeVariantHandler = (variant) => {
     setIsActiveVariation({ ...isActiveVariation, active: true, countVariation: countVariation + 1 })
-    addColumVariantHandler(variant, columns, setColumns)
+    addColumVariantHandler(variant, columns, setColumns, t)
     addVariant(variant)
     setIsSetAll(false)
   }
@@ -166,18 +167,18 @@ const TableVariant = ({
 
     let newColumns = [...columns]
     if(isEmpty(value || "", { ignore_whitespace: true })){
-      newColumns[idx].title = value || "Nama"
+      newColumns[idx].title = value || t.sales_information.variant.name
       newColumns[idx].isValid = false
       newColumns[idx].message = emptyMessage
       setColumns(newColumns)
     } else {
-      newColumns[idx].title = value || "Nama"
+      newColumns[idx].title = value || t.sales_information.variant.name
       newColumns[idx].isValid = true
       newColumns[idx].message = null
       setColumns(newColumns)
     }
     if(value && isIn(value, listVariantHeads)){
-      newColumns[idx].title = value || "Nama"
+      newColumns[idx].title = value || t.sales_information.variant.name
       newColumns[idx].isValid = false
       newColumns[idx].message = duplicateMessage
       setColumns(newColumns)
@@ -190,7 +191,7 @@ const TableVariant = ({
 
     let newColumns = [...columns]
     if(isEmpty(value || "", { ignore_whitespace: true })){
-      newColumns[idx].title = value || "Nama"
+      newColumns[idx].title = value || t.sales_information.variant.name
       newColumns[idx].isValid = false
       newColumns[idx].message = emptyMessage
       setColumns(newColumns)
@@ -373,8 +374,8 @@ const TableVariant = ({
             key: val1.key+val2.key,
             va1_key: +key1,
             va2_key: +key2,
-            va1_option: val1.va1_option.value ? val1.va1_option.value : `Pilihan ${+key1+1}`,
-            va2_option: val2.va2_option.value ? val2.va2_option.value : `Pilihan ${+key2+1}`,
+            va1_option: val1.va1_option.value ? val1.va1_option.value : `${t.sales_information.variant.option} ${+key1+1}`,
+            va2_option: val2.va2_option.value ? val2.va2_option.value : `${t.sales_information.variant.option} ${+key2+1}`,
             id: { value: val2.id.value, isValid: true, message: null },
             discount: { value: 0, isValid: true, message: null },
             discount_active: { value: false, isValid: true, message: null }
@@ -402,7 +403,7 @@ const TableVariant = ({
         const initialData = {
           key: val1.key,
           id: { value: val1.id.value, isValid: true, message: null },
-          va1_option: val1.va1_option.value ? val1.va1_option.value : `Pilihan ${+key1+1}`,
+          va1_option: val1.va1_option.value ? val1.va1_option.value : `${t.sales_information.variant.option} ${+key1+1}`,
         }
         if(isSetAll && !isDeleting){
           const { price, stock, code, barcode } = infoVariant
@@ -717,7 +718,8 @@ const TableVariant = ({
         onChange: e => onTableChange(e, !isIn(col.inputType, ["code", "barcode"]) && col.inputType, index),
         onBlur: e => onValidateTableVariantCheck(e, !isIn(col.inputType, ["code", "barcode"]) && col.inputType, index),
         maxCode: maxCode,
-        discountStatus: discountStatus
+        discountStatus: discountStatus,
+        t: t
       }),
     };
   });
@@ -748,7 +750,7 @@ const TableVariant = ({
           placement="left"
           title={
             <span className="text-dark fs-12 noselect">
-              Variasi tidak dapat dihapus jika promosi sudah dijadwalkan atau sedang berjalan.
+              {t.sales_information.variant.delete_variant_info}
             </span>
           }
         >
@@ -776,7 +778,7 @@ const TableVariant = ({
           placement="left"
           title={
             <span className="text-dark fs-12 noselect">
-              Pilihan tidak dapat dihapus jika promosi sudah dijadwalkan atau sedang berjalan.
+              {t.sales_information.variant.delete_option_info}
             </span>
           } 
         >
@@ -792,14 +794,14 @@ const TableVariant = ({
   const renderVariationButton = () => {
     const ButtonComponent = ({ disabled }) => (
       <Card.Body className="p-0 pb-1">
-        <p className="fs-14 mb-3 w-100">Variasi {countVariation+1 == 2 && countVariation+1}</p>
+        <p className="fs-14 mb-3 w-100">{t.sales_information.variant.title} {countVariation+1 == 2 && countVariation+1}</p>
         <ButtonColor
           disabled={disabled}
           block with="dashed" type="primary" 
           className="h-35" icon={<PlusCircleOutlined />}
           onClick={disabled ? () => {} : () => activeVariantHandler(countVariation+1)}
         >
-          {countVariation < 1 ? "Aktifkan Variasi" : "Tambah"}
+          {countVariation < 1 ? t.sales_information.variant.active_variant : t.sales_information.variant.add}
         </ButtonColor>
       </Card.Body>
     )
@@ -832,13 +834,13 @@ const TableVariant = ({
             <React.Fragment key={i}>
             <Card.Body className="p-3 bg-light mb-3 bor-rad-5px">
               <p className="fs-15 mb-3 w-100 fw-500">
-                Variasi {i+1}
+                {t.sales_information.variant.title} {i+1}
                 {renderActionButton(i+1)}
               </p>
               <Form layout="vertical" {...formVariantLayout} name="head_title">
                 <Form.Item 
                   className="mb-3"
-                  label="Nama"
+                  label={t.sales_information.variant.name}
                   name={`va${i+1}_option`}
                   validateStatus={!columns[i].isValid && columns[i].message && "error"}
                 >
@@ -846,12 +848,12 @@ const TableVariant = ({
                     <Input 
                       name={`va${i+1}_name`}
                       className="h-35"
-                      value={columns[i].title.split(" ")[0] === "Nama" ? "" : columns[i].title} 
+                      value={columns[i].title.split(" ")[0] === t.sales_information.variant.name ? "" : columns[i].title} 
                       placeholder={ i == 0 ? nameTitle1 : i == 1 ? nameTitle2 : "" } 
                       onBlur={onValidateVariantHeadCheck(`va${i+1}_option`)}
                       onChange={onVariantHeadChange(`va${i+1}_option`)}
                       maxLength={maxNameTitle}
-                      suffix={ columns[i].title.split(" ")[0] === "Nama" ? <CountChar>0/{maxNameTitle}</CountChar> : <CountChar>{columns[i].title.length}/{maxNameTitle}</CountChar> }
+                      suffix={ columns[i].title.split(" ")[0] === t.sales_information.variant.name ? <CountChar>0/{maxNameTitle}</CountChar> : <CountChar>{columns[i].title.length}/{maxNameTitle}</CountChar> }
                     />
                     <ErrorTooltip item={columns[i]} />
                     <Media.Body>
@@ -866,7 +868,7 @@ const TableVariant = ({
                 {i == 0 && [...Array(va1Total)].map((_,idx) => (
                   <Form.Item 
                     key={idx}
-                    label={idx === 0 && 'Pilihan'} 
+                    label={idx === 0 && t.sales_information.variant.option} 
                     className="my-2 w-100" 
                     name={`variants_${idx+1}`} 
                     validateStatus={!va1Option[idx].va1_option.isValid && va1Option[idx].va1_option.message && "error"}
@@ -895,7 +897,7 @@ const TableVariant = ({
                 {i == 1 && [...Array(va2Total)].map((_,idx) => (
                   <Form.Item 
                     key={idx}
-                    label={idx === 0 && 'Pilihan'} 
+                    label={idx === 0 && t.sales_information.variant.option} 
                     className="my-2 w-100" 
                     name={`variants_${idx+1}`} 
                     validateStatus={!va2Option[idx].va2_option.isValid && va2Option[idx].va2_option.message && "error"}
@@ -920,8 +922,12 @@ const TableVariant = ({
                   </Form.Item>
                 ))}
 
-                {i == 0 && va1Total < 20 && <ButtonAddVariant count={i}>Tambahkan Pilihan ({va1Total+1}/20)</ButtonAddVariant> }
-                {i == 1 && va2Total < 20 && <ButtonAddVariant count={i}>Tambahkan Pilihan ({va2Total+1}/20)</ButtonAddVariant> }
+                {i == 0 && va1Total < 20 && (
+                  <ButtonAddVariant count={i}>{t.sales_information.variant.add_option} ({va1Total+1}/20)</ButtonAddVariant>
+                )}
+                {i == 1 && va2Total < 20 && (
+                  <ButtonAddVariant count={i}>{t.sales_information.variant.add_option} ({va2Total+1}/20)</ButtonAddVariant>
+                )}
 
               </Form>
 
@@ -937,7 +943,7 @@ const TableVariant = ({
         <>
           <Card.Body className="p-0 py-3">
             <Form layout="vertical">
-              <Form.Item className="mb-0" label="Informasi Variasi" >
+              <Form.Item className="mb-0" label={t.sales_information.variant.variant_information}>
                 <Row gutter={[8, 8]}>
                   <Col xs={24} sm={24} md={17} lg={18} xl={18}>
                     <Input.Group compact className="info-variasi-input">
@@ -947,7 +953,7 @@ const TableVariant = ({
                           <InputNumber
                             min={1}
                             name="price"
-                            placeholder="Harga"
+                            placeholder={t.sales_information.variant.price}
                             value={infoVariant.price.value}
                             onChange={e => infoVariantChange(e, "price")}
                             className="w-100 bor-left-rad-0 bor-right-rad-0 h-33-custom-input h-35"
@@ -960,7 +966,7 @@ const TableVariant = ({
                         min={0} 
                         name="stock"
                         className="h-35" 
-                        placeholder="Stok" 
+                        placeholder={t.sales_information.variant.stock} 
                         value={infoVariant.stock.value}
                         onChange={e => infoVariantChange(e, "stock")}
                         style={{ width: 'calc(100%/4)', marginLeft: '-1px' }} 
@@ -968,7 +974,7 @@ const TableVariant = ({
                       <Input 
                         name="code"
                         className="h-35" 
-                        placeholder="Kode" 
+                        placeholder={t.sales_information.variant.code}
                         maxLength={maxCode}
                         value={infoVariant.code.value}
                         onChange={e => infoVariantChange(e)}
@@ -977,7 +983,7 @@ const TableVariant = ({
                       <Input 
                         name="barcode"
                         className="h-35" 
-                        placeholder="Barcode" 
+                        placeholder={t.sales_information.variant.barcode}
                         maxLength={maxCode}
                         value={infoVariant.barcode.value}
                         onChange={e => infoVariantChange(e)}
@@ -994,7 +1000,7 @@ const TableVariant = ({
                       className="h-35"
                       onClick={setInfoVariantHandler}
                     >
-                      Terapkan ke Semua
+                      {t.sales_information.variant.set_all}
                     </ButtonColor>
                   </Col>
                 </Row>

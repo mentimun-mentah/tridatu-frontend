@@ -6,7 +6,7 @@ export const formLogin = {
   password: { value: "", isValid: true, message: "" },
 }
 
-export const formLoginIsValid = (state, setState) => {
+export const formLoginIsValid = (state, setState, t) => {
   const email = { ...state.email }
   const password = { ...state.password }
   let isGood = true
@@ -14,13 +14,13 @@ export const formLoginIsValid = (state, setState) => {
   if(!isEmail(email.value)){
     isGood = false;
     email.isValid = false;
-    email.message = "value is not a valid email address";
+    email.message = t.validation.invalid_email;
   }
 
   if(!isLength(password.value, { min: 6, max: 100 })){
     isGood = false;
     password.isValid = false;
-    password.message = "ensure this value has at least 6 - 100 characters";
+    password.message = t.validation.empty_password;
   }
 
   if(!isGood) setState({ ...state, email, password })

@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Modal, Rate, Button, Select, Tabs, Progress, Breadcrumb, Input, AutoComplete } from "antd";
-import { Comment, Avatar, Col as ColAntd, Row as RowAntd, Skeleton, Alert } from 'antd';
+import { Modal, Rate, Button, Select, Tabs, Progress, Breadcrumb, Input, AutoComplete, Popover } from "antd";
+import { Comment, Avatar, Col as ColAntd, Row as RowAntd, Skeleton, Alert, Table, Form } from 'antd';
 import { AnimatePresence, motion } from "framer-motion"
 import { buildStyles, CircularProgressbar } from 'react-circular-progressbar';
-import { SearchOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { SearchOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
 
+import _ from 'lodash'
 import Link from 'next/link'
+import Image from 'next/image'
 import Router, { useRouter } from "next/router";
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
-import Form from 'react-bootstrap/Form'
 import Card from 'react-bootstrap/Card'
-import ButtonBoot from 'react-bootstrap/Button'
+import AlertB from 'react-bootstrap/Alert'
 import Container from 'react-bootstrap/Container'
 
 import ImageGallery from 'react-image-gallery'
@@ -21,28 +22,27 @@ import getYoutubeThumbnail from "lib/getYoutubeThumbnail"
 import formatNumber from "lib/formatNumber";
 import Pagination from "components/Pagination";
 import UlasanContainer from 'components/Card/Ulasan'
-import DiskusiContainer from 'components/Card/Diskusi'
+import CommentContainer from 'components/Card/Diskusi'
 import ShareModal from 'components/Card/ShareModal'
 import CardProduct from "components/Card/Product";
+import ErrorMessage from "components/ErrorMessage";
 
 import VariantProduct from "components/Products/Variants";
 import ShippingDisplayContainer from "components/Products/ShippingDisplay";
 import BottomNavigation from "components/Products/BottomNavigation"
 
 import * as actions from "store/actions";
-import axios from 'lib/axios'
+import axios, { jsonHeaderHandler, signature_exp } from 'lib/axios'
 
+import { columnsGrosir } from 'data/products'
+import { formComment, formCommentIsValid, onChangeMessage } from 'formdata/formComment'
 import { renderLeftNav, renderRightNav, renderFullscreenButton } from 'components/Products/ImageGalleryButton'
 
 import SlugStyle from 'components/Products/slugStyle'
 
 const CardProductMemo = React.memo(CardProduct);
 
-const Fade = {
-  initial: { opacity: 0, },
-  in: { opacity: 1, },
-  out: { opacity: 0, },
-};
+const Fade = { initial: { opacity: 0, }, in: { opacity: 1, }, out: { opacity: 0, }, };
 
 const initialShippingLocation = { 
   value: "Pilih lokasi untuk lihat ongkos kirim", 
@@ -69,6 +69,7 @@ const _renderImage = (item) => {
   )
 }
 
+const per_page = 10;
 const ProductDetail = () => {
   const dispatch = useDispatch()
   const router = useRouter()
@@ -78,6 +79,7 @@ const ProductDetail = () => {
   const loadingCost = useSelector(state => state.shipping.loading)
   const listLocation = useSelector(state => state.shipping.listLocation)
   const shippingCosts = useSelector(state => state.shipping.shippingCosts)
+  const comments = useSelector(state => state.comments.comments)
 
   useEffect(() => {
     dispatch(actions.getSlugProduct({ slug: router.query.slug, recommendation: true }))
@@ -87,22 +89,30 @@ const ProductDetail = () => {
     })
   }, [])
 
-  console.log(JSON.stringify(productData, null, 2))
-
   const { products_id, products_brand, products_category, products_condition, products_desc, products_image_product } = productData
   const { products_image_size_guide, products_love, products_name, products_recommendation, products_slug } = productData
-  const { products_variant, products_visitor, products_weight, products_wholesale, products_video } = productData
+  const { products_discount_status, products_variant, products_visitor, products_weight, products_wholesale, products_video } = productData
+  const { products_preorder } = productData
 
   const [showSearch, setShowSearch] = useState(false)
   const [showModalCart, setShowModalCart] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
+
   const [product, setProduct] = useState({})
   const [courier, setCourier] = useState({})
-  const [shippingLocation, setShippingLocation] = useState(initialShippingLocation)
-  const [love, setLove] = useState(products_love)
   const [quantity, setQuantity] = useState(1)
-  const [selected, setSelected] = useState({price: 0, va1_item: "", va2_item: "", stock: 0, priceChange: false })
+  const [love, setLove] = useState(products_love)
+  const [wholesaleList, setWholesaleList] = useState([])
+  const [shippingLocation, setShippingLocation] = useState(initialShippingLocation)
+  const [selected, setSelected] = useState({price: 0, va1_item: "", va2_item: "", stock: 0, discount: 0, isWholesale: false })
+
+  /*COMMENTS*/
+  const [page, setPage] = useState(comments.page)
+  const [commentList, setCommentList] = useState(comments)
+  const [sendCommentLoading, setSendCommentLoading] = useState(false)
+  const [commentMessage, setCommentMessage] = useState(formComment)
+  /*COMMENTS*/
 
   const showModalCartHandler = () => { setShowModalCart(true) }
 
@@ -149,7 +159,7 @@ const ProductDetail = () => {
   }
 
   const onSearchSelectHandler = (_, option) => {
-    dispatch(actions.getShippingCost({ destination: option.shipping_subdistricts_id, weight: products_weight }))
+    dispatch(actions.getShippingCost({ destination: option.shipping_subdistricts_id, weight: +products_weight }))
     setShippingLocation({ ...shippingLocation, ...option })
     setShowSearch(false)
   }
@@ -200,6 +210,7 @@ const ProductDetail = () => {
     }
     if(products_video){
       const video = {
+        original: getYoutubeThumbnail(products_video, "max"),
         thumbnail: getYoutubeThumbnail(products_video, "max"),
         embedUrl: products_video,
         renderItem: () => _renderVideo(products_video)
@@ -207,6 +218,236 @@ const ProductDetail = () => {
       videoProduct.push(video)
     }
     return list.concat(imgVariants, imgSizeGuide, videoProduct)
+  }
+
+  const stopVideos = () => {
+    const videos = document.querySelectorAll('iframe, video');
+    Array.prototype.forEach.call(videos, function (video) {
+      if (video.tagName.toLowerCase() === 'video') {
+        video.pause();
+      } else {
+        const src = video.src;
+        video.src = src;
+      }
+    });
+  };
+
+  const onSlide = () => {
+    stopVideos()
+  }
+
+  const wholesaleContent = (
+    <Table 
+      size="small"
+      columns={columnsGrosir} 
+      pagination={false}
+      dataSource={wholesaleList} 
+      className="table-striped-rows"
+    />
+  )
+
+  const getAllReplies = async (comments_id) => {
+    if(comments_id){
+      await axios.get(`/replies/comments/${comments_id}`)
+        .then(async res => {
+          const commentState = JSON.parse(JSON.stringify(commentList))
+          if(res.data.length){
+            console.log("masuk 1")
+            const dataReplies = await res.data.filter(x => x.comments_replies.length > 0)
+            if(dataReplies && dataReplies.length && dataReplies.length > 0){
+              for(let val of dataReplies){
+                if(commentState && commentState.data && commentState.data.length){
+                  for(let [key, com] of Object.entries(commentState.data)){
+                    if(com.comments_id === val.comments_id){
+                      commentState.data[key] = {
+                        ...commentState.data[key],
+                        comments_replies: val.comments_replies
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } else {
+            if(commentState && commentState.data && commentState.data.length){
+              const idx = commentState.data.findIndex(c => c.comments_id == comments_id)
+              if(res.data.comments_replies.length){
+                commentState.data[idx] = {
+                  ...commentState.data[idx],
+                  comments_replies: res.data.comments_replies
+                }
+              }
+            } else {
+              setCommentList(comments)
+              return
+            }
+          }
+          setCommentList(commentState)
+        })
+    }
+  }
+
+  const getDataReplies = async (comments_id) => {
+    const res = await axios.get(`/replies/comments/${comments_id}`)
+    return res.data
+  }
+
+  // useEffect(() => {
+  //   const list_comments_id = comments && comments.data && comments.data.map(x => x.comments_id)
+  //   if(list_comments_id){
+  //     getAllReplies(list_comments_id.join("-"))
+  //   }
+  // }, [comments])
+
+  useEffect(() => {
+    setCommentList(comments)
+  }, [])
+
+  useEffect(() => {
+    const dupCommentList = JSON.parse(JSON.stringify(commentList))
+    const dupCommentRedux = JSON.parse(JSON.stringify(comments))
+    const newComments = dupCommentRedux && dupCommentRedux.data && dupCommentRedux.data.filter(
+      ({ comments_id: id1 }) => dupCommentList && dupCommentList.data && !dupCommentList.data.some(({ comments_id: id2 }) => id2 === id1)
+    );
+
+    if(newComments && newComments.length){
+      for(let diff of newComments){
+        const idx = dupCommentRedux.data.findIndex(x => x.comments_id === diff.comments_id)
+        dupCommentList.data.splice(idx, 0, diff)
+      }
+      const newCommentData = { 
+        ...dupCommentList, 
+        total: dupCommentRedux.total,
+        next_num: dupCommentRedux.next_num,
+        prev_num: dupCommentRedux.prev_num,
+        page: dupCommentRedux.page,
+        iter_pages: dupCommentRedux.iter_pages
+      }
+      setCommentList(newCommentData)
+    }
+    else{
+      setCommentList(comments)
+    }
+  }, [comments])
+
+  useEffect(() => {
+    dispatch(actions.getAllComments({ page: page, commentable_id: products_id, commentable_type: "product" }))
+  }, [page])
+
+
+  const onSubmitComment = e => {
+    e.preventDefault()
+    if(formCommentIsValid(commentMessage, setCommentMessage)){
+      const { message } = commentMessage
+      const data = {
+        message: message.value,
+        commentable_id: products_id,
+        commentable_type: "product"
+      }
+      setSendCommentLoading(true)
+      axios.post('/comments/create', data, jsonHeaderHandler())
+        .then(() => {
+          setCommentMessage(formComment)
+          setSendCommentLoading(false)
+          dispatch(actions.getAllComments({ commentable_id: products_id, commentable_type: "product" }))
+        })
+        .catch(err => {
+          setSendCommentLoading(false)
+          const errDetail = err.response.data.detail
+          if(typeof errDetail == "string" && err.response.status == 403){
+            const state = JSON.parse(JSON.stringify(commentMessage));
+            state.message.value = message.value;
+            state.message.isValid = false;
+            state.message.message = errDetail;
+            setCommentMessage(state);
+          }
+          if(errDetail == signature_exp){
+            setCommentMessage(formComment)
+            dispatch(actions.getAllComments({ commentable_id: products_id, commentable_type: "product" }))
+          } 
+          if(typeof errDetail !== "string" && err.response.status == 422){
+            const state = JSON.parse(JSON.stringify(commentMessage));
+            errDetail.map((data) => {
+              const key = data.loc[data.loc.length - 1];
+              if (state[key]) {
+                state[key].value = state[key].value;
+                state[key].isValid = false;
+                state[key].message = data.msg;
+              }
+            });
+            setCommentMessage(state);
+          }
+        })
+    }
+  }
+
+  const onSubmitReplies = (e, formState, setFormState, comment_id, setLoading) => {
+    console.log("di klik")
+    e.preventDefault()
+    if(formCommentIsValid(formState, setFormState)){
+      const { message } = formState
+      const data = { message: message.value, comment_id: comment_id }
+      setLoading(true)
+      axios.post('/replies/create', data, jsonHeaderHandler())
+        .then(async () => {
+          setLoading(false)
+          setFormState(formComment)
+          const dataReplies = await getDataReplies(comment_id)
+          const commentState = JSON.parse(JSON.stringify(commentList))
+          const idx = commentState.data.findIndex(c => c.comments_id == comment_id)
+          console.log(JSON.stringify(dataReplies, null, 2))
+          if(commentState.data.comments_replies){
+            commentState.data[idx]["total_replies"] = dataReplies.comments_replies.length
+            commentState.data[idx].comments_replies.push(dataReplies.comments_replies[dataReplies.comments_replies.length - 1])
+          }
+          else{
+            if(commentState.data[idx]["comments_replies"] && commentState.data[idx]["comments_replies"].length){
+              commentState.data[idx]["total_replies"] = dataReplies.comments_replies.length
+              commentState.data[idx].comments_replies.push(dataReplies.comments_replies[dataReplies.comments_replies.length - 1])
+            }
+            else{
+              commentState.data[idx]["total_replies"] = dataReplies.comments_replies.length
+              commentState.data[idx]["comments_replies"] = dataReplies.comments_replies
+            }
+          }
+          setCommentList(commentState)
+        })
+        .catch(async err => {
+          console.log("masuk err aja", err)
+          console.log("masuk err", err.response)
+          setLoading(false)
+          if(err.response){
+            const errDetail = err.response && err.response.data && err.response.data.detail
+            if(typeof errDetail == "string" && err.response.status == 403){
+              const state = JSON.parse(JSON.stringify(formState));
+              state.message.value = message.value;
+              state.message.isValid = false;
+              state.message.message = errDetail;
+              setFormState(state);
+            }
+            if(errDetail == signature_exp){
+              setFormState(formComment)
+              const dataReplies = await getDataReplies(comment_id)
+              const commentState = JSON.parse(JSON.stringify(commentList))
+              const idx = commentState.data.findIndex(c => c.comments_id == comment_id)
+              commentState.data[idx].comments_replies.push(dataReplies.comments_replies[dataReplies.comments_replies.length - 1])
+              setCommentList(commentState)
+            } 
+            if(typeof errDetail !== "string" && err.response.status == 422){
+              const state = JSON.parse(JSON.stringify(formState));
+              errDetail.map((data) => {
+                const key = data.loc[data.loc.length - 1];
+                if (state[key]) {
+                  state[key].value = state[key].value;
+                  state[key].isValid = false;
+                  state[key].message = data.msg;
+                }
+              });
+              setFormState(state);
+            }
+          }
+        })
+    }
   }
 
   return(
@@ -245,6 +486,8 @@ const ProductDetail = () => {
               renderRightNav={renderRightNav}
               renderFullscreenButton={renderFullscreenButton}
               onClick={showImageModalHandler}
+              onSlide={onSlide}
+              additionalClass="product-images-container"
             />
           </Col>
           {/* POTHOS OF PRODUCTS */}
@@ -265,12 +508,29 @@ const ProductDetail = () => {
             </div>
             {/* TITLE PRODUCTS INFORMATION */}
 
+            {/* PRODUCTS INFORMATION */}
+            {products_brand && products_brand.brands_image && (
+              <div className="media info-product">
+                <h5 className="info-product-left">Brand</h5>
+                <div className="media-body info-product-body">
+                  <Image 
+                    width={64} 
+                    height={64} 
+                    src={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${products_brand.brands_image}`}
+                  />
+                </div>
+              </div>
+            )}
+            {/* PRODUCTS INFORMATION */}
+
             <VariantProduct 
               product={productData} 
               selected={selected}
               setSelected={setSelected}
               quantity={quantity}
               setQuantity={setQuantity}
+              wholesaleList={wholesaleList}
+              setWholesaleList={setWholesaleList}
             />
 
             {/* PRODUCTS INFORMATION */}
@@ -280,7 +540,7 @@ const ProductDetail = () => {
                 <div className="d-flex noselect">
                   <div className="info-item">
                     <p>Berat</p>
-                    <p>{products_weight}gr</p>
+                    <p>{+products_weight}gr</p>
                   </div>
                   <div className="info-item">
                     <p>Kondisi</p>
@@ -290,6 +550,12 @@ const ProductDetail = () => {
                     <p>Kategori</p>
                     <p>{products_category.item_sub_categories_name}</p>
                   </div>
+                  {Boolean(products_preorder) && (
+                    <div className="info-item">
+                      <p>Preorder</p>
+                      <p>{products_preorder} Hari</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -303,7 +569,7 @@ const ProductDetail = () => {
                   <p className="mb-0 font-weight-light">
                     Ke
                     <a 
-                      className="fw-500 text-dark m-l-3"
+                      className="fw-500 text-dark m-l-5"
                       style={{ borderBottom: "1px dashed #343a40" }}
                       onClick={searchHandlerClicked}
                     >
@@ -311,7 +577,7 @@ const ProductDetail = () => {
                     </a>
                   </p>
                   <p className="mb-0 font-weight-light">
-                    Dari<span className="fw-500 text-dark m-l-3">{shippingLocation.origin}</span>
+                    Dari<span className="fw-500 text-dark m-l-5">{shippingLocation.origin}</span>
                   </p>
                 </div>
 
@@ -349,12 +615,7 @@ const ProductDetail = () => {
                             {courier.costs.map(services => (
                               services.cost.map(cost => {
                                 let etd = cost.etd.split(" ")
-                                let data = {
-                                  code: courier.code,
-                                  services: services.service,
-                                  etd: etd[0],
-                                  cost: cost.value
-                                }
+                                let data = { code: courier.code, services: services.service, etd: etd[0], cost: cost.value }
                                 return (
                                   <Select.Option value={JSON.stringify(data)} key={courier.code + services.service}>
                                     <div className="d-flex justify-content-between noselect">
@@ -415,6 +676,28 @@ const ProductDetail = () => {
             </div>
             {/* SHIPPING INFORMATION */}
 
+
+            {/* PENAWARAN LAINNYA */}
+            {wholesaleList.length > 0 && (
+              <div className="media info-product">
+                <h5 className="info-product-left">Harga Grosir</h5>
+                <div className="media-body info-product-body">
+                  <div className="fs-14 noselect">
+                    <p className="mb-0">Lebih banyak, lebih murah!</p>
+                    <p className="mb-0">
+                      Mulai dari 
+                      Rp.{formatNumber(wholesaleList[0].wholesale_price)}, min. {formatNumber(wholesaleList[0].wholesale_min_qty)} pcs
+                      <Popover content={wholesaleContent} placement="bottom" overlayClassName="idx-1020">
+                        <i className="fas fa-angle-down hover-pointer m-l-8" style={{ verticalAlign: "text-bottom" }} />
+                      </Popover>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PENAWARAN LAINNYA */}
+
             {/* ACTIONS PRODUCTS INFORMATION 
             <div className="info-product">
               <Space>
@@ -440,7 +723,7 @@ const ProductDetail = () => {
 
         <Row className="mt-3">
           <Col>
-            <Tabs defaultActiveKey="1" style={{ borderTop: "1px solid #f0f0f0" }}>
+            <Tabs defaultActiveKey="3" style={{ borderTop: "1px solid #f0f0f0" }}>
               <Tabs.TabPane tab="Deskripsi" key="1">
                 <p className="ws-preline"> {products_desc} </p>
               </Tabs.TabPane>
@@ -462,31 +745,18 @@ const ProductDetail = () => {
                     </div>
                   </Col>
                   <Col lg={4} md={6}>
-                    <div className="ulasan-rating">
-                      <Rate disabled className="ulasan-rating-rate" count={1} value={1} />
-                      <span className="ulasan-rating-text">5</span>
-                      <Progress className="ulasan-star-rating" percent={80} strokeWidth="5px" format={percent => `${percent}`} />
-                    </div>
-                    <div className="ulasan-rating">
-                      <Rate disabled className="ulasan-rating-rate" count={1} value={1} />
-                      <span className="ulasan-rating-text">4</span>
-                      <Progress className="ulasan-star-rating" percent={100} strokeWidth="5px" format={percent => `${percent}`} />
-                    </div>
-                    <div className="ulasan-rating">
-                      <Rate disabled className="ulasan-rating-rate" count={1} value={1} />
-                      <span className="ulasan-rating-text">3</span>
-                      <Progress className="ulasan-star-rating" percent={90} strokeWidth="5px" format={percent => `${percent}`} />
-                    </div>
-                    <div className="ulasan-rating">
-                      <Rate disabled className="ulasan-rating-rate" count={1} value={1} />
-                      <span className="ulasan-rating-text">2</span>
-                      <Progress className="ulasan-star-rating" percent={30} strokeWidth="5px" format={percent => `${percent}`} />
-                    </div>
-                    <div className="ulasan-rating">
-                      <Rate disabled className="ulasan-rating-rate" count={1} value={1} />
-                      <span className="ulasan-rating-text">1</span>
-                      <Progress className="ulasan-star-rating" percent={10} strokeWidth="5px" format={percent => `${percent}`} />
-                    </div>
+                    {[5,4,3,2,1].map(x => (
+                      <div className="ulasan-rating" key={x}>
+                        <Rate disabled className="ulasan-rating-rate" count={1} value={1} />
+                        <span className="ulasan-rating-text">{x}</span>
+                        <Progress 
+                          strokeWidth="5px" 
+                          className="ulasan-star-rating" 
+                          format={percent => `${percent}`} 
+                          percent={Math.floor((Math.random() * 100) + 1)} 
+                        />
+                      </div>
+                    ))}
                   </Col>
                 </Row>
                 <Row className="mt-5">
@@ -506,43 +776,112 @@ const ProductDetail = () => {
                 </Row>
               </Tabs.TabPane>
 
-              <Tabs.TabPane tab="Diskusi (3)" key="3">
-                <section>
-                  <Comment 
-                    avatar={
-                      <Avatar
-                        src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"
-                        alt="Han Solo"
-                      />
-                    }
-                    content={
-                      <Form>
-                        <Form.Group>
-                          <Form.Control 
-                            as="textarea" 
-                            rows={3}
-                            placeholder="Apa yang ingin Anda tanyakan tentang produk ini?"
-                          />
-                        </Form.Group>
-                        <ButtonBoot className="btn-tridatu px-5">Kirim</ButtonBoot>
-                      </Form>
-                    }
-                  />
-                </section>
 
-                {[...Array(3)].map((_,i) => (
-                  <section className="diskusi-section mb-0" key={i}>
-                    <DiskusiContainer head body="isi">
-                      <DiskusiContainer body="isi" />
+
+              <Tabs.TabPane tab="Diskusi (3)" key="3">
+                {user && user.role !== "admin" && (
+                  <section className="mb-0">
+                    <Comment 
+                      avatar={
+                        <Avatar
+                          src={user && `${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`}
+                          alt={user && user.username}
+                        />
+                      }
+                      content={
+                        <Form>
+                          <Form.Item className="mb-2"
+                            validateStatus={!commentMessage.message.isValid && commentMessage.message.message && "error"}
+                          >
+                            <Input.TextArea name="message"
+                              autoSize={{ minRows: 3, maxRows: 5 }}
+                              value={commentMessage.message.value}
+                              onChange={e => onChangeMessage(e, commentMessage, setCommentMessage)}
+                              placeholder="Apa yang ingin Anda tanyakan tentang produk ini?"
+                            />
+                            <ErrorMessage item={commentMessage.message} />
+                          </Form.Item>
+                          <Form.Item className="mb-0">
+                            <Button className="btn-tridatu px-5" onClick={onSubmitComment}>
+                              {sendCommentLoading ? <LoadingOutlined /> : "Kirim"}
+                            </Button>
+                          </Form.Item>
+                        </Form>
+                      }
+                    />
+                  </section>
+                )}
+                {!user && (
+                  <section>
+                    <AlertB variant="secondary" className="border-0" style={{ backgroundColor: "#e2e3e563", color: "#343a40" }}>
+                      <p className="text-center my-2 noselect">
+                        <a className="text-dark fw-500" onClick={loveLoginBtn}>Masuk </a>
+                        terlebih dahulu untuk dapat menanyakan tentang produk ini
+                      </p>
+                    </AlertB>
+                  </section>
+                )}
+
+                {commentList && commentList.data && commentList.data.length > 0 && commentList.data.map(comment => (
+                  <section className="diskusi-section mb-0" key={comment.comments_id}>
+                    <CommentContainer 
+                      head body="message"
+                      comment_id={comment.comments_id}
+                      username={comment.users_username}
+                      content={comment.comments_message}
+                      created_at={comment.comments_created_at}
+                      can_delete={user && comment.comments_user_id === user.id}
+                      avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${comment.users_avatar}`}
+                    >
+                      {comment.total_replies > 2 && comment.comments_replies && 
+                       ((comment.total_replies - comment.comments_replies.length) > 0) && (
+                        <a 
+                          className="pb-1 fw-500 d-block" 
+                          style={{color:"rgba(0, 0, 0, 0.54)"}}
+                          onClick={() => getAllReplies(comment.comments_id)}
+                        >
+                          <i className="fal fa-comment-alt-dots m-r-3" />
+                          Lihat {comment.total_replies - comment.comments_replies.length} jawaban lainnya
+                        </a>
+                      )}
+                      {comment.comments_replies && 
+                       comment.comments_replies.length && comment.comments_replies.map(reply => (
+                        <CommentContainer 
+                          body="message" 
+                          key={reply.replies_id}
+                          role={reply.users_role}
+                          reply_id={reply.replies_id}
+                          username={reply.users_username}
+                          content={reply.replies_message}
+                          user_id={reply.replies_user_id}
+                          created_at={reply.replies_created_at}
+                          can_delete={user && reply.replies_user_id === user.id}
+                          avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${reply.users_avatar}`}
+                        />
+                      ))}
                       {/* IF USER LOGIN */}
-                      {user && <DiskusiContainer body="balas" />}
-                    </DiskusiContainer>
+                      {user && (
+                        <CommentContainer body="reply" 
+                          commentable_type="product"
+                          commentable_id={products_id}
+                          comment_id={comment.comments_id}
+                          onSubmitReplies={onSubmitReplies}
+                          avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} 
+                        />
+                      )}
+                    </CommentContainer>
                   </section>
                 ))}
 
                 <Row className="mt-3">
                   <Col className="align-self-center text-right">
-                    <Pagination />
+                    <Pagination 
+                      current={page}
+                      hideOnSinglePage
+                      pageSize={per_page}
+                      total={comments.total}
+                      goTo={val => setPage(val)}
+                    />
                   </Col>
                 </Row>
               </Tabs.TabPane>
@@ -569,10 +908,13 @@ const ProductDetail = () => {
         centered
         footer={null}
         visible={showImageModal}
-        onCancel={() => setShowImageModal(false)}
+        onCancel={() => {
+          setShowImageModal(false)
+          onSlide()
+        }}
         title={products_name}
         closeIcon={ <i className="fas fa-times" /> }
-        width="900px"
+        width="700px"
         maskStyle={{ backgroundColor: "rgba(0, 0, 0, 0.85)" }}
       >
         <ImageGallery
@@ -586,6 +928,8 @@ const ProductDetail = () => {
           renderRightNav={renderRightNav}
           renderFullscreenButton={renderFullscreenButton}
           thumbnailPosition="right"
+          onSlide={onSlide}
+          slideDuration={250}
         />
       </Modal>
 
@@ -668,6 +1012,13 @@ const ProductDetail = () => {
         :global(.image-gallery.fullscreen-modal){
           z-index: 3000;
         }
+        :global(.image-gallery-thumbnails-wrapper.right .image-gallery-thumbnails){
+          overflow-y: scroll;
+        }
+        :global(.product-images-container){
+          position: sticky;
+          top: 6rem;
+        }
       `}</style>
     </>
   )
@@ -679,6 +1030,48 @@ ProductDetail.getInitialProps = async ctx => {
 
   try{
     const res = await axios.get(`/products/${slug}?recommendation=true`)
+    const params = {
+      page: 1, per_page: 10,
+      commentable_type: "product",
+      commentable_id: res.data.products_id
+    }
+    let resComments = await axios.get(`/comments/all-comments`, { params: params })
+    // console.log("ASS ".repeat(90))
+    // console.log(JSON.stringify(resComments.data, null, 2))
+    // console.log("ASS ".repeat(90))
+    const list_comments_id = resComments && resComments.data && resComments.data.data.map(x => x.comments_id)
+    if(list_comments_id.length){
+      const resReplies = await axios.get(`/replies/comments/${list_comments_id.join("-")}`)
+      const dataReplies = resReplies.data.filter(x => x.comments_replies.length > 0)
+      if(dataReplies && dataReplies.length && dataReplies.length > 0){
+        for(let val of dataReplies){
+          if(resComments && resComments.data && resComments.data.data.length){
+            for(let [key, obj] of Object.entries(resComments.data.data)){
+              if(val.comments_id === obj.comments_id){
+                resComments.data.data[key] = {
+                  ...resComments.data.data[key],
+                  comments_replies: val.comments_replies
+                }
+              }
+            }
+          }
+        }
+        ctx.store.dispatch(actions.getAllCommentsSuccess(resComments.data))
+        // console.log("~+".repeat(90))
+        // console.log(JSON.stringify(resComments.data, null, 2))
+        // console.log("~+".repeat(90))
+      }
+      else{
+        ctx.store.dispatch(actions.getAllCommentsSuccess(resComments.data))
+      }
+    } 
+    else {
+      ctx.store.dispatch(actions.getAllCommentsSuccess(resComments.data))
+      // console.log("@#".repeat(90))
+      // console.log(JSON.stringify(resComments.data, null, 2))
+      // console.log("@#".repeat(90))
+    }
+    
     ctx.store.dispatch(actions.getProductSlugSuccess(res.data))
     if(res.hasOwnProperty("status") && res.status == 404){
       process.browser

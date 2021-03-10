@@ -2,6 +2,10 @@ import { useEffect } from "react";
 import { Col, Row, Empty } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { AnimatePresence, motion } from 'framer-motion'
+import { useRouter } from 'next/router'
+
+import id from 'locales/id/home'
+import en from 'locales/en/home'
 
 import Link from "next/link";
 import dynamic from 'next/dynamic'
@@ -35,7 +39,7 @@ const OutletImageMemo = React.memo(OutletImage);
 
 import { brandSettings, bannerSettings, infoStoreSettings, infoStoreSettingsMobile } from "lib/slickSetting";
 
-let banners = ['/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/2.jpeg', '/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/4.jpeg', '/static/images/banner/5.jpeg', '/static/images/banner/5.jpeg']
+let banners = ['/static/images/promo/used.jpg', '/static/images/banner/0.jpg', '/static/images/promo/Thumbnail-600x328.jpg', '/static/images/banner/2.jpeg']
 
 const infoStores = [...Array(4)].map(() => '/static/images/info-store/placeholder.png')
 const emptyBrands = [...Array(5)].map(() => '/static/images/brand/placeholder.png')
@@ -43,6 +47,10 @@ const emptyBrands = [...Array(5)].map(() => '/static/images/brand/placeholder.pn
 const per_page = 10
 const params = { page: 1, per_page: per_page, live: "true", order_by: "visitor" }
 const Home = () => {
+  const router = useRouter()
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const dispatch = useDispatch()
   const outlets = useSelector(state => state.outlet.outlet)
   const brands = useSelector(state => state.brand.brand)
@@ -61,7 +69,7 @@ const Home = () => {
         <RowB>
           <ColB lg={10} md={12}>
             <section className="banner-section">
-              <h4 className="fs-20-s">Promo</h4>
+              <h4 className="fs-20-s">{t.promo}</h4>
               <AnimatePresence>
                 <Slider {...bannerSettings}>
                   {banners.map((data, i) => (
@@ -75,7 +83,7 @@ const Home = () => {
 
             {/*INFORMASI BRAND*/}
             <section className="brand-section">
-              <h4 className="fs-20-s mb-4">Brand</h4>
+              <h4 className="fs-20-s mb-4">{t.brand}</h4>
               <AnimatePresence>
                 {brands && brands.length > 0 ? (
                   <Slider {...brandSettings} infinite={brands.length > 5} autoplay={false}>
@@ -102,7 +110,7 @@ const Home = () => {
           {/*INFORMASI OUTLET*/}
           <ColB lg={2} md={12} sm={12} className="d-none d-lg-block">
             <section className="info-store">
-              <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
+              <h4 className="fs-20-s info-store-title mb-3">{t.outlet_information}</h4>
               <AnimatePresence>
                 {outlets && outlets.length > 0 ? (
                   <Slider {...infoStoreSettings} infinite={outlets.length > 4}>
@@ -129,7 +137,7 @@ const Home = () => {
 
         {/*INFORMASI OUTLET MOBILE*/}
         <section className="info-store d-block d-lg-none">
-          <h4 className="fs-20-s info-store-title mb-3">Informasi Outlet</h4>
+          <h4 className="fs-20-s info-store-title mb-3">{t.outlet_information}</h4>
           {outlets && outlets.length > 0 ? (
             <Slider {...infoStoreSettingsMobile} infinite={outlets.length > 4}>
               {outlets.map(data => (
@@ -147,7 +155,7 @@ const Home = () => {
         {/*INFORMASI OUTLET MOBILE*/}
 
         <section>
-          <h4 className="fs-20-s mb-4">Paling Banyak Dilihat</h4>
+          <h4 className="fs-20-s mb-4">{t.most_viewed}</h4>
           <AnimatePresence>
             <Row gutter={[16, 16]}>
               {products && products.data && products.data.length > 0 && products.data.map(product => (
@@ -172,7 +180,7 @@ const Home = () => {
                   transition={{ duration: ".2" }}
                   className="w-100"
                 >
-                  <Empty className="my-5" description={<span className="text-secondary">Produk tidak tersedia</span>} />
+                  <Empty className="my-5" description={<span className="text-secondary">{t.no_product}</span>} />
                 </motion.div>
               )}
             </Row>
@@ -181,7 +189,7 @@ const Home = () => {
           {products && products.data && products.data.length > 0 && (
             <div className="text-center mb-5 mt-3">
               <Link href="/products" as="/products">
-                <Button className="btn-dark-tridatu-outline mx-auto">Lihat Semua Produk</Button>
+                <Button className="btn-dark-tridatu-outline mx-auto">{t.see_all}</Button>
               </Link>
             </div>
           )}
@@ -290,6 +298,9 @@ const Home = () => {
 };
 
 Home.getInitialProps = async ctx => {
+  // const cookies = parseCookies(ctx)
+  // const { NEXT_LOCALE } = cookies
+  // console.log("index =>", NEXT_LOCALE)
   const outlet = await axios.get("/outlets/all-outlets")
   const brand = await axios.get("/brands/all-brands")
   ctx.store.dispatch(actions.getOutletSuccess(outlet.data)); 

@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
-import { Button, Space, Popconfirm, Card as CardAnt } from 'antd'
+import { Popconfirm, Card as CardAnt } from 'antd'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 
 import Link from "next/link";
 import Image from "next/image";
 import Card from 'react-bootstrap/Card'
 
-const CardBrand = ({ data, deleteHandler }) => {
+const CardBrand = ({ data, deleteHandler, t }) => {
   return(
     <>
       <motion.div 
@@ -24,10 +24,10 @@ const CardBrand = ({ data, deleteHandler }) => {
               </a>
             </Link>,
             <Popconfirm 
-              title="Hapus brand ini?"
+              title={`${t.delete_brand}?`}
               onConfirm={deleteHandler}
-              okText="Ya"
-              cancelText="Batal"
+              okText={t.yes}
+              cancelText={t.cancel}
               placement="bottom"
               arrowPointAtCenter
             >

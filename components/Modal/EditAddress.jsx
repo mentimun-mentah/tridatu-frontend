@@ -12,22 +12,21 @@ import ErrorMessage from "components/ErrorMessage";
 
 import { formAddress, formAddressIsValid } from 'formdata/formAddress'
 
-const textSearch = "Please enter 3 or more characters"
-const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress }) => {
+const EditAddressModal = ({ t, show, close, perPage, currentPage, currentAddress }) => {
   const dispatch = useDispatch()
   const [loading, setLoading] = useState(false)
   const [addressList, setAddressList] = useState([])
   const [postalCode, setPostalCode] = useState([])
   const [address, setAddress] = useState(formAddress)
-  const [notFound, setNotFound] = useState({text: textSearch})
+  const [notFound, setNotFound] = useState({text: t.initial_text_search})
 
   const { label, receiver, phone, region, postal_code, recipient_address } = address
 
   const fetchAddress = value => {
-    let text = textSearch
+    let text = t.initial_text_search
     if(value.length < 3){
       let min = 3
-      text = `Please enter ${min - value.length} or more characters`
+      text = `${t.serach_min_text_1} ${min - value.length} ${t.serach_min_text_2}`
       setAddressList([])
       setPostalCode([])
       setNotFound({text: text})
@@ -43,7 +42,7 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
         .then(res => {
           if(res.data.length > 0 && value.length >= 3) setAddressList(res.data)
           else {
-            text = `No results found`
+            text = t.not_found
             value.length >= 3 && setNotFound({text: text})
             setAddressList([])
           }
@@ -87,17 +86,17 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
     setAddressList([])
     setPostalCode([])
     setAddress(formAddress);
-    setNotFound({text: textSearch})
+    setNotFound({text: t.initial_text_search})
   }
 
   const submitHandler = e => {
     e.preventDefault()
-    if(formAddressIsValid(address, setAddress)){
+    if(formAddressIsValid(address, setAddress, t)){
       setLoading(true)
       const data = {
         label: label.value,
         receiver: receiver.value,
-        phone: "+62" + phone.value,
+        phone: phone.value,
         region: region.value,
         postal_code: postal_code.value,
         recipient_address: recipient_address.value, 
@@ -116,7 +115,7 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
             setLoading(false)
             closeModalHandler()
             dispatch(actions.getAddress(perPage, currentPage))
-            resNotification("success", "Success", "Successfully add a new address.")
+            // resNotification("success", "Success", "Successfully add a new address.")
           } else if(typeof(errDetail) === "string") {
             setLoading(false)
             resNotification("error", "Error", errDetail)
@@ -145,7 +144,7 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
     <>
       <Modal
         centered
-        title="Tambah Alamat Baru"
+        title={t.edit_address_modal}
         visible={show}
         maskClosable
         onCancel={closeModalHandler}
@@ -153,10 +152,10 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
         closeIcon={<i className="fas fa-times" />}
         footer={[
           <Button key="back" onClick={closeModalHandler}>
-            Batal
+            {t.cancel}
           </Button>,
           <Button key="submit" type="primary" className="btn-tridatu" onClick={submitHandler} style={{ width: 80 }}>
-            {loading ? <LoadingOutlined /> : "Simpan"}
+            {loading ? <LoadingOutlined /> : t.save}
           </Button>,
         ]}
         className="modal-rad-10"
@@ -165,10 +164,10 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
         <Card.Body>
           <Form>
             <Form.Group>
-              <Form.Label>Label Alamat</Form.Label>
+              <Form.Label>{t.data_input.label_address}</Form.Label>
               <Form.Control 
                 name="label"
-                placeholder="Alamat Rumah, Alamat Kantor, Apartemen..." 
+                placeholder={t.data_input.label_address_placeholder}
                 value={label.value}
                 onChange={e => inputChangeHandler(e)}
               />
@@ -177,11 +176,11 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
 
             <Form.Row>
               <Form.Group as={Col}>
-                <Form.Label>Nama Penerima</Form.Label>
+                <Form.Label>{t.data_input.receiver_name}</Form.Label>
                 <Form.Control 
                   type="text" 
                   name="receiver" 
-                  placeholder="Nama" 
+                  placeholder={t.data_input.receiver_name_placeholder} 
                   value={receiver.value}
                   onChange={e => inputChangeHandler(e)}
                 />
@@ -189,12 +188,12 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
               </Form.Group>
 
               <Form.Group as={Col}>
-                <Form.Label>Nomor Telepon</Form.Label>
+                <Form.Label>{t.data_input.phone_number}</Form.Label>
                 <Input 
                   name="phone"
-                  addonBefore="+62" 
-                  placeholder="Nomor Telepon" 
-                  className="input-h-35" 
+                  // addonBefore="+62" 
+                  placeholder={t.data_input.phone_number} 
+                  className="input-h-35 h-35" 
                   value={phone.value}
                   onChange={e => inputChangeHandler(e)}
                 />
@@ -204,13 +203,13 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
 
             <Form.Row>
               <Form.Group as={Col} md={8} sm={12}>
-                <Form.Label>Kota atau Kecamatan</Form.Label>
+                <Form.Label>{t.data_input.city_or_district}</Form.Label>
                 <Select
                   showSearch
                   showArrow={false}
                   name="region"
                   className="w-100"
-                  placeholder="Tulis Nama Alamat / Kota / Kecamatan tujuan pengiriman"
+                  placeholder={t.data_input.city_or_district_placeholder}
                   onSearch={fetchAddress}
                   value={region.value}
                   onSelect={e => inputChangeHandler(e, "region")}
@@ -233,13 +232,13 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
               </Form.Group>
 
               <Form.Group as={Col} md={4} sm={12}>
-                <Form.Label>Kode Pos</Form.Label>
+                <Form.Label>{t.data_input.postal_code}</Form.Label>
                 <Select
                   showSearch
                   showArrow={false}
                   name="postal_code"
                   className="w-100 height-100"
-                  placeholder="Kode Pos"
+                  placeholder={t.data_input.postal_code}
                   value={postal_code.value}
                   disabled={postalCode.length < 1}
                   onSelect={e => inputChangeHandler(e, "postal_code")}
@@ -255,12 +254,12 @@ const EditAddressModal = ({ show, close, perPage, currentPage, currentAddress })
             </Form.Row>
 
             <Form.Group className="mb-0">
-              <Form.Label>Alamat</Form.Label>
+              <Form.Label>{t.data_input.address}</Form.Label>
               <Form.Control 
                 rows={3} 
                 as="textarea" 
                 name="recipient_address"
-                placeholder="Isi dengan nama jalan, nomor rumah, nomor kompleks, nama gedung, lantai atau nomor unit." 
+                placeholder={t.data_input.address_placeholder} 
                 value={recipient_address.value}
                 onChange={e => inputChangeHandler(e)}
               />

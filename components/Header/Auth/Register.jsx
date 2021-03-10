@@ -11,7 +11,7 @@ import ErrorMessage from "components/ErrorMessage";
 
 import { formRegister, formRegisterIsValid } from "formdata/formRegister";
 
-const Register = ({ show, handler, close }) => {
+const Register = ({ show, handler, close, t }) => {
   const [loading, setLoading] = useState(false);
   const [register, setRegister] = useState(formRegister);
 
@@ -39,7 +39,7 @@ const Register = ({ show, handler, close }) => {
 
   const submitHandler = (e) => {
     e.preventDefault();
-    if (formRegisterIsValid(register, setRegister)) {
+    if (formRegisterIsValid(register, setRegister, t)) {
       setLoading(true);
       const data = {
         username: username.value,
@@ -100,13 +100,13 @@ const Register = ({ show, handler, close }) => {
         closeIcon={<i className="fas fa-times" />}
       >
         <h4 className="fs-20-s">
-          Daftar
+          {t.register}
           <a
             href="#"
             className="fs-12 float-right text-secondary pt-2"
             onClick={handler}
           >
-            Masuk
+            {t.login}
           </a>
         </h4>
 
@@ -160,14 +160,14 @@ const Register = ({ show, handler, close }) => {
           </Form.Group>
 
           <div className="mt-4 text-secondary">
-            <span>Dengan mendaftar, saya menyetujui</span>
-            <a className="text-tridatu"> Syarat dan Ketentuan</a>
-            <span> dan </span>
-            <a className="text-tridatu">Kebijakan Privasi</a>
+            <span>{t.approval_text}</span>
+            <a className="text-tridatu"> {t.term_condition}</a>
+            <span> {t.and} </span>
+            <a className="text-tridatu">{t.privacy}</a>
           </div>
 
-          <Button className="mt-2 btn-tridatu" block onClick={submitHandler}>
-            Daftar
+          <Button className="mt-3 btn-tridatu" block onClick={submitHandler}>
+            {t.register}
             <AnimatePresence>
               {loading && (
                 <motion.div
@@ -182,10 +182,10 @@ const Register = ({ show, handler, close }) => {
         </Form>
 
         <Divider className="mb-4" plain>
-          <span className="text-muted">atau daftar dengan</span>
+          <span className="text-muted">{t.or_register_with}</span>
         </Divider>
 
-        <SocialLogin text="Daftar" />
+        <SocialLogin text={t.register_with} />
       </Modal>
     </>
   );

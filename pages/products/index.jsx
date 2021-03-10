@@ -4,6 +4,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { AnimatePresence, motion } from 'framer-motion'
 import { Select, Col, Row, Empty, Tag, Affix } from 'antd';
 
+import id from 'locales/id/products'
+import en from 'locales/en/products'
+
 import axios from 'lib/axios'
 import dynamic from 'next/dynamic'
 import Button from "antd-button-color";
@@ -49,6 +52,9 @@ const per_page = 20;
 const ProductContainer = ({ searchQuery, finalCategories }) => {
   const dispatch = useDispatch()
   const router = useRouter();
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
 
   /* GLOBAL STATE */
   const products = useSelector(state => state.products.products)
@@ -211,7 +217,7 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
 
     if(p_min.value) {
       queryString["p_min"] = p_min.value
-      setMinPriceList(["Harga Minimum"])
+      setMinPriceList([t.sidebar.price.min_price])
     } else {
       delete queryString["p_min"]
       setMinPriceList([])
@@ -219,7 +225,7 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
 
     if(p_max.value) {
       queryString["p_max"] = p_max.value
-      setMaxPriceList(["Harga Maximum"])
+      setMaxPriceList([t.sidebar.price.max_price])
     } else {
       delete queryString["p_max"]
       setMaxPriceList([])
@@ -270,11 +276,11 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
     }
     if(searchQuery.hasOwnProperty("p_min")){
       state.p_min.value = searchQuery.p_min
-      setMinPriceList(["Harga Minimum"])
+      setMinPriceList([t.sidebar.price.min_price])
     }
     if(searchQuery.hasOwnProperty("p_max")){
       state.p_max.value = searchQuery.p_max
-      setMaxPriceList(["Harga Maximum"])
+      setMaxPriceList([t.sidebar.price.max_price])
     }
     if(searchQuery.hasOwnProperty("brand")){
       const brands = searchQuery.brand.split(",").map(x => parseInt(x))
@@ -294,17 +300,17 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
     }
     if(searchQuery.hasOwnProperty("condition")){
       state.condition.value = [searchQuery.condition]
-      if(searchQuery.condition == "true") setConditionList(["Baru"])
-      else setConditionList(["Bekas"])
+      if(searchQuery.condition == "true") setConditionList([t.sidebar.condition.c_new])
+      else setConditionList([t.sidebar.condition.c_used])
     }
     if(searchQuery.hasOwnProperty("wholesale")){
       state.wholesale.value = [searchQuery.wholesale]
-      if(searchQuery.wholesale == "true") setWholesaleList(["Harga Grosir"])
+      if(searchQuery.wholesale == "true") setWholesaleList([t.sidebar.offer.wholesale])
       else setWholesaleList([])
     }
     if(searchQuery.hasOwnProperty("is_discount")){
       state.is_discount.value = [searchQuery.is_discount]
-      if(searchQuery.is_discount == "true") setDiscountList(["Diskon"])
+      if(searchQuery.is_discount == "true") setDiscountList([t.sidebar.offer.discount])
       else setDiscountList([])
     }
     //for category auto active when refreshed
@@ -316,7 +322,7 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
       }
     }
     setActiveFilter(state)
-  }, [])
+  }, [t])
 
   const showPagination = products !== null && products && products.data && products.data.length > 0 && (products.next_num !== null || products.prev_num !== null);
 
@@ -419,13 +425,13 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
         <RowB>
           <ColB className="align-self-center">
             <span className="text-secondary fs-14-s">
-              Hasil pencarian dari "<span className="text-dark">{router.query.q ? router.query.q : "Semua"}</span>"
+              {t.result} "<span className="text-dark">{router.query.q ? router.query.q : t.final_result}</span>"
             </span>
           </ColB>
           <ColB className="d-none d-lg-block">
             <Form inline className="float-right">
               <Form.Label className="my-1 mr-2">
-                Urutkan:
+                {t.sort.title}:
               </Form.Label>
               <Select 
                 value={order_by.value} 
@@ -433,7 +439,7 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
                 dropdownClassName="idx-1020"
                 onChange={e => onFilterChange(e, "order_by")} 
               >
-                {sortListProduct.map(sort => (
+                {sortListProduct(t).map(sort => (
                   <Select.Option key={sort.value} value={sort.value}>{sort.label}</Select.Option>
                 ))}
               </Select>
@@ -466,6 +472,7 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
       <Container className="pb-5 pt-3">
         <RowB>
           <SidebarContainerMemo
+            t={t}
             treeData={treeData}
             filterState={activeFilter}
             categoryKeys={categoryKeys}
@@ -479,7 +486,7 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
           />
 
           <ColB>
-            <h4 className="mb-2 d-none d-lg-block">Produk</h4>
+            <h4 className="mb-2 d-none d-lg-block">{t.product}</h4>
             {renderActiveFilter().length > 0 && (
               <div className="mb-3 d-none d-lg-block noselect">
                 <span className="text-secondary font-weight-light">Filter aktif: </span>
@@ -515,9 +522,9 @@ const ProductContainer = ({ searchQuery, finalCategories }) => {
                     <Empty className="my-5" 
                       description={
                         <>
-                          <span className="text-secondary mb-0 mt-2">Produk tidak tersedia</span>
+                          <span className="text-secondary mb-0 mt-2">{t.product_not_available}</span>
                           <br />
-                          {renderActiveFilter().length > 0 && <span className="text-secondary">Coba kurangi filter pencarian anda</span>}
+                          {renderActiveFilter().length > 0 && <span className="text-secondary">{t.empty_with_active}</span>}
                         </>
                       } 
                     />

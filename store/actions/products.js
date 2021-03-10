@@ -208,10 +208,18 @@ export const loveProduct = id => {
     dispatch(loveProductStart())
     axios.post(`/wishlists/love/${id}`, null, jsonHeaderHandler())
       .then(res => {
-        message.success({ 
-          content: res.data.detail, 
-          style: { marginTop: '10vh' },
-        });
+        if(res.status >= 400 && res.status < 500){
+          message.error({ 
+            content: res.data.detail, 
+            style: { marginTop: '10vh' },
+          });
+        }
+        if(res.status >= 200 && res.status < 300){
+          message.success({ 
+            content: res.data.detail, 
+            style: { marginTop: '10vh' },
+          });
+        }
         dispatch(loveProductSuccess())
       })
       .catch(err => {
@@ -225,10 +233,18 @@ export const unloveProduct = id => {
     dispatch(unloveProductStart())
     axios.delete(`/wishlists/unlove/${id}`, jsonHeaderHandler())
       .then(res => {
-        message.success({ 
-          content: res.data.detail, 
-          style: { marginTop: '10vh' },
-        });
+        if(res.status >= 400 && res.status < 500){
+          message.error({ 
+            content: res.data.detail, 
+            style: { marginTop: '10vh' },
+          });
+        }
+        if(res.status >= 200 && res.status < 300){
+          message.success({ 
+            content: res.data.detail, 
+            style: { marginTop: '10vh' },
+          });
+        }
         dispatch(unloveProductSuccess())
       })
       .catch(err => {

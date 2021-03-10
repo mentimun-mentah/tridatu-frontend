@@ -9,10 +9,10 @@ import Button from "react-bootstrap/Button";
 import { formEmail, formEmailIsValid } from "formdata/formEmail";
 import ErrorMessage from "components/ErrorMessage";
 
-const RESET = "reset",
-  RESEND = "resend";
+const RESET  = "reset",
+      RESEND = "resend";
 
-const ExtraAuth = ({ show, handler, close, type }) => {
+const ExtraAuth = ({ show, handler, close, type, t }) => {
   const [loading, setLoading] = useState(false);
   const [extraAuth, setExtraAuth] = useState(formEmail);
 
@@ -40,7 +40,7 @@ const ExtraAuth = ({ show, handler, close, type }) => {
 
   const submitHandler = (e) => {
     e.preventDefault();
-    if (formEmailIsValid(extraAuth, setExtraAuth)) {
+    if (formEmailIsValid(extraAuth, setExtraAuth, t)) {
       setLoading(true);
       const data = { email: email.value };
 
@@ -51,13 +51,23 @@ const ExtraAuth = ({ show, handler, close, type }) => {
         .post(url, data)
         .then((res) => {
           setLoading(false);
-          notification.success({
-            closeIcon: <i className="far fa-times" />,
-            message: "Success",
-            description: res.data.detail,
-            placement: "bottomRight",
-          });
           closeModalHandler();
+          if(res.status >= 400 && res.status < 500){
+            notification.error({
+              closeIcon: <i className="far fa-times" />,
+              message: "Error",
+              description: res.data.detail,
+              placement: "bottomRight",
+            });
+          }
+          if(res.status >= 200 && res.status < 300){
+            notification.success({
+              closeIcon: <i className="far fa-times" />,
+              message: "Success",
+              description: res.data.detail,
+              placement: "bottomRight",
+            });
+          }
         })
         .catch((err) => {
           setLoading(false);
@@ -99,14 +109,13 @@ const ExtraAuth = ({ show, handler, close, type }) => {
         closeIcon={<i className="fas fa-times" />}
       >
         <h4 className="fs-20-s">
-          {type === RESET && "Atur ulang kata sandi"}
-          {type === RESEND && "Kirim ulang email verifikasi"}
+          {type === RESET && t.reset_password}
+          {type === RESEND && t.resend_email_verification}
         </h4>
 
         <p className="text-muted fs-12-s">
-          Masukkan e-mail yang terdaftar. Kami akan mengirimkan
-          {type === RESET && " link untuk atur ulang kata sandi."}
-          {type === RESEND && " link verifikasi terbaru."}
+          {type === RESET && t.reset_password_text}
+          {type === RESEND && t.resend_email_verification_text}
         </p>
 
         <Form className="my-3 mb-3">
@@ -127,7 +136,7 @@ const ExtraAuth = ({ show, handler, close, type }) => {
             block
             onClick={submitHandler}
           >
-            Kirim
+            {t.send}
             <AnimatePresence>
               {loading && (
                 <motion.div
@@ -142,14 +151,14 @@ const ExtraAuth = ({ show, handler, close, type }) => {
         </Form>
 
         <p className="text-muted mb-0 fs-12">
-          Belum punya akun?
+          {t.dont_have_account}?
           <strong>
             <span
               className="text-tridatu hover-pointer noselect"
               onClick={handler}
             >
               {" "}
-              Daftar
+              {t.register}
             </span>
           </strong>
         </p>

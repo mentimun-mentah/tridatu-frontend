@@ -8,3 +8,4 @@ export { getProducts, getProductStart, getProductSuccess, aliveArchiveProduct, l
 export { getSlugProduct, getProductSlugStart, getProductSlugSuccess, getProductSlugFail, deleteProduct, searchName } from './products'
 export { searchCityDistrict, getShippingCost } from './shipping'
 export { getDiscount, nonActiveDiscount } from './discount'
+export { getAllComments, getAllCommentsSuccess } from './comments'

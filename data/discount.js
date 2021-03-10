@@ -8,17 +8,17 @@ import ItemPeriodPromo from "components/Card/Admin/Product/Promo/ItemPeriod";
 import ItemStatusPromo from "components/Card/Admin/Product/Promo/ItemStatus";
 import { not_active, will_come, ongoing, have_ended } from 'components/Card/Admin/Product/Promo/statusType'
 
-export const orderList = [
-  { label: "Semua Status", value: "" },
-  { label: "Sedang Berjalan", value: ongoing },
-  { label: "Akan Datang", value: will_come },
-  { label: "Tidak Aktif", value: not_active },
-  { label: "Telah Berakhir", value: have_ended },
+export const orderList = (t) => [
+  { label: t.status_type.all_status, value: "" },
+  { label: t.status_type.ongoing, value: ongoing },
+  { label: t.status_type.will_come, value: will_come },
+  { label: t.status_type.not_active, value: not_active },
+  { label: t.status_type.have_ended, value: have_ended },
 ];
 
-export const columns = [
+export const columns = (t) => [
   {
-    title: "Produk",
+    title: t.product,
     dataIndex: "products",
     key: "product",
     width: 270,
@@ -32,7 +32,7 @@ export const columns = [
     ),
   },
   {
-    title: "Harga",
+    title: t.price,
     dataIndex: "products",
     key: "price",
     width: 180,
@@ -46,7 +46,7 @@ export const columns = [
     ),
   },
   {
-    title: "Periode Diskon",
+    title: t.periode,
     dataIndex: "products",
     key: "period",
     width: 200,
@@ -56,19 +56,20 @@ export const columns = [
         statusPromo={item.products_discount_status}
         start={item.products_discount_start}
         end={item.products_discount_end}
+        t={t}
       />
     ),
   },
   {
-    title: "Status",
+    title: t.status_discount,
     dataIndex: "products",
     key: "status",
     width: 200,
     ellipsis: true,
-    render: (item) => <ItemStatusPromo statusPromo={item.products_discount_status} />,
+    render: (item) => <ItemStatusPromo statusPromo={item.products_discount_status} t={t} />,
   },
   {
-    title: "Aksi",
+    title: t.action,
     dataIndex: "products",
     key: "action",
     width: 200,
@@ -79,9 +80,9 @@ export const columns = [
 
 /* ################## */
 /* ################## */
-export const columnsProductNoVariant = [
+export const columnsProductNoVariant = (t) => [
   {
-    title: "Harga Normal",
+    title: t.modal.normal_price,
     dataIndex: "product",
     key: "price",
     align: "center",
@@ -91,7 +92,7 @@ export const columnsProductNoVariant = [
     ),
   },
   {
-    title: "Harga Diskon",
+    title: t.modal.discount_price,
     dataIndex: "product",
     key: "discount_price",
     align: "center",
@@ -100,7 +101,7 @@ export const columnsProductNoVariant = [
     width: 200,
   },
   {
-    title: "Diskon (%)",
+    title: t.modal.discount + " (%)",
     dataIndex: "product",
     key: "discount",
     align: "center",
@@ -109,7 +110,7 @@ export const columnsProductNoVariant = [
     width: 200,
   },
   {
-    title: "Stok",
+    title: t.modal.stock,
     dataIndex: "product",
     key: "stock",
     width: 150,
@@ -117,7 +118,7 @@ export const columnsProductNoVariant = [
     render: (item) => <p className="mb-0">{+item.stock}</p>,
   },
   {
-    title: "Aktif/Nonaktif",
+    title: t.modal.active_inactive,
     dataIndex: "product",
     key: "active",
     align: "center",
@@ -127,8 +128,9 @@ export const columnsProductNoVariant = [
   },
 ];
 
-export const columnsProductVariant = [
+export const columnsProductVariant = (t) =>[
   {
+    // title: t.modal.variant,
     title: "Variasi",
     colSpan: 0,
     dataIndex: "product",
@@ -138,7 +140,7 @@ export const columnsProductVariant = [
     render: (item) => <p className="mb-0">{item.va_option}</p>
   },
   {
-    title: "Harga Normal",
+    title: t.modal.normal_price,
     colSpan: 2,
     dataIndex: "product",
     key: "price",
@@ -149,7 +151,7 @@ export const columnsProductVariant = [
     ),
   },
   {
-    title: "Harga Diskon",
+    title: t.modal.discount_price,
     dataIndex: "product",
     key: "discount_price",
     align: "center",
@@ -158,7 +160,7 @@ export const columnsProductVariant = [
     width: 200,
   },
   {
-    title: "Diskon (%)",
+    title: t.modal.discount + " (%)",
     dataIndex: "product",
     key: "discount",
     align: "center",
@@ -167,7 +169,7 @@ export const columnsProductVariant = [
     width: 200,
   },
   {
-    title: "Stok",
+    title: t.modal.stock,
     dataIndex: "product",
     key: "stock",
     width: 130,
@@ -175,7 +177,7 @@ export const columnsProductVariant = [
     render: (item) => <p className="mb-0">{+item.stock}</p>,
   },
   {
-    title: "Aktif/Nonaktif",
+    title: t.modal.active_inactive,
     dataIndex: "product",
     key: "active",
     align: "center",

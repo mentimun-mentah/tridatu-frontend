@@ -1,7 +1,7 @@
 import { Switch, InputNumber, Form } from 'antd'
 import ErrorMessage from "components/ErrorMessage";
 
-const EditableCell = ({ record, index, children, type, editable, onChange, onBlur, ...restProps }) => {
+const EditableCell = ({ t, record, index, children, type, editable, onChange, onBlur, ...restProps }) => {
   let childNode = children;
 
   if(editable){
@@ -19,7 +19,7 @@ const EditableCell = ({ record, index, children, type, editable, onChange, onBlu
                   <InputNumber
                     min={record.product["normal_price"] - (record.product["normal_price"] * (95/100))}
                     max={record.product["normal_price"]}
-                    placeholder="Harga Diskon"
+                    placeholder={t.modal.discount_price}
                     className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
                     parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
@@ -44,7 +44,7 @@ const EditableCell = ({ record, index, children, type, editable, onChange, onBlu
                   <InputNumber
                     min={record.product["discount_active"].value ? 1 : 0}
                     max={95}
-                    placeholder="Diskon"
+                    placeholder={t.modal.discount}
                     className="w-100 h-33-custom-input fs-12 input-number-variant bor-right-rad-0"
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
                     parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useRouter } from 'next/router';
-import { Card as CardAnt, Typography, Space, Button, Popconfirm, Collapse } from 'antd';
-import { QuestionCircleOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card as CardAnt, Typography, Space, Button, Popconfirm, Collapse, Badge } from 'antd';
+import { SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,6 +14,14 @@ const AdminCardVoucher = ({ image, idx }) => {
 
   const router = useRouter()
 
+  const genExtra = () => (
+    <SettingOutlined
+      onClick={event => {
+        event.stopPropagation();
+      }}
+    />
+  );
+
   return(
     <>
       <CardAnt 
@@ -25,7 +33,7 @@ const AdminCardVoucher = ({ image, idx }) => {
           </a>,
            <Popconfirm 
             title="Hapus promo ini?"
-             onConfirm={() => {}}
+            onConfirm={() => {}}
             okText="Ya"
             cancelText="Batal"
             placement="bottom"
@@ -56,9 +64,17 @@ const AdminCardVoucher = ({ image, idx }) => {
               <div className="promotion-box__value">10 Sep - 29 Okt 2020</div>
             </div>
           </div>
+          <div className="promotion-date">
+            <div className="promotion-date-detail">
+              <div className="promotion-box-label">Status Promo</div>
+              <div className="promotion-box__value">
+                <Badge color="yellow" text="Akan Datang" />
+              </div>
+            </div>
+          </div>
 
-          <Collapse expandIconPosition="right">
-            <Collapse.Panel  header="1 Kode Promo" key="1">
+          <Collapse expandIconPosition="left">
+            <Collapse.Panel  header="1 Kode Promo" key="1" extra={genExtra()}>
               <div className="promotion-code">
                 <b>Diskon hingga Rp50.000</b>
                 <p className="fs-12 text-muted mb-0">Tanpa minimum transaksi</p>
@@ -67,23 +83,6 @@ const AdminCardVoucher = ({ image, idx }) => {
                     MISECCAM2K
                   </Paragraph>
                 </div>
-                <ul className="ant-card-actions voucher-ant-card-actions mb-0">
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <EditOutlined key="edit" />
-                    </span>
-                  </li>
-                  <li className="w-50 my-0">
-                    <span className="text-center">
-                      <DeleteOutlined key="delete" />
-                    </span>
-                  </li>
-                </ul>
-                {/* <div className="d-flex border-top text-center pt-2 mt-2 justify-content-center"> */}
-                {/*   <EditOutlined key="edit" /> */}
-                {/*   <span className="text-secondary mx-2 border-right" /> */}
-                {/*   <DeleteOutlined key="delete" /> */}
-                {/* </div> */}
               </div>
             </Collapse.Panel>
           </Collapse>
@@ -121,6 +120,11 @@ const AdminCardVoucher = ({ image, idx }) => {
           margin-bottom: 16px;
         }
 
+        .promotion-code:not(:last-child){
+          margin-bottom: .5rem;
+          padding-bottom: .5rem;
+          border-bottom: 1px solid #f0f0f0;
+        }
         .promotion-code .promotion-box-label{
           font-size: 12px;
           line-height: 16px;

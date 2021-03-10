@@ -1,9 +1,12 @@
-export const priceMessage = "Harga harus lebih dari 1."
-export const priceSmallerMessage = "Harga satuan harus lebih rendah dari harga utama"
-export const price50SmallerMessage = "Harga satuan tidak boleh 50% lebih rendah dari harga utama"
-export const priceSmallerBefore = "Harga satuan harus lebih rendah dari harga yang sebelumnya"
+export const initQtyGrosir = (t) => t.sales_information.validation.init_qty_grosir
+export const nextQtyGrosir = (t) => t.sales_information.validation.next_qty_grosir
+export const priceMessage = (t) => t.sales_information.validation.price
+export const priceSmallerMessage = (t) => t.sales_information.validation.price_smaller_message
+export const price50SmallerMessage = (t) => t.sales_information.validation.price_50_smaller_message
+export const priceSmallerBefore = (t) => t.sales_information.validation.price_smaller_before
 
-export const validateFormGrosirPrice = (grosir, setGrosir, price, va1_price, active) => {
+
+export const validateFormGrosirPrice = (grosir, setGrosir, price, va1_price, active, t) => {
   let newGrosir = [... grosir]
   const checkPrice = active ? price.value : va1_price.value
   const initialPrice = Math.round(checkPrice/2)
@@ -14,12 +17,12 @@ export const validateFormGrosirPrice = (grosir, setGrosir, price, va1_price, act
       if(newGrosir[i].price.value >= checkPrice){
         isGood = false;
         newGrosir[i]["price"].isValid = false
-        newGrosir[i]["price"].message = priceSmallerMessage
+        newGrosir[i]["price"].message = priceSmallerMessage(t)
       }
       if(newGrosir[i].price.value < initialPrice){
         isGood = false;
         newGrosir[i]["price"].isValid = false
-        newGrosir[i]["price"].message = price50SmallerMessage
+        newGrosir[i]["price"].message = price50SmallerMessage(t)
       }
       if(newGrosir[i].price.value >= initialPrice && newGrosir[i].price.value < checkPrice){
         isGood = true;
@@ -42,14 +45,14 @@ export const validateFormGrosirPrice = (grosir, setGrosir, price, va1_price, act
         ){
           isGood = false;
           newGrosir[i + 1]["price"].isValid = false
-          newGrosir[i + 1]["price"].message = priceSmallerBefore
+          newGrosir[i + 1]["price"].message = priceSmallerBefore(t)
         }
         if(newGrosir[i].price.value >= newGrosir[i-1].price.value && 
            newGrosir[i].price.value >= newGrosir[i+1].price.value
         ){
           isGood = false;
           newGrosir[i]["price"].isValid = false
-          newGrosir[i]["price"].message = priceSmallerBefore
+          newGrosir[i]["price"].message = priceSmallerBefore(t)
         }
       } else {
         if(i > 0 && 
@@ -70,7 +73,7 @@ export const validateFormGrosirPrice = (grosir, setGrosir, price, va1_price, act
         if(i == 0 && newGrosir[i].price.value >= checkPrice){
           isGood = false;
           newGrosir[i]["price"].isValid = false
-          newGrosir[i]["price"].message = priceSmallerMessage
+          newGrosir[i]["price"].message = priceSmallerMessage(t)
         }
       }
     }
@@ -83,7 +86,7 @@ export const validateFormGrosirPrice = (grosir, setGrosir, price, va1_price, act
   return isGood
 }
 
-export const validateFormGrosirQty = (grosir, setGrosir) => {
+export const validateFormGrosirQty = (grosir, setGrosir, t) => {
   let newGrosir = [... grosir]
   let isGood = true
 
@@ -91,13 +94,13 @@ export const validateFormGrosirQty = (grosir, setGrosir) => {
     if(i == 0 && newGrosir[i].min_qty.value < 2){
       isGood = false
       newGrosir[i]["min_qty"].isValid = false
-      newGrosir[i]["min_qty"].message = "Min Qty untuk grosir harus lebih dari 1"
+      newGrosir[i]["min_qty"].message = initQtyGrosir(t)
     }
     if(i > 0){
       if(newGrosir[i].min_qty.value <= newGrosir[i - 1].min_qty.value){
         isGood = false
         newGrosir[i]["min_qty"].isValid = false
-        newGrosir[i]["min_qty"].message = "Min Qty harus lebih besar dari sebelumnya"
+        newGrosir[i]["min_qty"].message = nextQtyGrosir(t)
       }
     }
   }

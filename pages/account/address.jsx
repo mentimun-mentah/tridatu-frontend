@@ -1,7 +1,11 @@
+import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { Button, Radio, Empty } from 'antd'
 import { useDispatch, useSelector } from "react-redux";
 import { AnimatePresence, motion } from 'framer-motion'
+
+import id from 'locales/id/account/address'
+import en from 'locales/en/account/address'
 
 import nookies from "nookies";
 import Row from 'react-bootstrap/Row'
@@ -19,6 +23,11 @@ import AddressList from 'components/Account/Address'
 
 const perPage = 10;
 const Address = () => {
+  const router = useRouter();
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const dispatch = useDispatch()
   const addresses = useSelector(state => state.address.address)
   const loading = useSelector(state => state.address.loading)
@@ -42,16 +51,16 @@ const Address = () => {
 
   const editData = (res, setState) => {
     const { id, label, main_address, phone, postal_code, receiver, recipient_address, region } = res.data
-    let phoneData = "";
-    if(phone){
-      phoneData = phone.split(" ")[phone.split(" ").length - 1]
-      phoneData = phoneData.split("-").join("")
-    }
+    // let phoneData = "";
+    // if(phone){
+    //   phoneData = phone.split(" ")[phone.split(" ").length - 1]
+    //   phoneData = phoneData.split("-").join("")
+    // }
     const data = {
       id: id,
       main_address: main_address,
       label: { value: label, isValid: true, message: null },
-      phone: { value: phoneData, isValid: true, message: null },
+      phone: { value: phone, isValid: true, message: null },
       postal_code: { value: postal_code, isValid: true, message: null },
       receiver: { value: receiver, isValid: true, message: null },
       recipient_address: { value: recipient_address, isValid: true, message: null },
@@ -61,19 +70,28 @@ const Address = () => {
   }
 
   const editAddressHandler = id => {
-    console.log(id)
     axios.get(`/address/my-address/${id}`)
       .then(res => {
-        editData(res, setCurrentAddress)
-        setShowEditAddressModal(true)
+        if(res.status >= 400 && res.status < 500){
+          resNotification("error", "Error", res.data.detail)
+        }
+        if(res.status >= 200 && res.status < 300){
+          editData(res, setCurrentAddress)
+          setShowEditAddressModal(true)
+        }
       })
       .catch(err => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           axios.get(`/address/my-address/${id}`)
             .then(res => {
-              editData(res, setCurrentAddress)
-              setShowEditAddressModal(true)
+              if(res.status >= 400 && res.status < 500){
+                resNotification("error", "Error", res.data.detail)
+              }
+              if(res.status >= 200 && res.status < 300){
+                editData(res, setCurrentAddress)
+                setShowEditAddressModal(true)
+              }
             })
             .catch(() => {})
         } else if(typeof(errDetail) === "string") {
@@ -89,13 +107,18 @@ const Address = () => {
     axios.put(`/address/main-address-true/${id}`, null, jsonHeaderHandler())
       .then(res => {
         dispatch(actions.getAddress(perPage, currentPage))
-        resNotification("success", "Success", res.data.detail)
+        if(res.status >= 400 && res.status < 500){
+          resNotification("error", "Error", res.data.detail)
+        }
+        if(res.status >= 200 && res.status < 300){
+          resNotification("success", "Success", res.data.detail)
+        }
       })
       .catch(err => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           dispatch(actions.getAddress(perPage, currentPage))
-          resNotification("success", "Success", "Successfully set the address to main address.")
+          // resNotification("success", "Success", "Successfully set the address to main address.")
         } else if(typeof(errDetail) === "string") {
           resNotification("error", "Error", errDetail)
         } else {
@@ -115,14 +138,19 @@ const Address = () => {
     }
     axios.delete(`/address/delete/${id}`, jsonHeaderHandler())
       .then(res => {
-        dispatch(actions.getAddress(perPage, page))
-        resNotification("success", "Success", res.data.detail)
+        if(res.status >= 400 && res.status < 500){
+          resNotification("error", "Error", res.data.detail)
+        }
+        if(res.status >= 200 && res.status < 300){
+          dispatch(actions.getAddress(perPage, page))
+          resNotification("success", "Success", res.data.detail)
+        }
       })
       .catch(err => {
         const errDetail = err.response.data.detail
         if(errDetail == signature_exp){
           dispatch(actions.getAddress(perPage, page))
-          resNotification("success", "Success", "Successfully delete the address.")
+          // resNotification("success", "Success", "Successfully delete the address.")
         } else if(typeof(errDetail) === "string") {
           resNotification("error", "Error", errDetail)
         } else {
@@ -153,7 +181,7 @@ const Address = () => {
         <Card.Header className="bg-transparent border-bottom">
           <Row className="justify-content-between">
             <Col className="align-self-center">
-              <h1 className="fs-16 mb-0">Alamat Saya</h1>
+              <h1 className="fs-16 mb-0">{t.my_address}</h1>
             </Col>
             <Col>
               <Button 
@@ -161,7 +189,7 @@ const Address = () => {
                 className="btn-tridatu float-right align-self-center"
                 icon={<i className="far fa-plus pr-2" />}
               >
-                Tambah Alamat
+                {t.add_address}
               </Button>
             </Col>
           </Row>
@@ -176,7 +204,7 @@ const Address = () => {
                 exit={{ opacity: 0 }}
                 transition={{ duration: ".2" }}
               >
-                <Empty className="my-5" description={<span className="text-secondary">Kamu belum memiliki alamat</span>} />
+                <Empty className="my-5" description={<span className="text-secondary">{t.empty_address}</span>} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -192,6 +220,7 @@ const Address = () => {
                 <Radio.Group onChange={changeMainAddress} value={true} className="w-100">
                   {addresses && addresses.data.map(data => (
                     <AddressList 
+                      t={t}
                       key={data.id} 
                       data={data} 
                       showEditHandler={() => editAddressHandler(data.id)}
@@ -219,6 +248,7 @@ const Address = () => {
       </Card>
 
       <AddAddressModal
+        t={t}
         show={showAddressModal}
         close={closeAddressModalHandler}
         perPage={perPage}
@@ -226,6 +256,7 @@ const Address = () => {
       />
 
       <EditAddressModal
+        t={t}
         show={showEditAddressModal}
         close={closeEditAddressModalHandler}
         perPage={perPage}

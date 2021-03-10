@@ -17,7 +17,7 @@ import { countDiscPrice } from 'lib/utility'
 import ErrorTooltip from "components/ErrorMessage/Tooltip";
 import formatNumber from "lib/formatNumber"
 
-const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discountStatus }) => {
+const NoVariant = ({ t, noVariant, onNoVariantChangeHandler, isActiveGrosir, discountStatus }) => {
 
   const { activeGrosir } = isActiveGrosir
   const { va1_price, va1_stock, va1_code, va1_barcode, va1_discount, va1_discount_active: activeDiscount } = noVariant
@@ -31,7 +31,7 @@ const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discou
       <Form layout="vertical" {...formItemLayout}>
         <Form.Item 
           required
-          label="Harga" 
+          label={t.sales_information.no_variant.price}
           validateStatus={(!activeGrosir || !checkStatusDiscountNoVariant()) && !va1_price.isValid && va1_price.message && "error"}
         >
           <div className="ant-input-group-wrapper">
@@ -54,21 +54,22 @@ const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discou
         </Form.Item>
 
         {checkStatusDiscountNoVariant() && (
-          <Form.Item label="Harga Sale">
+          <Form.Item label={t.sales_information.no_variant.sale_price}>
             <div className="border noselect p-2 bor-rad-25rem">
               <div className="price-sale w-100">
                 <span>Rp.{formatNumber(countDiscPrice(va1_discount.value, va1_price.value))}</span>
-                <span className="ml-2 fs-12 text-muted">{va1_discount.value}% DISKON</span>
+                <span className="ml-2 fs-12 text-muted">{va1_discount.value}% {t.sales_information.no_variant.discount}</span>
                 <Tooltip 
-                  title={<span className="text-dark fs-13 text-nowrap noselect">Produk ini sedang dalam masa promosi</span>} 
+                  title={<span className="text-dark fs-13 text-nowrap noselect">{t.sales_information.no_variant.sale_text}</span>} 
                   color="#fff"
+                  overlayClassName="ant-tooltip-width"
                 >
                   <span className="ml-1 fs-12 text-muted"><i className="far fa-info-circle" /></span>
                 </Tooltip>
               </div>
               <div className="price-sale">
                 <small className="form-text text-left text-muted">
-                  Harga tidak dapat dimodifikasi ketika promosi sedang berlangsung.
+                  {t.sales_information.no_variant.sale_info}
                 </small>
               </div>
             </div>
@@ -77,13 +78,13 @@ const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discou
 
         <Form.Item 
           required
-          label="Stok" 
+          label={t.sales_information.no_variant.stock}
           validateStatus={!va1_stock.isValid && va1_stock.message && "error"}
         >
           <InputNumber 
             min={0} 
             name="va1_stock"
-            placeholder="Jumlah Stok"
+            placeholder={t.sales_information.no_variant.placeholder.stock}
             className="w-100 h-33-custom-input" 
             value={va1_stock.value}
             onChange={e => onNoVariantChangeHandler(e, "va1_stock")}
@@ -92,13 +93,13 @@ const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discou
         </Form.Item>
 
         <Form.Item 
-          label="Kode Variasi"
+          label={t.sales_information.no_variant.variant_code}
           validateStatus={!va1_code.isValid && va1_code.message && "error"}
         >
           <Input 
             className="h-35" 
             name="va1_code"
-            placeholder="Kode Variasi" 
+            placeholder={t.sales_information.no_variant.variant_code}
             value={va1_code.value}
             onChange={e => onNoVariantChangeHandler(e)}
           />
@@ -106,14 +107,14 @@ const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discou
         </Form.Item>
 
         <Form.Item 
-          label="Barcode" 
+          label={t.sales_information.no_variant.barcode} 
           className="mb-4"
           validateStatus={!va1_barcode.isValid && va1_barcode.message && "error"}
         >
           <Input 
             className="h-35" 
             name="va1_barcode"
-            placeholder="Barcode" 
+            placeholder={t.sales_information.no_variant.barcode}
             value={va1_barcode.value}
             onChange={e => onNoVariantChangeHandler(e)}
           />
@@ -125,6 +126,9 @@ const NoVariant = ({ noVariant, onNoVariantChangeHandler, isActiveGrosir, discou
       <style jsx>{`
         .price-sale{
           line-height: 1;
+        }
+        :global(.ant-tooltip-width .ant-tooltip-inner){
+          width: fit-content;
         }
       `}</style>
     </>

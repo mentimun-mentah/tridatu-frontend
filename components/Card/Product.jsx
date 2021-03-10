@@ -76,7 +76,7 @@ const CardProduct = ({ data }) => {
         exit={{ opacity: 0 }}
         transition={{ duration: ".2" }}
       >
-      <Card className="border-0 shadow h-100">
+      <Card className="border-0 shadow-1 h-100">
         <Image 
           width={270}
           height={270}

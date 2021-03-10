@@ -12,7 +12,7 @@ const SocialLogin = ({ text }) => {
               <div className="btn-login-icon">
                 <LogoGoogle />
               </div>
-              <span>{text} dengan Google</span>
+              <span>{text} Google</span>
             </button>
           </a>
         </Col>
@@ -22,7 +22,7 @@ const SocialLogin = ({ text }) => {
               <div className="btn-login-icon">
                 <LogoFacebook />
               </div>
-              <span>{text} dengan Facebook</span>
+              <span>{text} Facebook</span>
             </button>
           </a>
         </Col>

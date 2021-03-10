@@ -1,8 +1,12 @@
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { Input, Select, Row, Col, Empty } from 'antd'
 import { useSelector, useDispatch } from "react-redux";
 import { AnimatePresence, motion } from 'framer-motion'
+
+import id from 'locales/id/account/favorite'
+import en from 'locales/en/account/favorite'
 
 import dynamic from 'next/dynamic'
 import ColB from 'react-bootstrap/Col'
@@ -20,16 +24,20 @@ const CardProductLoadingMemo = React.memo(CardProductLoading);
 const CardProduct = dynamic(() => import("components/Card/Product"), { ssr: false, loading: () => <CardProductLoadingMemo />  })
 const CardProductMemo = React.memo(CardProduct);
 
-const sortList = [
-  { value: "", label: "Terbaru" }, 
-  { value: "longest", label: "Terlama" },
-  { value: "high_price", label: "Harga Tertinggi" }, 
-  { value: "low_price", label: "Harga Terendah" },
+const sortList = (t) => [
+  { value: "", label: t.newest }, 
+  { value: "longest", label: t.longest },
+  { value: "high_price", label: t.high_price }, 
+  { value: "low_price", label: t.low_price },
 ] 
 
 const per_page = 10;
 const Favorite = () => {
   const dispatch = useDispatch()
+  const router = useRouter();
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
 
   const [page, setPage] = useState(1)
   const [activeFilter, setActiveFilter] = useState(formFilter);
@@ -84,9 +92,9 @@ const Favorite = () => {
     <>
       <Card className="card-container">
         <Card.Header className="bg-transparent border-bottom">
-          <h1 className="fs-16 mt-1 mb-0">Favorit</h1>
+          <h1 className="fs-16 mt-1 mb-0">{t.favorite}</h1>
           <small>
-            Kelola item favorit Anda dari sini
+            {t.favorite_text}
           </small>
         </Card.Header>
         <Card.Body>
@@ -96,7 +104,7 @@ const Favorite = () => {
                 <Input 
                   name="q"
                   className="account-search h-100"
-                  placeholder="Cari produk favoritmu" 
+                  placeholder={t.search_placeholder} 
                   prefix={<i className="far fa-search" />}
                   value={q.value}
                   onChange={onFilterChange}
@@ -105,13 +113,13 @@ const Favorite = () => {
               <Form.Group as={ColB} lg={4} md={6}>
                 <Select 
                   name="order_by"
-                  placeholder="Urutkan" 
+                  placeholder={t.sort} 
                   style={{ width: "100%"}}
                   className="account-search"
                   value={order_by.value}
                   onChange={(e) => onFilterChange(e, "order_by")}
                 >
-                  {sortList.map(sort => (
+                  {sortList(t).map(sort => (
                     <Select.Option key={sort.value} value={sort.value}>{sort.label}</Select.Option>
                   ))}
                 </Select>
@@ -122,14 +130,14 @@ const Favorite = () => {
           <AnimatePresence exitBeforeEnter>
             <Row gutter={[10, 10]}>
               {products && products.data && products.data.length > 0 && products.data.map(product => (
-                <Col lg={5} md={6} sm={8} xs={12} key={product.products_id} className="modif-col">
+                <Col lg={6} md={6} sm={8} xs={12} key={product.products_id} className="modif-col">
                   <CardProductMemo data={product} />
                 </Col>
               ))}
               {loadingProduct && (!user || user) && (
                 <>
                   {[...Array(16)].map((_,i) => (
-                    <Col lg={5} md={6} sm={8} xs={12} key={i}>
+                    <Col lg={6} md={6} sm={8} xs={12} key={i}>
                       <CardProductLoading />
                     </Col>
                   ))}
@@ -143,7 +151,7 @@ const Favorite = () => {
                   transition={{ duration: ".2" }}
                   className="w-100 my-5"
                 >
-                  <Empty className="my-5" description={<span className="text-secondary">Produk tidak tersedia</span>} />
+                  <Empty className="my-5" description={<span className="text-secondary">{t.no_product}</span>} />
                 </motion.div>
               )}
             </Row>

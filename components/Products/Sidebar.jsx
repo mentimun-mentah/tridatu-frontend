@@ -9,7 +9,7 @@ import Card from "react-bootstrap/Card";
 const renderTitle = (title) => <b className="text-dark">{title}</b> 
 
 const SidebarContainer = ({ 
-  treeData, filterState, categoryKeys,
+  t, treeData, filterState, categoryKeys,
   onChange, onCategoryChange, onConditionChange, onWholesaleChange, onBrandChange, 
   onPreOrderChange, onDiscountChange
 }) => {
@@ -29,7 +29,7 @@ const SidebarContainer = ({
             defaultOpenKeys={['kategori', 'rating', 'harga', 'brand', 'penawaran', 'kondisi', 'lainnya']}
           >
 
-            <Menu.SubMenu key="kategori" className="title-filter" title={renderTitle('Kategori')} >
+            <Menu.SubMenu key="kategori" className="title-filter" title={renderTitle(t.sidebar.category)} >
               <div className="p-l-20 p-r-20 scrollable-submenu-category">
                 <Tree
                   blockNode
@@ -44,10 +44,10 @@ const SidebarContainer = ({
               </div>
             </Menu.SubMenu>
 
-            <Menu.SubMenu key="harga" className="filter-checkbox title-filter" title={renderTitle('Harga')}>
+            <Menu.SubMenu key="harga" className="filter-checkbox title-filter" title={renderTitle(t.sidebar.price.title)}>
               <div className="p-l-20 p-r-20 mt-3">
                 <Form.Group>
-                  <Form.Label className="text-secondary m-b-13">Harga Minimum</Form.Label>
+                  <Form.Label className="text-secondary m-b-13">{t.sidebar.price.min_price}</Form.Label>
                   <InputNumber formatter={value => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
                     parser={value => value.replace(/\Rp\s?|(\.*)/g, "")}
                     min={1}
@@ -57,7 +57,7 @@ const SidebarContainer = ({
                   />
                 </Form.Group>
                 <Form.Group>
-                  <Form.Label className="text-secondary m-b-13">Harga Maksimum</Form.Label>
+                  <Form.Label className="text-secondary m-b-13">{t.sidebar.price.max_price}</Form.Label>
                   <InputNumber formatter={value => `Rp ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
                     parser={value => value.replace(/\Rp\s?|(\.*)/g, "")}
                     min={2}
@@ -69,60 +69,60 @@ const SidebarContainer = ({
               </div>
             </Menu.SubMenu>
 
-            <Menu.SubMenu key="kondisi" className="scrollable-submenu title-filter" title={renderTitle('Kondisi')}>
+            <Menu.SubMenu key="kondisi" className="scrollable-submenu title-filter" title={renderTitle(t.sidebar.condition.title)}>
               <div className="p-l-20 p-r-20">
                 <Checkbox.Group className="w-100" onChange={onConditionChange} value={condition.value}>
                   <Checkbox 
                     value="true"
-                    label="Baru" 
+                    label={t.sidebar.condition.c_new}
                     className="rating-checkbox" 
                     onChange={(e) => onConditionChange(e, "label")}
                   >
-                    <span className="text-secondary">Baru</span>
+                    <span className="text-secondary">{t.sidebar.condition.c_new}</span>
                   </Checkbox>
                   <Checkbox 
                     value="false"
-                    label="Bekas" 
+                    label={t.sidebar.condition.c_used} 
                     className="rating-checkbox" 
                     onChange={(e) => onConditionChange(e, "label")}
                   >
-                    <span className="text-secondary">Bekas</span>
+                    <span className="text-secondary">{t.sidebar.condition.c_used}</span>
                   </Checkbox>
                 </Checkbox.Group>
               </div>
             </Menu.SubMenu>
 
-            <Menu.SubMenu key="rating" className="filter-checkbox title-filter" title={renderTitle('Rating')}>
+            <Menu.SubMenu key="rating" className="filter-checkbox title-filter" title={renderTitle(t.sidebar.rating.title)}>
               <div className="p-l-20 p-r-20">
                 <Checkbox.Group className="w-100" /*onChange={onRatingChange} value={rating.value}*/>
                   <Checkbox value="4" className="rating-checkbox mt-0">
                     <Rate disabled defaultValue={1} count={1} className="filter-rate fs-14" />
-                    <span className="text-secondary">4 Keatas</span>
+                    <span className="text-secondary">{t.sidebar.rating.upper_4}</span>
                   </Checkbox>
                 </Checkbox.Group>
               </div>
             </Menu.SubMenu>
 
-            <Menu.SubMenu key="penawaran" className="scrollable-submenu title-filter" title={renderTitle('Penawaran')}>
+            <Menu.SubMenu key="penawaran" className="scrollable-submenu title-filter" title={renderTitle(t.sidebar.offer.title)}>
               <div className="p-l-20 p-r-20">
                 <Checkbox.Group className="w-100" onChange={onDiscountChange} value={is_discount.value}>
                   <Checkbox 
                     value="true"
-                    label="Diskon" 
+                    label={t.sidebar.offer.discount} 
                     className="rating-checkbox" 
                     onChange={(e) => onDiscountChange(e, "label")}
                   >
-                    <span className="text-secondary">Diskon</span>
+                    <span className="text-secondary">{t.sidebar.offer.discount}</span>
                   </Checkbox>
                 </Checkbox.Group>
                 <Checkbox.Group className="w-100" onChange={onWholesaleChange} value={wholesale.value}>
                   <Checkbox 
                     value="true"
-                    label="Harga Grosir" 
+                    label={t.sidebar.offer.wholesale} 
                     className="rating-checkbox" 
                     onChange={(e) => onWholesaleChange(e, "label")}
                   >
-                    <span className="text-secondary">Harga Grosir</span>
+                    <span className="text-secondary">{t.sidebar.offer.wholesale}</span>
                   </Checkbox>
                 </Checkbox.Group>
               </div>
@@ -146,7 +146,7 @@ const SidebarContainer = ({
               </div>
             </Menu.SubMenu>
 
-            <Menu.SubMenu key="lainnya" className="scrollable-submenu title-filter" title={renderTitle('Lainnya')}>
+            <Menu.SubMenu key="lainnya" className="scrollable-submenu title-filter" title={renderTitle(t.sidebar.others.title)}>
               <div className="p-l-20 p-r-20">
                 <Checkbox.Group className="w-100" onChange={onPreOrderChange} value={pre_order.value}>
                   <Checkbox 

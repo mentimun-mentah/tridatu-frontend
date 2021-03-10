@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { Row, Col, Tooltip, Table, notification } from 'antd'
 
+import id from 'locales/id/admin'
+import en from 'locales/en/admin'
+
 import Chart from 'chart.js'
 import Card from 'react-bootstrap/Card'
 
@@ -15,30 +18,30 @@ import { dataSourceBestProduct, columnsBestProduct } from 'data/salesAdmin'
 import { columnsReviewDashboard, dataSourceReview } from 'data/reviewAdmin'
 import { formContentReview } from 'formdata/formReviewAdmin'
 
-const statsData = [
+const statsData = (t) => [
   { 
-    title: "Belum Bayar", 
+    title: t.stats_data.unpaid, 
     value: 0, 
     link: "/admin/sale?type=unpaid",
-    tooltipText: <span className="fs-12">Pesanan yang baru masuk dan belum dibayar.</span> 
+    tooltipText: <span className="fs-12">{t.stats_data.unpaid_tooltip}</span> 
   },
   { 
-    title: "Perlu Dikirim", 
+    title: t.stats_data.toship, 
     value: 0, 
     link: "/admin/sale?type=toship",
-    tooltipText: <span className="fs-12">Pesanan yang sudah dibayar dan belum dikirim ke pembeli.</span>
+    tooltipText: <span className="fs-12">{t.stats_data.toship_tooltip}</span>
   },
   { 
-    title: "Konfirmasi Pembatalan", 
+    title: t.stats_data.canceled, 
     value: 0, 
     link: "/admin/sale?type=canceled",
-    tooltipText: <span className="fs-12">Pesanan yang perlu dikonfirmasi untuk dibatalkan.</span>
+    tooltipText: <span className="fs-12">{t.stats_data.canceled_tooltip}</span>
   },
   { 
-    title: "Ulasan Baru", 
+    title: t.stats_data.buyer_reviews, 
     value: 0, 
     link: "/admin",
-    tooltipText: <span className="fs-12">Jumlah ulasan dari pembeli yang belum kamu balas.</span>
+    tooltipText: <span className="fs-12">{t.stats_data.buyer_reviews_tooltip}</span>
   },
 ]
 
@@ -46,6 +49,10 @@ parseOptions(Chart, chartOptions());
 
 const Dashboard = () => {
   const router = useRouter()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const [showDetailReview, setShowDetailReview] = useState(false)
   const [contentReview, setContentReview] = useState(formContentReview)
 
@@ -62,9 +69,8 @@ const Dashboard = () => {
     notification["warning"]({
       duration: 5,
       closeIcon: <i className="far fa-times" />,
-      message: 'Perhatian',
-      description:
-      "Menghapus kategori atau brand juga akan menghapus produk yang menggunakan kategori atau brand tersebut.",
+      message: t.warning_notification.message,
+      description: t.warning_notification.description
     });
   }, [])
 
@@ -72,11 +78,11 @@ const Dashboard = () => {
     <>
       <section className="dashboard-section">
         <div className="dashboard-container">
-          <h4 className="fs-20-s mb-0">Penting hari ini</h4>
-          <p className="fs-14 fs-12-s text-secondary">Aktivitas yang perlu kamu pantau untuk jaga kepuasan pembeli</p>
+          <h4 className="fs-20-s mb-0">{t.important_today}</h4>
+          <p className="fs-14 fs-12-s text-secondary">{t.important_today_text}</p>
 
           <Row gutter={[16, 16]}>
-            {statsData.map((data, i) => (
+            {statsData(t).map((data, i) => (
               <Col xl={6} lg={8} md={8} sm={12} xs={12} key={i}>
                 <Card className="shadow-sm h-100 hover-pointer border-0 bor-rad-5px" onClick={() => router.push(data.link)}>
                   <Card.Body className="py-2 px-3">

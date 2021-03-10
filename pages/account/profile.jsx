@@ -1,10 +1,15 @@
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { Select, Button, Upload, Input } from 'antd'
 import { useDispatch, useSelector } from "react-redux";
 import { LoadingOutlined } from "@ant-design/icons";
 
+import id from 'locales/id/account/profile'
+import en from 'locales/en/account/profile'
+
 import axios, { jsonHeaderHandler, resNotification, signature_exp } from 'lib/axios'
+import isIn from 'validator/lib/isIn'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Card from 'react-bootstrap/Card'
@@ -20,6 +25,11 @@ const genderList = ['Laki-laki', 'Perempuan', 'Lainnya']
 
 const Profile = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
   const [loading, setLoading] = useState(false)
   const [loadingProfie, setLoadingProfie] = useState(false)
   const [avatar, setAvatar] = useState(formImage)
@@ -58,11 +68,11 @@ const Profile = () => {
 
   const onSubmitHandler = e => {
     e.preventDefault()
-    if(formProfileIsValid(profile, setProfile)){
+    if(formProfileIsValid(profile, setProfile, t)){
       setLoadingProfie(true)
       const data = {
         username: username.value,
-        phone: "+62" + phone.value,
+        phone: phone.value,
         gender: gender.value
       }
 
@@ -74,7 +84,7 @@ const Profile = () => {
         })
         .catch(err => {
           const errDetail = err.response.data.detail;
-          const errPhone = "The phone number has already been taken."
+          const errPhone = ["The phone number has already been taken.", "Nomor telepon sudah dipakai orang lain."]
           if(errDetail === signature_exp){
             axios.put('/users/update-account', data, jsonHeaderHandler())
               .then(res => {
@@ -87,7 +97,7 @@ const Profile = () => {
                 axios.delete("/users/delete-cookies")
               })
           }
-          if (typeof errDetail === "string" && errDetail === errPhone) {
+          if (typeof errDetail === "string" && isIn(errDetail, errPhone)) {
             setLoadingProfie(false)
             const state = JSON.parse(JSON.stringify(profile));
             state.phone.value = state.phone.value;
@@ -115,16 +125,18 @@ const Profile = () => {
 
   useEffect(() => {
     if(user !== null){
-      let phone = "";
-      if(user.phone){
-        phone = user.phone.split(" ")[user.phone.split(" ").length - 1]
-        phone = phone.split("-").join("")
-      }
+      // let phone = "";
+      // if(user.phone){
+      //   console.log(user.phone)
+      //   phone = user.phone.split(" ")[user.phone.split(" ").length - 1]
+      //   phone = phone.split("-").join("")
+      // }
       const data = {
         ...profile,
         username: { value: user.username, isValid: true, message: null },
         email: { value: user.email, isValid: true, message: null },
-        phone: { value: phone, isValid: true, message: null },
+        // phone: { value: phone, isValid: true, message: null },
+        phone: { value: user.phone, isValid: true, message: null },
         gender: { value: user.gender, isValid: true, message: null },
       };
       setProfile(data)
@@ -147,9 +159,9 @@ const Profile = () => {
     <>
       <Card className="card-container">
         <Card.Header className="bg-transparent border-bottom">
-          <h1 className="fs-16 mt-1 mb-0">Akun Saya</h1>
+          <h1 className="fs-16 mt-1 mb-0">{t.my_account}</h1>
           <small>
-            Kelola informasi profil Anda untuk mengontrol dan melindungi akun anda
+            {t.my_account_text}
           </small>
         </Card.Header>
         <Row noGutters>
@@ -158,7 +170,7 @@ const Profile = () => {
               <Form>
                 <Form.Row>
                   <Form.Group as={Col} lg={6} md={6} sm={12}>
-                    <Form.Label>Username</Form.Label>
+                    <Form.Label>{t.data_input.username}</Form.Label>
                     <Form.Control 
                       type="text" 
                       name="username" 
@@ -170,7 +182,7 @@ const Profile = () => {
                   </Form.Group>
 
                   <Form.Group as={Col} lg={6} md={6} sm={12}>
-                    <Form.Label>Email</Form.Label>
+                    <Form.Label>{t.data_input.email}</Form.Label>
                     <Form.Control 
                       disabled 
                       type="email" 
@@ -181,12 +193,12 @@ const Profile = () => {
 
                 <Form.Row>
                   <Form.Group as={Col} lg={6} md={6} sm={12}>
-                    <Form.Label>Nomor Telepon</Form.Label>
+                    <Form.Label>{t.data_input.phone_number}</Form.Label>
                     <Input 
                       name="phone" 
-                      addonBefore="+62" 
-                      className="input-h-35" 
-                      placeholder="Nomor Telepon" 
+                      // addonBefore="+62" 
+                      className="input-h-35 h-35"
+                      placeholder={t.data_input.phone_number} 
                       value={phone.value}
                       onChange={e => inputChangeHandler(e)}
                     />
@@ -194,11 +206,11 @@ const Profile = () => {
                   </Form.Group>
 
                   <Form.Group as={Col} lg={6} md={6} sm={12}>
-                    <Form.Label>Jenis Kelamin</Form.Label>
+                    <Form.Label>{t.data_input.gender}</Form.Label>
                     <Select 
                       name="gender" 
                       className="w-100" 
-                      placeholder="Pilih jenis kelamin"
+                      placeholder={t.data_input.gender_placeholder}
                       value={gender.value}
                       onChange={e => inputChangeHandler(e, "gender")}
                     >
@@ -211,7 +223,7 @@ const Profile = () => {
                 </Form.Row>
                 
                 <Button className="btn-tridatu" onClick={onSubmitHandler} style={{ width: 80 }} disabled={saveDisable}>
-                  {loadingProfie ? <LoadingOutlined /> : "Simpan"}
+                  {loadingProfie ? <LoadingOutlined /> : t.save}
                 </Button> 
 
               </Form>
@@ -236,15 +248,15 @@ const Profile = () => {
                   showUploadList={false}
                   beforeUpload={(file) => imageValidation(file, "file", "/users/update-avatar", "put", setLoading, () => dispatch(actions.getUser()), "The image profile has updated.")}
                 >
-                  <Button style={{ width: 91 }} disabled={loading}>
-                    {loading ? <LoadingOutlined /> : "Pilih Foto"}
+                  <Button style={{ width: 'auto' }} disabled={loading}>
+                    {loading ? <LoadingOutlined /> : t.data_avatar.select_photo}
                   </Button>
                 </Upload>
                 <p className="fs-12 mb-0 mt-3 text-secondary mt-0">
-                  Ukuran gambar: maks. 4 MB
+                  {t.data_avatar.img_size} 4 MB
                 </p>
                 <p className="fs-12 text-secondary mt-0">
-                  Format gambar: .JPEG, .JPG, .PNG
+                  {t.data_avatar.img_format}: .JPEG, .JPG, .PNG
                 </p>
               </Card.Body>
             </Card>
