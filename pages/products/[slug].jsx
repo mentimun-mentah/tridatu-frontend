@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Modal, Rate, Button, Select, Tabs, Progress, Breadcrumb, Input, AutoComplete, Popover } from "antd";
-import { Comment, Avatar, Col as ColAntd, Row as RowAntd, Skeleton, Alert, Table, Form } from 'antd';
+import { Comment, Avatar, Col as ColAntd, Row as RowAntd, Skeleton, Alert, Table, Form, Empty } from 'antd';
 import { AnimatePresence, motion } from "framer-motion"
 import { buildStyles, CircularProgressbar } from 'react-circular-progressbar';
 import { SearchOutlined, InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
@@ -16,16 +16,20 @@ import Card from 'react-bootstrap/Card'
 import AlertB from 'react-bootstrap/Alert'
 import Container from 'react-bootstrap/Container'
 
+import isEmpty from 'validator/lib/isEmpty';
 import ImageGallery from 'react-image-gallery'
 
 import getYoutubeThumbnail from "lib/getYoutubeThumbnail"
+import kFormatter from "lib/kFormatter";
 import formatNumber from "lib/formatNumber";
 import Pagination from "components/Pagination";
 import UlasanContainer from 'components/Card/Ulasan'
 import CommentContainer from 'components/Card/Diskusi'
+import CommentContainerLoading from 'components/Card/DiskusiLoading'
 import ShareModal from 'components/Card/ShareModal'
 import CardProduct from "components/Card/Product";
 import ErrorMessage from "components/ErrorMessage";
+import OutletImageLoading from "components/Card/OutletLoading";
 
 import VariantProduct from "components/Products/Variants";
 import ShippingDisplayContainer from "components/Products/ShippingDisplay";
@@ -69,17 +73,24 @@ const _renderImage = (item) => {
   )
 }
 
-const per_page = 10;
+const REVIEW = "REVIEW"
+const DISCUSSION = "DISCUSSION"
+const DESCRIPTION = "DESCRIPTION"
+const per_page = 4;
+
 const ProductDetail = () => {
   const dispatch = useDispatch()
   const router = useRouter()
 
   const user = useSelector(state => state.auth.user)
   const productData = useSelector(state => state.products.productSlug)
+  const loadingProduct = useSelector(state => state.products.loading)
+  const loadingCategories = useSelector(state => state.categories.loading)
   const loadingCost = useSelector(state => state.shipping.loading)
   const listLocation = useSelector(state => state.shipping.listLocation)
   const shippingCosts = useSelector(state => state.shipping.shippingCosts)
   const comments = useSelector(state => state.comments.comments)
+  const loadingComments = useSelector(state => state.comments.loading)
 
   useEffect(() => {
     dispatch(actions.getSlugProduct({ slug: router.query.slug, recommendation: true }))
@@ -91,7 +102,7 @@ const ProductDetail = () => {
 
   const { products_id, products_brand, products_category, products_condition, products_desc, products_image_product } = productData
   const { products_image_size_guide, products_love, products_name, products_recommendation, products_slug } = productData
-  const { products_discount_status, products_variant, products_visitor, products_weight, products_wholesale, products_video } = productData
+  const { products_variant, products_visitor, products_weight, products_video } = productData
   const { products_preorder } = productData
 
   const [showSearch, setShowSearch] = useState(false)
@@ -99,6 +110,7 @@ const ProductDetail = () => {
   const [showShareModal, setShowShareModal] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
 
+  const [activeTab, setActiveTab] = useState(DESCRIPTION)
   const [product, setProduct] = useState({})
   const [courier, setCourier] = useState({})
   const [quantity, setQuantity] = useState(1)
@@ -126,12 +138,14 @@ const ProductDetail = () => {
   useEffect(() => {
     setProduct(productData)
     setLove(products_love)
+    getInitialComments()
+    setActiveTab(DESCRIPTION)
   }, [productData])
 
-  useEffect(() => {
-    dispatch(actions.getSlugProduct({ slug: router.query.slug, recommendation: true }))
-  }, [love])
-
+  // delete jika tidak ingin ada loading lagi
+  // useEffect(() => {
+  //   dispatch(actions.getSlugProduct({ slug: router.query.slug, recommendation: true }))
+  // }, [love])
 
   useEffect(() => {
     if(shippingCosts){
@@ -252,7 +266,6 @@ const ProductDetail = () => {
         .then(async res => {
           const commentState = JSON.parse(JSON.stringify(commentList))
           if(res.data.length){
-            console.log("masuk 1")
             const dataReplies = await res.data.filter(x => x.comments_replies.length > 0)
             if(dataReplies && dataReplies.length && dataReplies.length > 0){
               for(let val of dataReplies){
@@ -292,15 +305,52 @@ const ProductDetail = () => {
     return res.data
   }
 
-  // useEffect(() => {
-  //   const list_comments_id = comments && comments.data && comments.data.map(x => x.comments_id)
-  //   if(list_comments_id){
-  //     getAllReplies(list_comments_id.join("-"))
-  //   }
-  // }, [comments])
+  const getInitialComments = async () => {
+    const params = { page: page, per_page: per_page, commentable_type: "product", commentable_id: products_id }
+    let resComments = await axios.get(`/comments/all-comments`, { params: params })
+    const list_comments_with_replies = await resComments && resComments.data && resComments.data.data.filter(x => x.total_replies > 0)
+    const list_comments_id = list_comments_with_replies.map(x => x.comments_id)
+
+    if(list_comments_id && list_comments_id.length){
+      const resReplies = await axios.get(`/replies/comments/${list_comments_id.join("-")}`)
+
+      let finalResReplies = resReplies.data
+      if(typeof resReplies.data.length === "undefined") finalResReplies = new Array(resReplies.data)
+
+      if(finalResReplies.length > 0){
+        for(let val of finalResReplies){
+          if(resComments && resComments.data && resComments.data.data.length){
+            for(let [key, obj] of Object.entries(resComments.data.data)){
+              if(val.comments_id === obj.comments_id){
+                resComments.data.data[key] = {
+                  ...resComments.data.data[key],
+                  comments_replies: val.comments_replies
+                }
+              }
+            }
+          }
+        }
+        dispatch(actions.getAllCommentsSuccess(resComments.data))
+      }
+      else{
+        dispatch(actions.getAllCommentsSuccess(resComments.data))
+      }
+    } 
+    else {
+      dispatch(actions.getAllCommentsSuccess(resComments.data))
+    }
+  }
 
   useEffect(() => {
+    getInitialComments()
+  }, [page])
+
+  useEffect(() => {
+    getInitialComments()
     setCommentList(comments)
+    return () => {
+      dispatch(actions.getAllCommentsSuccess([]))
+    }
   }, [])
 
   useEffect(() => {
@@ -310,7 +360,7 @@ const ProductDetail = () => {
       ({ comments_id: id1 }) => dupCommentList && dupCommentList.data && !dupCommentList.data.some(({ comments_id: id2 }) => id2 === id1)
     );
 
-    if(newComments && newComments.length){
+    if(newComments && newComments.length && dupCommentList.page === page){
       for(let diff of newComments){
         const idx = dupCommentRedux.data.findIndex(x => x.comments_id === diff.comments_id)
         dupCommentList.data.splice(idx, 0, diff)
@@ -329,11 +379,6 @@ const ProductDetail = () => {
       setCommentList(comments)
     }
   }, [comments])
-
-  useEffect(() => {
-    dispatch(actions.getAllComments({ page: page, commentable_id: products_id, commentable_type: "product" }))
-  }, [page])
-
 
   const onSubmitComment = e => {
     e.preventDefault()
@@ -382,11 +427,13 @@ const ProductDetail = () => {
   }
 
   const onSubmitReplies = (e, formState, setFormState, comment_id, setLoading) => {
-    console.log("di klik")
     e.preventDefault()
     if(formCommentIsValid(formState, setFormState)){
       const { message } = formState
-      const data = { message: message.value, comment_id: comment_id }
+      const data = { 
+        message: message.value, 
+        comment_id: comment_id 
+      }
       setLoading(true)
       axios.post('/replies/create', data, jsonHeaderHandler())
         .then(async () => {
@@ -395,7 +442,6 @@ const ProductDetail = () => {
           const dataReplies = await getDataReplies(comment_id)
           const commentState = JSON.parse(JSON.stringify(commentList))
           const idx = commentState.data.findIndex(c => c.comments_id == comment_id)
-          console.log(JSON.stringify(dataReplies, null, 2))
           if(commentState.data.comments_replies){
             commentState.data[idx]["total_replies"] = dataReplies.comments_replies.length
             commentState.data[idx].comments_replies.push(dataReplies.comments_replies[dataReplies.comments_replies.length - 1])
@@ -413,8 +459,6 @@ const ProductDetail = () => {
           setCommentList(commentState)
         })
         .catch(async err => {
-          console.log("masuk err aja", err)
-          console.log("masuk err", err.response)
           setLoading(false)
           if(err.response){
             const errDetail = err.response && err.response.data && err.response.data.detail
@@ -450,253 +494,342 @@ const ProductDetail = () => {
     }
   }
 
+  const deleteCommentOrReply = (head, id, comment_id) => {
+    let url = `/replies/delete/${id}`
+    if(head){
+      url = `/comments/delete/${id}`
+    }
+
+    axios.delete(url, jsonHeaderHandler())
+      .then(async res => {
+        if(res.status === 200 || res.status === 404){
+          if(head){
+            const commentState = JSON.parse(JSON.stringify(commentList))
+            commentState.data = commentState.data.filter(x => x.comments_id !== id)
+            commentState.total = commentState.total - 1
+            setCommentList(commentState)
+          }
+          else{
+            const commentState = JSON.parse(JSON.stringify(commentList))
+            const idx = commentState.data.findIndex(c => c.comments_id == comment_id)
+            commentState.data[idx].comments_replies = commentState.data[idx].comments_replies.filter(x => x.replies_id !== id)
+            commentState.data[idx].total_replies = commentState.data[idx].total_replies - 1
+            setCommentList(commentState)
+          }
+        }
+      })
+      .catch(err => {
+        const errDetail = err.response && err.response.data && err.response.data.detail
+        if(errDetail == signature_exp){
+          if(head){
+            const commentState = JSON.parse(JSON.stringify(commentList))
+            commentState.data = commentState.data.filter(x => x.comments_id !== id)
+            commentState.total = commentState.total - 1
+            setCommentList(commentState)
+          }
+          else{
+            const commentState = JSON.parse(JSON.stringify(commentList))
+            const idx = commentState.data.findIndex(c => c.comments_id == comment_id)
+            commentState.data[idx].comments_replies = commentState.data[idx].comments_replies.filter(x => x.replies_id !== id)
+            commentState.data[idx].total_replies = commentState.data[idx].total_replies - 1
+            setCommentList(commentState)
+          }
+        }
+      })
+  }
+
   return(
     <>
       <BottomNavigation 
-        product={productData}
-        loveHandler={(id) => loveHandler(id)}
         love={love}
         selected={selected}
         quantity={quantity}
+        product={productData}
+        loveHandler={(id) => loveHandler(id)}
       />
 
       <Container className="pt-4 pb-2">
         <Row className="mb-3">
           <Col className="col-lg-7 col-12">
             <Breadcrumb className="text-truncate">
-              <Breadcrumb.Item href="/products">Products</Breadcrumb.Item>
-              <Breadcrumb.Item>{products_category.categories_name}</Breadcrumb.Item>
-              <Breadcrumb.Item>{products_category.sub_categories_name}</Breadcrumb.Item>
-              <Breadcrumb.Item>{products_category.item_sub_categories_name}</Breadcrumb.Item>
-              <Breadcrumb.Item>{products_name}</Breadcrumb.Item>
+              {loadingCategories ? (
+                <Breadcrumb.Item>
+                  <Skeleton.Button active loading={loadingCategories} size="small" className="skeleton-breadcumb w-100" />
+                </Breadcrumb.Item>
+              ):(
+                <>
+                  <Breadcrumb.Item href="/products">Products</Breadcrumb.Item>
+                  <Breadcrumb.Item>{products_category.categories_name}</Breadcrumb.Item>
+                  <Breadcrumb.Item>{products_category.sub_categories_name}</Breadcrumb.Item>
+                  <Breadcrumb.Item>{products_category.item_sub_categories_name}</Breadcrumb.Item>
+                  <Breadcrumb.Item>{products_name}</Breadcrumb.Item>
+                </>
+              )}
             </Breadcrumb>
           </Col>
         </Row>
         <Row>
           {/* POTHOS OF PRODUCTS */}
           <Col lg={6} className="product-images m-b-13-m m-b-13-s" id="id-product-images">
-            <ImageGallery
-              items={getImageList()} 
-              showPlayButton={false}
-              useBrowserFullscreen={false}
-              useTranslate3D={false}
-              preventDefaultTouchmoveEvent
-              showFullscreenButton={false}
-              renderLeftNav={renderLeftNav}
-              renderRightNav={renderRightNav}
-              renderFullscreenButton={renderFullscreenButton}
-              onClick={showImageModalHandler}
-              onSlide={onSlide}
-              additionalClass="product-images-container"
-            />
+            {loadingProduct ? (
+              <>
+                <OutletImageLoading />
+                <RowAntd gutter={[10, 0]} className="mt-2">
+                  {[...Array(4)].map((_,x) => (
+                    <ColAntd span={6} key={x} className="px-1">
+                      <OutletImageLoading />
+                    </ColAntd>
+                  ))}
+                </RowAntd>
+              </>
+            ):(
+              <ImageGallery
+                items={getImageList()} 
+                showPlayButton={false}
+                useBrowserFullscreen={false}
+                useTranslate3D={false}
+                preventDefaultTouchmoveEvent
+                showFullscreenButton={false}
+                renderLeftNav={renderLeftNav}
+                renderRightNav={renderRightNav}
+                renderFullscreenButton={renderFullscreenButton}
+                onClick={showImageModalHandler}
+                onSlide={onSlide}
+                additionalClass="product-images-container"
+              />
+            )}
           </Col>
           {/* POTHOS OF PRODUCTS */}
 
           <Col lg={6}>
             {/* TITLE PRODUCTS INFORMATION */}
             <div className="header-product">
-              <h1 className="header-product-title fs-18-s">{products_name}</h1>
+              {loadingProduct ? (
+                <Skeleton.Button active loading={loadingProduct} className="w-100 h-26" />
+              ):(
+                <h1 className="header-product-title fs-18-s">{products_name}</h1>
+              )}
               <div className="header-product-rating text-muted">
-                <span className="header-product-rating-detail m-r-5">
-                  4.5
-                </span>
-                <Rate className="header-product-rating-rate" allowHalf disabled defaultValue={5} />
-                <span className="header-product-rating-detail">
-                  (116) • <b>Terjual 127 Produk</b> • <b>{products_visitor}x</b> Dilihat
-                </span>
+                {loadingProduct ? (
+                  <Skeleton.Button active loading={loadingProduct} size="small" className="skeleton-breadcumb w-100" />
+                ):(
+                  <span className="header-product-rating-detail pl-0">
+                    <span className="text-dark mr-1 fw-500">Terjual</span><span>{kFormatter(1273, 'rb')}</span>
+                    <span className="fs-14 mx-1">•</span>
+                    <Rate className="header-product-rating-rate" count={1} allowHalf disabled value={1} />
+                    <span className="text-dark mx-1 fw-500">4.8</span><span>({kFormatter(4532, 'rb')} ulasan)</span>
+                    <span className="fs-14 mx-1">•</span>
+                    <span className="text-dark mx-1 fw-500">{kFormatter(+products_visitor, 'rb')} x</span>Dilihat
+                  </span>
+                )}
               </div>
             </div>
             {/* TITLE PRODUCTS INFORMATION */}
 
-            {/* PRODUCTS INFORMATION */}
-            {products_brand && products_brand.brands_image && (
-              <div className="media info-product">
-                <h5 className="info-product-left">Brand</h5>
-                <div className="media-body info-product-body">
-                  <Image 
-                    width={64} 
-                    height={64} 
-                    src={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${products_brand.brands_image}`}
-                  />
-                </div>
-              </div>
-            )}
-            {/* PRODUCTS INFORMATION */}
-
-            <VariantProduct 
-              product={productData} 
-              selected={selected}
-              setSelected={setSelected}
-              quantity={quantity}
-              setQuantity={setQuantity}
-              wholesaleList={wholesaleList}
-              setWholesaleList={setWholesaleList}
-            />
-
-            {/* PRODUCTS INFORMATION */}
-            <div className="media info-product">
-              <h5 className="info-product-left">Info produk</h5>
-              <div className="media-body info-product-body">
-                <div className="d-flex noselect">
-                  <div className="info-item">
-                    <p>Berat</p>
-                    <p>{+products_weight}gr</p>
-                  </div>
-                  <div className="info-item">
-                    <p>Kondisi</p>
-                    <p>{products_condition ? "Baru" : "Bekas"}</p>
-                  </div>
-                  <div className="info-item">
-                    <p>Kategori</p>
-                    <p>{products_category.item_sub_categories_name}</p>
-                  </div>
-                  {Boolean(products_preorder) && (
-                    <div className="info-item">
-                      <p>Preorder</p>
-                      <p>{products_preorder} Hari</p>
+            {loadingProduct ? (
+              <>
+                {[...Array(6)].map((_,x) => (
+                  <div className="media info-product" key={x}>
+                    <h5 className="info-product-left"><Skeleton.Button active loading={true} className="w-100" /></h5>
+                    <div className="media-body info-product-body">
+                      <Skeleton.Button active loading={true} className="w-100" />
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            {/* PRODUCTS INFORMATION */}
+                  </div>
+                ))}
+              </>
+            ):(
+              <>
+                {/* PRODUCTS INFORMATION */}
+                {products_brand && products_brand.brands_image && (
+                  <div className="media info-product">
+                    <h5 className="info-product-left">Brand</h5>
+                    <div className="media-body info-product-body">
+                      <Image 
+                        width={64} 
+                        height={64} 
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/static/brands/${products_brand.brands_image}`}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* PRODUCTS INFORMATION */}
 
-            {/* SHIPPING INFORMATION */}
-            <div className="media info-product">
-              <h5 className="info-product-left">Ongkos Kirim</h5>
-              <div className="media-body info-product-body">
-                <div className="fs-14 text-secondary mb-2">
-                  <p className="mb-0 font-weight-light">
-                    Ke
-                    <a 
-                      className="fw-500 text-dark m-l-5"
-                      style={{ borderBottom: "1px dashed #343a40" }}
-                      onClick={searchHandlerClicked}
-                    >
-                      {shippingLocation.value}
-                    </a>
-                  </p>
-                  <p className="mb-0 font-weight-light">
-                    Dari<span className="fw-500 text-dark m-l-5">{shippingLocation.origin}</span>
-                  </p>
-                </div>
+                <VariantProduct 
+                  product={productData} 
+                  selected={selected}
+                  setSelected={setSelected}
+                  quantity={quantity}
+                  setQuantity={setQuantity}
+                  wholesaleList={wholesaleList}
+                  setWholesaleList={setWholesaleList}
+                />
 
-                <AnimatePresence exitBeforeEnter>
-                  {showSearch ? (
-                    <motion.div initial="initial" animate="in" exit="out" variants={Fade} className="m-t-10" key={showSearch}>
-                      <Card>
-                        <Card.Body className="px-3" style={{ paddingTop: "9.5px", paddingBottom: "9.5px" }}>
-                          <AutoComplete 
-                            autoFocus 
-                            dropdownClassName="idx-1020"
-                            className="w-100"
-                            options={listLocation}
-                            onSelect={onSearchSelectHandler}
-                          >
-                            <Input
-                              placeholder="Search"
-                              onPressEnter={false}
-                              onChange={onSearchChangeHandler}
-                              prefix={<SearchOutlined className="text-black-50"/>}
-                            />
-                          </AutoComplete>
-                        </Card.Body>
-                      </Card>
-                    </motion.div>
-                  ) : (
-                    <motion.div initial="initial" animate="in" exit="out" variants={Fade} key={!showSearch}>
-                      <Select 
-                        className="w-100 select-courier"
-                        onChange={val => setCourier(val)}
-                        value={<ShippingDisplayContainer data={courier} />}
-                      >
-                        {shippingCosts && shippingCosts.costs_shipping.length > 0 && shippingCosts.costs_shipping.map((courier, i) => (
-                          <React.Fragment key={i}>
-                            {courier.costs.map(services => (
-                              services.cost.map(cost => {
-                                let etd = cost.etd.split(" ")
-                                let data = { code: courier.code, services: services.service, etd: etd[0], cost: cost.value }
-                                return (
-                                  <Select.Option value={JSON.stringify(data)} key={courier.code + services.service}>
-                                    <div className="d-flex justify-content-between noselect">
-                                      <div className="align-self-center" style={{ width: 'calc(100%/2)' }}>
-                                        <p className="mb-0 text-uppercase text-truncate"> 
-                                          <img 
-                                            className="courier-img" 
-                                            src={`/static/images/couriers/${courier.code}.png`} 
-                                          />
-                                          <span className="va-super">{courier.code || "-"} {services.service}</span>
-                                        </p>
-                                      </div>
-                                      <div className="align-self-center">
-                                        <p className="mb-0 text-truncate"> {etd[0] || 0} hari </p>
-                                      </div>
-                                      <div className="align-self-center m-r-17">
-                                        <p className="mb-0 text-truncate"> Rp.{formatNumber(cost.value || 0)} </p>
-                                      </div>
-                                    </div>
-                                  </Select.Option>
-                                )
-                              })
-                            ))}
-                          </React.Fragment>
-                        ))}
-                      </Select>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-
-                <AnimatePresence>
-                  {shippingCosts.costs_shipping.length > 0 && (
-                    <Alert banner showIcon 
-                      type="info" className="m-t-10 shadow-sm bor-rad-5px p-2"
-                      icon={<InfoCircleOutlined className="fs-18 m-r-10" />}
-                      message={
-                        <p className="mb-0 font-weight-light text-muted fs-12" style={{ lineHeight: "12px" }}>
-                          Estimasi Biaya Pengiriman
-                        </p>
-                      }
-                      description={
-                        <motion.div initial="initial" animate="in" exit="out" variants={Fade} className="mb-0 font-weight-light">
-                          {loadingCost ? (
-                            <Skeleton.Button active className="h-17" style={{ verticalAlign: "sub" }} />
-                          ):(
-                            <span className="fw-500 text-dark" style={{ lineHeight: "12px" }}>
-                              Rp.{formatNumber(shippingCosts.min_cost)} - Rp.{formatNumber(shippingCosts.max_cost)}
-                            </span>
-                          )}
-                        </motion.div>
-                      } 
-                    />
-                  )}
-                </AnimatePresence>
-
-              </div>
-            </div>
-            {/* SHIPPING INFORMATION */}
-
-
-            {/* PENAWARAN LAINNYA */}
-            {wholesaleList.length > 0 && (
-              <div className="media info-product">
-                <h5 className="info-product-left">Harga Grosir</h5>
-                <div className="media-body info-product-body">
-                  <div className="fs-14 noselect">
-                    <p className="mb-0">Lebih banyak, lebih murah!</p>
-                    <p className="mb-0">
-                      Mulai dari 
-                      Rp.{formatNumber(wholesaleList[0].wholesale_price)}, min. {formatNumber(wholesaleList[0].wholesale_min_qty)} pcs
-                      <Popover content={wholesaleContent} placement="bottom" overlayClassName="idx-1020">
-                        <i className="fas fa-angle-down hover-pointer m-l-8" style={{ verticalAlign: "text-bottom" }} />
-                      </Popover>
-                    </p>
+                {/* PRODUCTS INFORMATION */}
+                <div className="media info-product">
+                  <h5 className="info-product-left">Info produk</h5>
+                  <div className="media-body info-product-body">
+                    <div className="d-flex noselect">
+                      <div className="info-item">
+                        <p>Berat</p>
+                        <p>{+products_weight}gr</p>
+                      </div>
+                      <div className="info-item">
+                        <p>Kondisi</p>
+                        <p>{products_condition ? "Baru" : "Bekas"}</p>
+                      </div>
+                      <div className="info-item">
+                        <p>Kategori</p>
+                        <p>{products_category.item_sub_categories_name}</p>
+                      </div>
+                      {Boolean(products_preorder) && (
+                        <div className="info-item">
+                          <p>Preorder</p>
+                          <p>{products_preorder} Hari</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+                {/* PRODUCTS INFORMATION */}
+
+                {/* SHIPPING INFORMATION */}
+                <div className="media info-product">
+                  <h5 className="info-product-left">Ongkos Kirim</h5>
+                  <div className="media-body info-product-body">
+                    <div className="fs-14 text-secondary mb-2">
+                      <p className="mb-0 font-weight-light">
+                        Ke
+                        <a 
+                          className="fw-500 text-dark m-l-5"
+                          style={{ borderBottom: "1px dashed #343a40" }}
+                          onClick={searchHandlerClicked}
+                        >
+                          {shippingLocation.value}
+                        </a>
+                      </p>
+                      <p className="mb-0 font-weight-light">
+                        Dari<span className="fw-500 text-dark m-l-5">{shippingLocation.origin}</span>
+                      </p>
+                    </div>
+
+                    <AnimatePresence exitBeforeEnter>
+                      {showSearch ? (
+                        <motion.div initial="initial" animate="in" exit="out" variants={Fade} className="m-t-10" key={showSearch}>
+                          <Card>
+                            <Card.Body className="px-3" style={{ paddingTop: "9.5px", paddingBottom: "9.5px" }}>
+                              <AutoComplete 
+                                autoFocus 
+                                dropdownClassName="idx-1020"
+                                className="w-100"
+                                options={listLocation}
+                                onSelect={onSearchSelectHandler}
+                              >
+                                <Input
+                                  placeholder="Search"
+                                  onPressEnter={false}
+                                  onChange={onSearchChangeHandler}
+                                  prefix={<SearchOutlined className="text-black-50"/>}
+                                />
+                              </AutoComplete>
+                            </Card.Body>
+                          </Card>
+                        </motion.div>
+                      ) : (
+                        <motion.div initial="initial" animate="in" exit="out" variants={Fade} key={!showSearch}>
+                          <Select 
+                            className="w-100 select-courier"
+                            onChange={val => setCourier(val)}
+                            value={<ShippingDisplayContainer data={courier} />}
+                          >
+                            {shippingCosts && shippingCosts.costs_shipping.length > 0 && shippingCosts.costs_shipping.map((courier, i) => (
+                              <React.Fragment key={i}>
+                                {courier.costs.map(services => (
+                                  services.cost.map(cost => {
+                                    let etd = cost.etd.split(" ")
+                                    let data = { code: courier.code, services: services.service, etd: etd[0], cost: cost.value }
+                                    return (
+                                      <Select.Option value={JSON.stringify(data)} key={courier.code + services.service}>
+                                        <div className="d-flex justify-content-between noselect">
+                                          <div className="align-self-center" style={{ width: 'calc(100%/2)' }}>
+                                            <p className="mb-0 text-uppercase text-truncate"> 
+                                              <img 
+                                                className="courier-img" 
+                                                src={`/static/images/couriers/${courier.code}.png`} 
+                                              />
+                                              <span className="va-super">{courier.code || "-"} {services.service}</span>
+                                            </p>
+                                          </div>
+                                          <div className="align-self-center">
+                                            <p className="mb-0 text-truncate"> {etd[0] || 0} hari </p>
+                                          </div>
+                                          <div className="align-self-center m-r-17">
+                                            <p className="mb-0 text-truncate"> Rp.{formatNumber(cost.value || 0)} </p>
+                                          </div>
+                                        </div>
+                                      </Select.Option>
+                                    )
+                                  })
+                                ))}
+                              </React.Fragment>
+                            ))}
+                          </Select>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+
+                    <AnimatePresence>
+                      {shippingCosts.costs_shipping.length > 0 && (
+                        <Alert banner showIcon 
+                          type="info" className="m-t-10 shadow-sm bor-rad-5px p-2"
+                          icon={<InfoCircleOutlined className="fs-18 m-r-10" />}
+                          message={
+                            <p className="mb-0 font-weight-light text-muted fs-12" style={{ lineHeight: "12px" }}>
+                              Estimasi Biaya Pengiriman
+                            </p>
+                          }
+                          description={
+                            <motion.div initial="initial" animate="in" exit="out" variants={Fade} className="mb-0 font-weight-light">
+                              {loadingCost ? (
+                                <Skeleton.Button active className="h-17" style={{ verticalAlign: "sub" }} />
+                              ):(
+                                <span className="fw-500 text-dark" style={{ lineHeight: "12px" }}>
+                                  Rp.{formatNumber(shippingCosts.min_cost)} - Rp.{formatNumber(shippingCosts.max_cost)}
+                                </span>
+                              )}
+                            </motion.div>
+                          } 
+                        />
+                      )}
+                    </AnimatePresence>
+
+                  </div>
+                </div>
+                {/* SHIPPING INFORMATION */}
+
+                {/* PENAWARAN LAINNYA */}
+                {wholesaleList.length > 0 && (
+                  <div className="media info-product">
+                    <h5 className="info-product-left">Harga Grosir</h5>
+                    <div className="media-body info-product-body">
+                      <div className="fs-14 noselect">
+                        <p className="mb-0">Lebih banyak, lebih murah!</p>
+                        <p className="mb-0">
+                          Mulai dari 
+                          Rp.{formatNumber(wholesaleList[0].wholesale_price)}, min. {formatNumber(wholesaleList[0].wholesale_min_qty)} pcs
+                          <Popover content={wholesaleContent} placement="bottom" overlayClassName="idx-1020">
+                            <i className="fas fa-angle-down hover-pointer m-l-8" style={{ verticalAlign: "text-bottom" }} />
+                          </Popover>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PENAWARAN LAINNYA */}
+              </>
             )}
 
-            {/* PENAWARAN LAINNYA */}
 
             {/* ACTIONS PRODUCTS INFORMATION 
             <div className="info-product">
@@ -723,12 +856,16 @@ const ProductDetail = () => {
 
         <Row className="mt-3">
           <Col>
-            <Tabs defaultActiveKey="3" style={{ borderTop: "1px solid #f0f0f0" }}>
-              <Tabs.TabPane tab="Deskripsi" key="1">
-                <p className="ws-preline"> {products_desc} </p>
+            <Tabs activeKey={activeTab} style={{ borderTop: "1px solid #f0f0f0" }} onChange={key => setActiveTab(key)}>
+              <Tabs.TabPane tab="Deskripsi" key={DESCRIPTION}>
+                {loadingProduct ? (
+                  <Skeleton active />
+                ):(
+                  <p className="ws-preline"> {products_desc} </p>
+                )}
               </Tabs.TabPane>
 
-              <Tabs.TabPane tab="Ulasan (20)" key="2">
+              <Tabs.TabPane tab="Ulasan (20)" key={REVIEW}>
                 <Row className="mt-4">
                   <Col className="col-auto align-self-center mr-3">
                     <div className="d-inline-flex">
@@ -777,8 +914,21 @@ const ProductDetail = () => {
               </Tabs.TabPane>
 
 
+              <Tabs.TabPane tab={`Diskusi (${commentList.total})`} key={DISCUSSION}>
+                <AnimatePresence>
+                  {!loadingComments && commentList.total === 0 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: ".2" }}
+                      className="w-100"
+                    >
+                      <Empty className="my-5" description={<span className="text-secondary">Belum Ada Diskusi</span>} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              <Tabs.TabPane tab="Diskusi (3)" key="3">
                 {user && user.role !== "admin" && (
                   <section className="mb-0">
                     <Comment 
@@ -802,7 +952,11 @@ const ProductDetail = () => {
                             <ErrorMessage item={commentMessage.message} />
                           </Form.Item>
                           <Form.Item className="mb-0">
-                            <Button className="btn-tridatu px-5" onClick={onSubmitComment}>
+                            <Button 
+                              className="btn-tridatu px-5" 
+                              onClick={onSubmitComment} 
+                              // disabled={isEmpty(commentMessage.message.value)}
+                            >
                               {sendCommentLoading ? <LoadingOutlined /> : "Kirim"}
                             </Button>
                           </Form.Item>
@@ -822,68 +976,80 @@ const ProductDetail = () => {
                   </section>
                 )}
 
-                {commentList && commentList.data && commentList.data.length > 0 && commentList.data.map(comment => (
-                  <section className="diskusi-section mb-0" key={comment.comments_id}>
-                    <CommentContainer 
-                      head body="message"
-                      comment_id={comment.comments_id}
-                      username={comment.users_username}
-                      content={comment.comments_message}
-                      created_at={comment.comments_created_at}
-                      can_delete={user && comment.comments_user_id === user.id}
-                      avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${comment.users_avatar}`}
-                    >
-                      {comment.total_replies > 2 && comment.comments_replies && 
-                       ((comment.total_replies - comment.comments_replies.length) > 0) && (
-                        <a 
-                          className="pb-1 fw-500 d-block" 
-                          style={{color:"rgba(0, 0, 0, 0.54)"}}
-                          onClick={() => getAllReplies(comment.comments_id)}
-                        >
-                          <i className="fal fa-comment-alt-dots m-r-3" />
-                          Lihat {comment.total_replies - comment.comments_replies.length} jawaban lainnya
-                        </a>
-                      )}
-                      {comment.comments_replies && 
-                       comment.comments_replies.length && comment.comments_replies.map(reply => (
+                {loadingComments ? (
+                  <CommentContainerLoading body="message">
+                    <CommentContainerLoading body="reply"/>
+                    <CommentContainerLoading body="reply"/>
+                  </CommentContainerLoading>
+                ):(
+                  <>
+                    {commentList && commentList.data && commentList.data.length > 0 && commentList.data.map(comment => (
+                      <section className="diskusi-section mb-0" key={comment.comments_id}>
                         <CommentContainer 
-                          body="message" 
-                          key={reply.replies_id}
-                          role={reply.users_role}
-                          reply_id={reply.replies_id}
-                          username={reply.users_username}
-                          content={reply.replies_message}
-                          user_id={reply.replies_user_id}
-                          created_at={reply.replies_created_at}
-                          can_delete={user && reply.replies_user_id === user.id}
-                          avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${reply.users_avatar}`}
-                        />
-                      ))}
-                      {/* IF USER LOGIN */}
-                      {user && (
-                        <CommentContainer body="reply" 
+                          head body="message"
                           commentable_type="product"
-                          commentable_id={products_id}
                           comment_id={comment.comments_id}
-                          onSubmitReplies={onSubmitReplies}
-                          avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} 
-                        />
-                      )}
-                    </CommentContainer>
-                  </section>
-                ))}
+                          username={comment.users_username + comment.comments_id}
+                          content={comment.comments_message}
+                          created_at={comment.comments_created_at}
+                          can_delete={user && comment.comments_user_id === user.id}
+                          avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${comment.users_avatar}`}
+                          onDeleteCommentOrReply={() => deleteCommentOrReply(true, comment.comments_id, comment.comments_id)}
+                        >
+                          {comment.total_replies !== 0 && comment.comments_replies && 
+                          ((comment.total_replies > comment.comments_replies.length) > 0) && (
+                            <a 
+                              className="pb-1 fw-500 d-block" 
+                              style={{color:"rgba(0, 0, 0, 0.54)"}}
+                              onClick={() => getAllReplies(comment.comments_id)}
+                            >
+                              <i className="fal fa-comment-alt-dots m-r-3" />
+                              Lihat {comment.total_replies - comment.comments_replies.length < 0 ? comment.total_replies : comment.total_replies - comment.comments_replies.length} jawaban lainnya
+                            </a>
+                          )}
 
-                <Row className="mt-3">
-                  <Col className="align-self-center text-right">
-                    <Pagination 
-                      current={page}
-                      hideOnSinglePage
-                      pageSize={per_page}
-                      total={comments.total}
-                      goTo={val => setPage(val)}
-                    />
-                  </Col>
-                </Row>
+                          {comment.comments_replies && 
+                           Boolean(comment.comments_replies.length) && comment.comments_replies.length && comment.comments_replies.map(reply => (
+                            <CommentContainer 
+                              body="message" 
+                              key={reply.replies_id}
+                              role={reply.users_role}
+                              username={reply.users_username}
+                              content={reply.replies_message}
+                              user_id={reply.replies_user_id}
+                              comment_id={comment.comments_id}
+                              created_at={reply.replies_created_at}
+                              can_delete={user && reply.replies_user_id === user.id}
+                              avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${reply.users_avatar}`}
+                              onDeleteCommentOrReply={() => deleteCommentOrReply(false, reply.replies_id, comment.comments_id)}
+                            />
+                          ))}
+                          {/* IF USER LOGIN */}
+                          {user && (
+                            <CommentContainer body="reply" 
+                              commentable_id={products_id}
+                              comment_id={comment.comments_id}
+                              onSubmitReplies={onSubmitReplies}
+                              avatar_url={`${process.env.NEXT_PUBLIC_API_URL}/static/avatars/${user.avatar}`} 
+                            />
+                          )}
+                        </CommentContainer>
+                      </section>
+                    ))}
+
+                    <Row className="mt-3">
+                      <Col className="align-self-center text-right">
+                        <Pagination 
+                          current={page}
+                          hideOnSinglePage
+                          pageSize={per_page}
+                          total={comments.total}
+                          goTo={val => setPage(val)}
+                        />
+                      </Col>
+                    </Row>
+                  </>
+                )}
               </Tabs.TabPane>
 
             </Tabs>
@@ -1019,6 +1185,10 @@ const ProductDetail = () => {
           position: sticky;
           top: 6rem;
         }
+        :global(.ant-skeleton-button.skeleton-breadcumb){
+          height: 14px;
+          vertical-align: text-bottom;
+        }
       `}</style>
     </>
   )
@@ -1026,25 +1196,28 @@ const ProductDetail = () => {
 
 ProductDetail.getInitialProps = async ctx => {
   const { slug } = ctx.query
-  ctx.store.dispatch(actions.getProductSlugStart)
+  ctx.store.dispatch(actions.getProductSlugStart())
+  ctx.store.dispatch(actions.getAllCommentsStart())
 
   try{
     const res = await axios.get(`/products/${slug}?recommendation=true`)
     const params = {
-      page: 1, per_page: 10,
+      page: 1, per_page: per_page,
       commentable_type: "product",
       commentable_id: res.data.products_id
     }
     let resComments = await axios.get(`/comments/all-comments`, { params: params })
-    // console.log("ASS ".repeat(90))
-    // console.log(JSON.stringify(resComments.data, null, 2))
-    // console.log("ASS ".repeat(90))
-    const list_comments_id = resComments && resComments.data && resComments.data.data.map(x => x.comments_id)
-    if(list_comments_id.length){
+    const list_comments_with_replies = await resComments && resComments.data && resComments.data.data.filter(x => x.total_replies > 0)
+    const list_comments_id = list_comments_with_replies.map(x => x.comments_id)
+
+    if(list_comments_id && list_comments_id.length){
       const resReplies = await axios.get(`/replies/comments/${list_comments_id.join("-")}`)
-      const dataReplies = resReplies.data.filter(x => x.comments_replies.length > 0)
-      if(dataReplies && dataReplies.length && dataReplies.length > 0){
-        for(let val of dataReplies){
+
+      let finalResReplies = resReplies.data
+      if(typeof resReplies.data.length === "undefined") finalResReplies = new Array(resReplies.data)
+
+      if(finalResReplies.length > 0){
+        for(let val of finalResReplies){
           if(resComments && resComments.data && resComments.data.data.length){
             for(let [key, obj] of Object.entries(resComments.data.data)){
               if(val.comments_id === obj.comments_id){
@@ -1057,9 +1230,6 @@ ProductDetail.getInitialProps = async ctx => {
           }
         }
         ctx.store.dispatch(actions.getAllCommentsSuccess(resComments.data))
-        // console.log("~+".repeat(90))
-        // console.log(JSON.stringify(resComments.data, null, 2))
-        // console.log("~+".repeat(90))
       }
       else{
         ctx.store.dispatch(actions.getAllCommentsSuccess(resComments.data))
@@ -1067,12 +1237,8 @@ ProductDetail.getInitialProps = async ctx => {
     } 
     else {
       ctx.store.dispatch(actions.getAllCommentsSuccess(resComments.data))
-      // console.log("@#".repeat(90))
-      // console.log(JSON.stringify(resComments.data, null, 2))
-      // console.log("@#".repeat(90))
     }
     
-    ctx.store.dispatch(actions.getProductSlugSuccess(res.data))
     if(res.hasOwnProperty("status") && res.status == 404){
       process.browser
         ? Router.replace("/products", "/products") //Redirec from Client Side
@@ -1080,11 +1246,10 @@ ProductDetail.getInitialProps = async ctx => {
       !process.browser && ctx.res.end()
       ctx.store.dispatch(actions.getProductSlugFail("something was wrong"))
     }
-    ctx.store.dispatch(actions.getProductSlugFail("something was wrong"))
+    ctx.store.dispatch(actions.getProductSlugSuccess(res.data))
   }
   catch (err) {
     const res = await axios.get(`/products/${slug}?recommendation=true`)
-    ctx.store.dispatch(actions.getProductSlugSuccess(res.data))
     if(res.hasOwnProperty("status") && res.status == 404){
       process.browser
         ? Router.replace("/products", "/products") //Redirec from Client Side
@@ -1092,7 +1257,7 @@ ProductDetail.getInitialProps = async ctx => {
       !process.browser && ctx.res.end()
       ctx.store.dispatch(actions.getProductSlugFail("something was wrong"))
     }
-    ctx.store.dispatch(actions.getProductSlugFail("something was wrong"))
+    ctx.store.dispatch(actions.getProductSlugSuccess(res.data))
   }
 }
 

@@ -1,20 +1,17 @@
 import { useState } from 'react'
 import { useRouter } from "next/router";
-import { useDispatch } from 'react-redux'
 import { Comment, Avatar, Popconfirm, Form, Input, Button, Tag } from 'antd';
-import { formComment, formCommentIsValid, onChangeMessage } from 'formdata/formComment'
+import { formComment, onChangeMessage } from 'formdata/formComment'
 import { LoadingOutlined } from "@ant-design/icons";
 
 import moment from 'moment';
-import * as actions from "store/actions";
 import ErrorMessage from "components/ErrorMessage";
 import axios, { jsonHeaderHandler, signature_exp } from 'lib/axios'
 
 const CommentContainer = ({ 
-  children, head, body, content, avatar_url, username, created_at, reply_id, comment_id, commentable_id, commentable_type, role, 
-  can_delete, onSubmitReplies
+  children, head, body, content, avatar_url, username, created_at, comment_id, role, 
+  can_delete, onSubmitReplies, onDeleteCommentOrReply
 }) => {
-  const dispatch = useDispatch()
   const router = useRouter()
   const { locale } = router
 
@@ -22,21 +19,6 @@ const CommentContainer = ({
   const [commentMessage, setCommentMessage] = useState(formComment)
 
   moment.locale(locale)
-
-  const deleteCommentOrReply = (head) => {
-    let id = reply_id
-    let url = `/replies/delete/${id}`
-    if(head){
-      id = comment_id
-      url = `/comments/delete/${id}`
-    }
-    axios.delete(url, jsonHeaderHandler())
-      .then(res => {
-        console.log(res.data)
-        dispatch(actions.getAllComments({ commentable_id: commentable_id, commentable_type: commentable_type }))
-      })
-      .catch(err => console.log(err.response.data.detail))
-  }
 
   const submitReplyHandler = (e) => {
     onSubmitReplies(e, commentMessage, setCommentMessage, comment_id, setSendRepliesLoading)
@@ -57,7 +39,7 @@ const CommentContainer = ({
               cancelText="Batal"
               placement="bottomRight"
               arrowPointAtCenter
-              onConfirm={() => deleteCommentOrReply(head)}
+              onConfirm={() => onDeleteCommentOrReply()}
             >
               <i className="fal fa-ellipsis-h-alt" />
             </Popconfirm>

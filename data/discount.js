@@ -1,5 +1,6 @@
 import { Switch, InputNumber } from "antd";
 
+import kFormatter from "lib/kFormatter";
 import formatNumber from "lib/formatNumber";
 
 import ItemInfoPromo from "components/Card/Admin/Product/Promo/ItemInfo";
@@ -23,6 +24,7 @@ export const columns = (t) => [
     key: "product",
     width: 270,
     ellipsis: true,
+    className: "p-l-8",
     render: (item) => (
       <ItemInfoPromo
         image={item.products_image_product}
@@ -37,6 +39,7 @@ export const columns = (t) => [
     key: "price",
     width: 180,
     ellipsis: true,
+    className: "p-l-8",
     render: (item) => (
       <ItemPricePromo
         discount={item.variants_discount}
@@ -46,11 +49,21 @@ export const columns = (t) => [
     ),
   },
   {
+    title: t.stock,
+    dataIndex: "products",
+    key: "stock",
+    width: 100,
+    ellipsis: true,
+    className: "p-l-8",
+    render: (item) => <span>{kFormatter(+item.variants_total_stock, 'k')}</span>,
+  },
+  {
     title: t.periode,
     dataIndex: "products",
     key: "period",
     width: 200,
     ellipsis: true,
+    className: "p-l-8",
     render: (item) => (
       <ItemPeriodPromo
         statusPromo={item.products_discount_status}
@@ -66,6 +79,7 @@ export const columns = (t) => [
     key: "status",
     width: 200,
     ellipsis: true,
+    className: "p-l-8",
     render: (item) => <ItemStatusPromo statusPromo={item.products_discount_status} t={t} />,
   },
   {
@@ -74,6 +88,7 @@ export const columns = (t) => [
     key: "action",
     width: 200,
     action: true,
+    className: "p-l-8",
   },
 ];
 

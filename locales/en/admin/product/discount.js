@@ -6,6 +6,7 @@ export default {
   empty_product: "There are no product",
   product: "Product",
   price: "Price",
+  stock: "Stock",
   periode: "Discount Period",
   status_discount: "Status",
   action: "Action",

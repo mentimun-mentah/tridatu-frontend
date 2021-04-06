@@ -1,20 +1,29 @@
-import { useState } from 'react'
+import { withAuth } from 'lib/withAuth'
+import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Form, Input, Radio, InputNumber, Select, Table, Space } from 'antd'
-import { PlusCircleOutlined } from '@ant-design/icons'
+import { Form, Radio, Select, Table, Space, Tooltip } from 'antd'
+import { PlusCircleOutlined, LoadingOutlined  } from '@ant-design/icons'
 
 import _ from 'lodash'
 import makeid from 'lib/makeid'
-import Card from 'react-bootstrap/Card'
+import isIn from 'validator/lib/isIn'
 import Button from "antd-button-color"
+import Card from 'react-bootstrap/Card'
+import isEmpty from 'validator/lib/isEmpty'
+import ErrorMessage from 'components/ErrorMessage'
 
+import { getSelectedKeys } from 'lib/voucher'
 import { imageValidation, uploadButton } from 'lib/imageUploader'
-import { columnsVoucher, columnsOngkir, columnsSelectedProduct, columnsSelectedBrand, columnsSelectedCategory } from 'data/voucher'
+import axios, { jsonHeaderHandler, resNotification, signature_exp, formErrorMessage } from 'lib/axios'
+import { formTableVoucherIsValid, formTableOngkirIsValid } from 'formdata/formPromo'
+import { formVoucher, formSelectedPromo, formLengthVoucher } from 'formdata/formPromo'
+import { formSelectedPromoIsValid, formLengthVoucherIsValid } from 'formdata/formPromo'
 import { columnsSelectedSubCategory, columnsSelectedItemSubCategory } from 'data/voucher'
+import { columnsVoucher, columnsOngkir, columnsSelectedProduct, columnsSelectedBrand, columnsSelectedCategory } from 'data/voucher'
 
 // import { productsData } from 'data/products'
 
-import Pagination from 'components/Pagination'
+import * as actions from "store/actions";
 import AddStyleAdmin from 'components/Admin/addStyle'
 import EditableCell from 'components/Admin/Voucher/Cell'
 import ProductEditableCell from 'components/Admin/Voucher/ProductCell'
@@ -24,36 +33,26 @@ import ProductVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherPro
 import CategoryVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherCategory'
 import SubCategoryVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherSubCategory'
 import ItemSubCategoryVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherItemSubCategory'
-import {useEffect} from 'react'
-
 
 const components = { body: { cell: EditableCell } };
 const productComponents = { body: { cell: ProductEditableCell } };
-const CountChar = ({children}) => <span className="text-muted noselect border-left pl-2 fs-12">{children}</span>
 
-const NOMINAL = "NOMINAL"
-// const PERCENT = "PERCENT"
+const ALL_KIND = "all", SPECIFIC_BRAND = "specific_brand", SPECIFIC_PRODUCT = "specific_product", 
+      CATEGORY = "category", SUB_CATEGORY = "sub_category", ITEM_SUB_CATEGORY = "item_sub_category"
 
-const initialDataVoucher = {
-  code: { value: "", isValid: true, message: null },
-  claim: { value: "", isValid: true, message: null },
-  nominal: { value: "", isValid: true, message: null },
-  minimum: { value: 0, isValid: true, message: null },
-  max_discount: { value: "", isValid: true, message: null },
-  discount_type: { value: NOMINAL, isValid: true, message: null },
-}
-
-const ButtonAddVoucher = ({ onClick, disabled, children }) => (
-  <Button
-    block with="dashed" 
-    type="primary" 
-    className="h-35" 
-    icon={<PlusCircleOutlined />} 
-    onClick={disabled ? () => {} : onClick}
-    disabled={disabled}
-  >
-    {children}
-  </Button>
+const ButtonAddVoucher = ({ onClick, disabled, title, children }) => (
+  <Tooltip title={title}>
+    <Button block 
+      with="dashed" 
+      type="primary" 
+      className="h-35" 
+      icon={<PlusCircleOutlined />} 
+      onClick={disabled ? () => {} : onClick}
+      disabled={disabled}
+    >
+      {children}
+    </Button>
+  </Tooltip>
 )
 
 const tableProps = {
@@ -66,10 +65,22 @@ const tableProps = {
   components: productComponents
 }
 
+const initialTypeVoucher = { value: ALL_KIND, label: "Produk" }
+
+const tooltipSelectPromoFirst = <small>Pilih promo terlebih dahulu</small>
+const tooltipMaximumVoucher = <small>Pilih promo terlebih dahulu</small>
+
 const NewPromo = () => {
-  const [typeVoucher, setTypeVoucher] = useState({value: "all", label: "Produk"})
+  const dispatch = useDispatch()
+  /*GLOBAL STATE*/
+  const listPromoName = useSelector(state => state.promo.listPromoName)
+  /*GLOBAL STATE*/
+
+  const [loading, setLoading] = useState(false)
   const [dataVoucher, setDataVoucher] = useState([])
   const [dataFreeShipping, setDataFreeShipping] = useState([])
+  const [typeVoucher, setTypeVoucher] = useState(initialTypeVoucher)
+  const [countVoucherLength, setCountVoucherLength] = useState(formLengthVoucher)
 
   /*MODAL VOUCHER*/
   const [showBrandModal, setShowBrandModal] = useState(false)
@@ -84,46 +95,107 @@ const NewPromo = () => {
   const [selectedSubCategory, setSelectedSubCategory] = useState([])
   const [selectedItemSubCategory, setSelectedItemSubCategory] = useState([])
   /*MODAL VOUCHER*/
+  
+  /*SEARCH PROMO*/
+  const [searchName, setSearchName] = useState("")
+  const [selectedPromo, setSelectedPromo] = useState(formSelectedPromo)
+  const [notFound, setNotFound] = useState("Harap masukkan 1 karakter atau lebih")
+  /*SEARCH PROMO*/
 
+  const { promo_id } = selectedPromo
+  const { voucher, selected } = countVoucherLength
+
+  const onChangeCountVoucher = (add) => {
+    if(add) {
+      const data = {
+        ...countVoucherLength,
+        voucher: {
+          value: countVoucherLength.voucher.value + 1,
+          isValid: true, message: null
+        }
+      }
+      setCountVoucherLength(data)
+    } else {
+      const data = {
+        ...countVoucherLength,
+        voucher: {
+          value: countVoucherLength.voucher.value - 1,
+          isValid: true, message: null
+        }
+      }
+      setCountVoucherLength(data)
+    }
+  }
+
+  /*FUNCTION FOR ADD NEW DISCOUNT VOUCHER*/
   const addVoucherDiscountHandler = () => {
+    const newFormVoucher = JSON.parse(JSON.stringify(formVoucher))
     const data = {
       key: makeid(5),
-      voucher : initialDataVoucher
+      voucher : newFormVoucher
     }
     setDataVoucher([...dataVoucher, data])
+    onChangeCountVoucher(true)
   }
+  /*FUNCTION FOR ADD NEW DISCOUNT VOUCHER*/
 
+  /*FUNCTION FOR DELETE DISCOUNT VOUCHER*/
   const removeVoucherDiscountHandler = (index) => {
     setDataVoucher(dataVoucher.filter((_, i) => i !== index))
+    onChangeCountVoucher(false)
   }
+  /*FUNCTION FOR DELETE DISCOUNT VOUCHER*/
 
+  /*FUNCTION FOR ADD FREESHIP VOUCHER*/
   const addFreeShippingHandler = () => {
+    const newFormVoucher = JSON.parse(JSON.stringify(formVoucher))
+    newFormVoucher.kind.value = "ongkir"
+    newFormVoucher.min_transaction.value = 0
+    newFormVoucher.nominal.value = null
+    newFormVoucher.percent.value = null
+    newFormVoucher.max_discount.value = null
     const data = {
       key: makeid(5),
-      voucher : initialDataVoucher
+      voucher : newFormVoucher
     }
     setDataFreeShipping([...dataFreeShipping, data])
+    onChangeCountVoucher(true)
   }
+  /*FUNCTION FOR ADD FREESHIP VOUCHER*/
 
+  /*FUNCTION FOR DELETE FREESHIP VOUCHER*/
   const removeFreeShippingHandler = (index) => {
     setDataFreeShipping(dataFreeShipping.filter((_, i) => i !== index))
+    onChangeCountVoucher(false)
   }
+  /*FUNCTION FOR DELETE FREESHIP VOUCHER*/
 
+  /*FUNCTION FOR CHANGING KIND OF VOUCHER*/
   const discountTypeHandler = (val, index) => {
-    const newDataVoucher = [...dataVoucher]
+    const newDataVoucher = JSON.parse(JSON.stringify(dataVoucher))
+    let item = "nominal"
+    if(val === "discount") item = "nominal"
+    if(val === "discount_up_to") item = "percent"
+
     newDataVoucher[index] = {
       ...newDataVoucher[index], 
       voucher: {
         ...newDataVoucher[index].voucher, 
-        discount_type: {
-          ...newDataVoucher[index].voucher.discount_type,
+        kind: {
+          ...newDataVoucher[index].voucher.kind,
           value: val 
+        },
+        [item]: {
+          ...newDataVoucher[index].voucher[item],
+          value: "", isValid: true, message: null
         }
       }
     }
     setDataVoucher(newDataVoucher)
   }
+  /*FUNCTION FOR CHANGING KIND OF VOUCHER*/
 
+  /*FUNCTION FOR REMOVE SELECTED ITEM*/
   const removeItemHandler = (key, state, setState) => {
     const newState = [...state]
     _.remove(newState, x => x.key === key)
@@ -147,6 +219,139 @@ const NewPromo = () => {
       setState(newState)
     }
   }
+  /*FUNCTION FOR REMOVE SELECTED ITEM*/
+
+  /*FUNCTION FOR VALIDATING DATA TABLE*/
+  const onValidateTable = (e, item, index) => {
+    const newData = [...dataVoucher]
+    if(isIn(item, ["code", "quota"])){
+      if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
+        newData[index]['voucher'][item].isValid = false
+        newData[index]['voucher'][item].message = "Kolom tidak boleh kosong"
+      }
+    }
+    if(item === "nominal-percent"){
+      if(newData[index]['voucher']['kind'].value === "discount"){
+        if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
+          newData[index]['voucher']['nominal'].isValid = false
+          newData[index]['voucher']['nominal'].message = "Kolom tidak boleh kosong"
+        }
+      }
+      if(newData[index]['voucher']['kind'].value === "discount_up_to"){
+        if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
+          newData[index]['voucher']['percent'].isValid = false
+          newData[index]['voucher']['percent'].message = "Kolom tidak boleh kosong"
+        }
+      }
+    }
+    setDataVoucher(newData)
+  }
+
+  const onValidateTableOngkir = (e, item, index) => {
+    const newData = [...dataFreeShipping]
+    if(isIn(item, ["code", "quota"])){
+      if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
+        newData[index]['voucher'][item].isValid = false
+        newData[index]['voucher'][item].message = "Kolom tidak boleh kosong"
+      }
+    }
+    if(item === "min_transaction" && e.target.value < 0) {
+      newData[index]['voucher'][item].isValid = false
+      newData[index]['voucher'][item].message = "Min. Transaksi mulai dari 0"
+    }
+    setDataFreeShipping(newData)
+  }
+  /*FUNCTION FOR VALIDATING DATA TABLE*/
+
+  /*FUNCTION FOR EDITING DATA TABLE*/
+  const onTableChange = (e, item, index) => {
+    const newData = [...dataVoucher]
+    const listCode = newData.map(data => data.voucher.code.value)
+
+    if(item === "code"){
+      const re = /^[A-Z0-9]+$/
+      if(re.test(e.target.value.toUpperCase())){
+        const ss = e.target.selectionStart;
+        const se = e.target.selectionEnd;
+        const value = e.target.value.toUpperCase()
+        e.target.value = e.target.value.toUpperCase();
+        e.target.selectionStart = ss;
+        e.target.selectionEnd = se;
+        newData[index]['voucher'][item].value = value
+        newData[index]['voucher'][item].isValid = true
+        newData[index]['voucher'][item].message = null
+
+        if(isIn(value, listCode)){
+          newData[index]['voucher'][item].value = value
+          newData[index]['voucher'][item].isValid = false
+          newData[index]['voucher'][item].message = "Kode tidak boleh sama"
+        }
+      }
+      if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
+        newData[index]['voucher'][item].value = e.target.value
+        newData[index]['voucher'][item].isValid = true
+        newData[index]['voucher'][item].message = null
+      }
+    }
+    if(item === "nominal-percent"){
+      if(newData[index]['voucher']['kind'].value === "discount"){
+        newData[index]['voucher']['nominal'].value = e
+        newData[index]['voucher']['nominal'].isValid = true
+        newData[index]['voucher']['nominal'].message = null
+      }
+      if(newData[index]['voucher']['kind'].value === "discount_up_to"){
+        newData[index]['voucher']['percent'].value = e
+        newData[index]['voucher']['percent'].isValid = true
+        newData[index]['voucher']['percent'].message = null
+      }
+    }
+    if(item !== "nominal-percent" && item !== "code"){
+      newData[index]['voucher'][item].value = e
+      newData[index]['voucher'][item].isValid = true
+      newData[index]['voucher'][item].message = null
+    }
+    setDataVoucher(newData)
+
+    const data = {
+      ...countVoucherLength,
+      voucher: {
+        ...countVoucherLength.voucher,
+        isValid: true, message: null
+      }
+    }
+    setCountVoucherLength(data)
+  }
+
+  const onTableChangeOngkir = (e, item, index) => {
+    const newData = [...dataFreeShipping]
+
+    if(item === "code"){
+      const re = /^[A-Z0-9]+$/
+      if(re.test(e.target.value.toUpperCase())){
+        const ss = e.target.selectionStart;
+        const se = e.target.selectionEnd;
+        const value = e.target.value.toUpperCase()
+        e.target.value = e.target.value.toUpperCase();
+        e.target.selectionStart = ss;
+        e.target.selectionEnd = se;
+        newData[index]['voucher'][item].value = value
+        newData[index]['voucher'][item].isValid = true
+        newData[index]['voucher'][item].message = null
+      }
+      if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
+        newData[index]['voucher'][item].value = e.target.value
+        newData[index]['voucher'][item].isValid = true
+        newData[index]['voucher'][item].message = null
+      }
+    }
+    if(item !== "code"){
+      newData[index]['voucher'][item].value = e
+      newData[index]['voucher'][item].isValid = true
+      newData[index]['voucher'][item].message = null
+    }
+    setDataFreeShipping(newData)
+  }
+  /*FUNCTION FOR EDITING DATA TABLE*/
 
   const columnsVouchers = columnsVoucher.map(col => {
     if (!col.editable) return col;
@@ -157,6 +362,8 @@ const NewPromo = () => {
         index: index,
         type: col.type,
         editable: col.editable,
+        onBlur: e => onValidateTable(e, col.type, index),
+        onChange: e => onTableChange(e, col.type, index),
         onRemove: () => removeVoucherDiscountHandler(index),
         discountTypeHandler: val => discountTypeHandler(val, index),
       })
@@ -172,6 +379,8 @@ const NewPromo = () => {
         index: index,
         type: col.type,
         editable: col.editable,
+        onBlur: e => onValidateTableOngkir(e, col.type, index),
+        onChange: e => onTableChangeOngkir(e, col.type, index),
         onRemove: () => removeFreeShippingHandler(index)
       })
     }
@@ -249,15 +458,15 @@ const NewPromo = () => {
   
   const onShowModalHandler = (type) => {
     switch(type){
-      case 'specific_brand':
+      case SPECIFIC_BRAND:
         return setShowBrandModal(true)
-      case 'specific_product':
+      case SPECIFIC_PRODUCT:
         return setShowProductModal(true)
-      case 'category':
+      case CATEGORY:
         return setShowCategoryModal(true)
-      case 'sub_category':
+      case SUB_CATEGORY:
         return setShowSubCategoryModal(true)
-      case 'item_sub_category':
+      case ITEM_SUB_CATEGORY:
         return setShowItemSubCategoryModal(true)
       default:
         return () => {}
@@ -279,6 +488,274 @@ const NewPromo = () => {
     setSelectedItemSubCategory([])
   }, [typeVoucher])
 
+  const getSelectedProductId = () => {
+    const newSelected = JSON.parse(JSON.stringify(selectedProduct))
+    const listId = newSelected.map(x => x.products.products_id)
+    return listId
+  }
+
+  const getSelectedBrandId = () => {
+    const newSelected = JSON.parse(JSON.stringify(selectedBrand))
+    const listId = newSelected.map(x => x.brand.id.toString())
+    return listId
+  }
+
+  const getSelectedCategoryId = () => {
+    const newSelected = JSON.parse(JSON.stringify(selectedCategory))
+    const listId = newSelected.map(x => x.category.categories_id.toString())
+    return listId
+  }
+
+  const getSelectedSubCategoryId = () => {
+    const newSelected = JSON.parse(JSON.stringify(selectedSubCategory))
+    const listId = newSelected.map(x => x.category.sub_categories_id.toString())
+    return listId
+  }
+
+  const getSelectedItemSubCategoryId = () => {
+    const newSelected = JSON.parse(JSON.stringify(selectedItemSubCategory))
+    const listId = getSelectedKeys(newSelected).map(x => x.toString())
+    return listId
+  }
+
+  const getListIdHandler = (type) => {
+    switch(type){
+      case SPECIFIC_BRAND:
+        return getSelectedBrandId()
+      case SPECIFIC_PRODUCT:
+        return getSelectedProductId()
+      case CATEGORY:
+        return getSelectedCategoryId()
+      case SUB_CATEGORY:
+        return getSelectedSubCategoryId()
+      case ITEM_SUB_CATEGORY:
+        return getSelectedItemSubCategoryId()
+      default:
+        return () => {}
+    }
+  }
+
+  /*FUNCTION FOR RESET DATA STATE*/
+  const resetAllData = () => {
+    setSelectedPromo(formSelectedPromo)
+    setSelectedBrand([])
+    setSelectedProduct([])
+    setSelectedCategory([])
+    setSelectedSubCategory([])
+    setSelectedItemSubCategory([])
+    setTypeVoucher(initialTypeVoucher)
+    setDataVoucher([])
+    setDataFreeShipping([])
+    setCountVoucherLength(formLengthVoucher)
+  }
+  /*FUNCTION FOR RESET DATA STATE*/
+
+  /*SEARCH PROMO NAME FUNCTION*/
+  const fetchPromoName = val => {
+    setSearchName(val)
+    dispatch(actions.searchPromoName({ q: val }))
+  }
+  /*SEARCH PROMO NAME FUNCTION*/
+
+  /*FUNCTION FOR SELECTING PROMO ID*/
+  const onSelectPromoId = val => {
+    const data = {
+      ...selectedPromo,
+      promo_id: { value: val.value, isValid: true, message: null }
+    }
+    setSelectedPromo(data)
+    const countVoucher = {
+      ...countVoucherLength,
+      voucher: {
+        value: val.total_code,
+        isValid: true, message: null
+      }
+    }
+    setCountVoucherLength(countVoucher)
+  }
+  /*FUNCTION FOR SELECTING PROMO ID*/
+
+  /*FUNCTION FORMATING TO VOUCHER*/
+  const formatingVoucher = () => {
+    const listVoucher = []
+    const newDataVoucher = [...dataVoucher]
+    const newDataOngkir = [...dataFreeShipping]
+
+    if(newDataVoucher.length){
+      for(let val of newDataVoucher){
+        const { code, kind, max_discount, min_transaction, nominal, percent, quota } = val.voucher
+        const init = {
+          code: code.value,
+          quota: +quota.value,
+          kind: kind.value,
+          min_transaction: +min_transaction.value || 0,
+        }
+        if(kind.value === "discount"){
+          const data = {
+            ...init,
+            nominal: +nominal.value,
+            percent: null,
+            max_discount: null
+          }
+          listVoucher.push(data)
+        }
+        if(kind.value === "discount_up_to"){
+          const data = {
+            ...init,
+            nominal: null,
+            percent: percent.value,
+            max_discount: +max_discount.value
+          }
+          listVoucher.push(data)
+        }
+      }
+    }
+
+    if(newDataOngkir.length){
+      for(let val of newDataOngkir){
+        const { code, kind, min_transaction, quota } = val.voucher
+        const init = {
+          code: code.value,
+          quota: +quota.value,
+          kind: kind.value,
+          min_transaction: +min_transaction.value || 0,
+        }
+        if(kind.value === "ongkir"){
+          const data = {
+            ...init,
+            nominal: null,
+            percent: null,
+            max_discount: null
+          }
+          listVoucher.push(data)
+        }
+      }
+    }
+    return listVoucher
+  }
+  /*FUNCTION FORMATING TO VOUCHER*/
+
+  const onSubmitHandler = e => {
+    e.preventDefault()
+    let tableIsValid = []
+    let tableOngkirIsValid = []
+    for(let i = 0; i < dataVoucher.length; i++){
+      tableIsValid.push(formTableVoucherIsValid(dataVoucher, setDataVoucher, i))
+    }
+    for(let i = 0; i < dataFreeShipping.length; i++){
+      tableOngkirIsValid.push(formTableOngkirIsValid(dataFreeShipping, setDataFreeShipping, i))
+    }
+    if(
+      formSelectedPromoIsValid(selectedPromo, setSelectedPromo) && 
+      formLengthVoucherIsValid(countVoucherLength, setCountVoucherLength, typeVoucher.value) &&
+      !isIn("false", tableIsValid) && !isIn("false", tableOngkirIsValid)
+    ){
+      const data = {
+        promo_id: promo_id.value,
+        applicable_promo: {
+          list_id: getListIdHandler(typeVoucher.value),
+          kind: typeVoucher.value
+        },
+        voucher: formatingVoucher()
+      }
+      setLoading(true)
+      axios.post("/promo-codes/create", data, jsonHeaderHandler())
+        .then(res => {
+          setLoading(false)
+          resetAllData()
+          resNotification("success", "Success", res.data.detail)
+        })
+        .catch(err => {
+          setLoading(false)
+          const errDetail = err.response.data.detail
+          if(errDetail == signature_exp){
+            resetAllData()
+            resNotification("success", "Success", "Successfully add a new promo-code.")
+          }
+          if(typeof errDetail === "string" && errDetail !== signature_exp){
+            formErrorMessage(errDetail)
+          }
+          if(typeof errDetail === "object"){
+            const stateCountVoucherLength = JSON.parse(JSON.stringify(countVoucherLength))
+            const listIndex = errDetail.map(data => data.loc[data.loc.length - 2])
+            errDetail.map(data => {
+              const key = data.loc[data.loc.length - 1];
+              const idx = data.loc[data.loc.length - 2];
+              if(key === "promo_id"){
+                const state = JSON.parse(JSON.stringify(selectedPromo))
+                if(state[key]){
+                  state[key].value = state[key].value
+                  state[key].isValid = false
+                  state[key].message = data.msg
+                }
+                setSelectedPromo(state)
+              }
+              if(isIn(key, ["voucher", "list_id"])){
+                if(stateCountVoucherLength[key]){
+                  stateCountVoucherLength[key].value = stateCountVoucherLength[key].value
+                  stateCountVoucherLength[key].isValid = false
+                  stateCountVoucherLength[key].message = data.msg
+                }
+                if(key === "list_id"){
+                  stateCountVoucherLength["selected"].value = stateCountVoucherLength["selected"].value
+                  stateCountVoucherLength["selected"].isValid = false
+                  stateCountVoucherLength["selected"].message = data.msg
+                }
+                setCountVoucherLength(stateCountVoucherLength)
+              }
+              if(isIn(key, ["code", "quota", "min_transaction", "nominal", "percent", "max_discount"])){
+                const newDataVoucher = [...dataVoucher]
+                const newDataOngkir = [...dataFreeShipping]
+
+                if(idx === listIndex[listIndex.length - 1]){
+                  if(newDataOngkir.length){
+                    newDataOngkir[0]["voucher"][key].value = newDataOngkir[0]["voucher"][key].value
+                    newDataOngkir[0]["voucher"][key].isValid = false
+                    newDataOngkir[0]["voucher"][key].message = data.msg
+                    setDataFreeShipping(newDataOngkir)
+                  }
+                  else{
+                    newDataVoucher[idx]["voucher"][key].value = newDataVoucher[idx]["voucher"][key].value
+                    newDataVoucher[idx]["voucher"][key].isValid = false
+                    newDataVoucher[idx]["voucher"][key].message = data.msg
+                  }
+                }
+                else{
+                  newDataVoucher[idx]["voucher"][key].value = newDataVoucher[idx]["voucher"][key].value
+                  newDataVoucher[idx]["voucher"][key].isValid = false
+                  newDataVoucher[idx]["voucher"][key].message = data.msg
+                }
+                setDataVoucher(newDataVoucher)
+              }
+            })
+          }
+        })
+    }
+  }
+
+
+  useEffect(() => {
+    if(searchName.length && listPromoName.length <= 0){
+      setNotFound("Hasil tidak ditemukan")
+    }
+    if(searchName.length <= 0){
+      setNotFound("Harap masukkan 1 karakter atau lebih")
+    }
+  }, [listPromoName])
+
+  useEffect(() => {
+    const combineSelected = [...selectedBrand, ...selectedProduct, ...selectedCategory, ...selectedSubCategory, ...selectedItemSubCategory]
+    const data = {
+      ...countVoucherLength,
+      selected: {
+        value: combineSelected.length,
+        isValid: true, message: null
+      }
+    }
+    setCountVoucherLength(data)
+  }, [selectedBrand, selectedProduct, selectedCategory, selectedSubCategory, selectedItemSubCategory])
+
+
   return(
     <>
       <Card className="border-0 shadow-sm card-add-product">
@@ -288,74 +765,88 @@ const NewPromo = () => {
         <Card.Body className="p-3">
           <Form layout="vertical">
 
-            <Form.Item label="Pilih Promo" required>
+            <Form.Item required
+              label="Pilih Promo"
+              validateStatus={!promo_id.isValid && promo_id.message && "error"}
+            >
               <Select
                 showSearch
                 placeholder="Pilih promo"
                 optionFilterProp="children"
-                filterOption={(input, option) =>
-                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                value={promo_id.value}
+                onSearch={fetchPromoName}
+                defaultActiveFirstOption={false}
+                onChange={(_, value) => onSelectPromoId(value)}
+                notFoundContent={
+                  <p className="text-center mb-2">
+                    <i className="fad fa-badge-percent fs-35 text-center d-block my-2" />
+                    <span className="text-center">{notFound}</span>
+                  </p>
                 }
               >
-                <Select.Option value="jack">Promo prdratih</Select.Option>
-                <Select.Option value="lucy">Promo Lumix 1JT</Select.Option>
-                <Select.Option value="tom">Promo Gratis Ongkir</Select.Option>
+                {listPromoName.map(data => (
+                  <Select.Option value={data.id} total_code={data.total_code} key={data.id}>{data.name}</Select.Option>
+                ))}
               </Select>
+              <ErrorMessage item={promo_id} />
             </Form.Item>
 
             <Form.Item label="Tipe Voucher" required>
               <Radio.Group value={typeVoucher.value} onChange={selectTypeVoucherHandler}>
-                <Radio.Button value="all" label="Produk" className="voucher-radio-button-wrapper noselect">
+                <Radio.Button value={ALL_KIND} label="Produk" className="voucher-radio-button-wrapper noselect">
                   <i className="far fa-lg fa-boxes-alt mr-1" /> Semua Produk
                 </Radio.Button>
-                <Radio.Button value="specific_product" label="Produk" className="voucher-radio-button-wrapper noselect">
+                <Radio.Button value={SPECIFIC_PRODUCT} label="Produk" className="voucher-radio-button-wrapper noselect">
                   <i className="far fa-lg fa-box-full mr-1" /> Spesifik Produk
                 </Radio.Button>
-                <Radio.Button value="specific_brand" label="Brand" className="voucher-radio-button-wrapper noselect">
+                <Radio.Button value={SPECIFIC_BRAND} label="Brand" className="voucher-radio-button-wrapper noselect">
                   <i className="far fa-lg fa-layer-group mr-1" /> Spesifik Brand
                 </Radio.Button>
-                <br/>
-                <Radio.Button value="category" label="Kategori" className="voucher-radio-button-wrapper noselect">
+                <br className="d-none d-md-block" />
+                <Radio.Button value={CATEGORY} label="Kategori" className="voucher-radio-button-wrapper noselect">
                   <i className="far fa-lg fa-sitemap mr-1" /> Kategori
                 </Radio.Button>
-                <Radio.Button value="sub_category" label="Sub Kategori" className="voucher-radio-button-wrapper noselect">
+                <Radio.Button value={SUB_CATEGORY} label="Sub Kategori" className="voucher-radio-button-wrapper noselect">
                   <i className="far fa-lg fa-folder-tree mr-1" /> Sub Kategori
                 </Radio.Button>
-                <Radio.Button value="item_sub_category" label="Item Sub Kategori" className="voucher-radio-button-wrapper noselect">
+                <Radio.Button value={ITEM_SUB_CATEGORY} label="Item Sub Kategori" className="voucher-radio-button-wrapper noselect">
                   <i className="far fa-lg fa-folder mr-1" /> Item Sub Kategori
                 </Radio.Button>
               </Radio.Group>
             </Form.Item>
 
             <Form.Item label={`${typeVoucher.label} yang Berlaku`} required className="mb-0">
-              {typeVoucher.value === "all" ? 
+              {typeVoucher.value === ALL_KIND ? 
                 <p className="mb-0 mt-n3 noselect">Semua Produk</p> : 
+                <>
                 <Button with="dashed" type="primary"
                   icon={<PlusCircleOutlined />}
-                  onClick={typeVoucher.value === "all" ? () => {} : () => onShowModalHandler(typeVoucher.value)}
+                  onClick={typeVoucher.value === ALL_KIND ? () => {} : () => onShowModalHandler(typeVoucher.value)}
                 >
                   Tambahkan {typeVoucher.label}
                 </Button>
+                <ErrorMessage item={selected} />
+                </>
               }
             </Form.Item>
 
-            {selectedProduct.length > 0 && typeVoucher.value === "specific_product" && (
+            {selectedProduct.length > 0 && typeVoucher.value === SPECIFIC_PRODUCT && (
               <Table {...tableProps} columns={columnsProduct} dataSource={selectedProduct} />
             )}
 
-            {selectedBrand.length > 0 && typeVoucher.value === "specific_brand" && (
+            {selectedBrand.length > 0 && typeVoucher.value === SPECIFIC_BRAND && (
               <Table {...tableProps} columns={columnsBrand} dataSource={selectedBrand} />
             )}
 
-            {selectedCategory.length > 0 && typeVoucher.value === "category" && (
+            {selectedCategory.length > 0 && typeVoucher.value === CATEGORY && (
               <Table {...tableProps} columns={columnsCategory} dataSource={selectedCategory} />
             )}
 
-            {selectedSubCategory.length > 0 && typeVoucher.value === "sub_category" && (
+            {selectedSubCategory.length > 0 && typeVoucher.value === SUB_CATEGORY && (
               <Table {...tableProps} columns={columnsSubCategory} dataSource={selectedSubCategory} />
             )}
 
-            {selectedItemSubCategory.length > 0 && typeVoucher.value === "item_sub_category" && (
+            {selectedItemSubCategory.length > 0 && typeVoucher.value === ITEM_SUB_CATEGORY && (
               <Table {...tableProps} scroll={{ x:700, y:300 }} expandable={{ defaultExpandAllRows: true }} columns={columnsItemSubCategory} dataSource={selectedItemSubCategory} />
             )}
 
@@ -368,6 +859,7 @@ const NewPromo = () => {
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
           <h5 className="mb-0 fs-16-s">Pengaturan Bonus</h5>
+          <small className="text-muted">{10 - voucher.value} voucher tersisa</small>
         </Card.Body>
 
         <Card.Body className="p-3">
@@ -384,15 +876,20 @@ const NewPromo = () => {
             />
           )}
 
-          {dataVoucher.length >= 0 && ((dataFreeShipping.length + dataVoucher.length) < 10) && (
-            <ButtonAddVoucher 
-              onClick={addVoucherDiscountHandler}
-              disabled={(dataFreeShipping.length + dataVoucher.length) >= 10}
-            >
-              Tambah Voucher Diskon
-            </ButtonAddVoucher>
+          {dataVoucher.length >= 0 && (
+            <>
+              <ButtonAddVoucher 
+                onClick={addVoucherDiscountHandler}
+                disabled={voucher.value >= 10 || !Boolean(promo_id.value.length)}
+                title={(!Boolean(promo_id.value.length) && tooltipSelectPromoFirst) || (voucher.value >= 10 && tooltipMaximumVoucher)}
+              >
+                Tambah Voucher Diskon
+              </ButtonAddVoucher>
+              <span className="fs-14">
+                <ErrorMessage item={voucher} />
+              </span>
+            </>
           )}
-
 
           <p className="fs-15 my-3 w-100 fw-500">
             Voucher Gratis Ongkir
@@ -409,77 +906,15 @@ const NewPromo = () => {
           {dataFreeShipping.length >= 0 && dataFreeShipping.length < 1 && (
             <ButtonAddVoucher 
               onClick={addFreeShippingHandler}
-              disabled={(dataFreeShipping.length + dataVoucher.length) >= 10}
+              disabled={voucher.value >= 10 || !Boolean(promo_id.value.length)}
+              title={(!Boolean(promo_id.value.length) && tooltipSelectPromoFirst) || (voucher.value >= 10 && tooltipMaximumVoucher)}
             >
               Tambah Voucher Gratis Ongkir
             </ButtonAddVoucher>
           )}
 
-          <Form layout="vertical" className="mt-5 d-none">
-            <Form.Item label="Jenis Voucher" required>
-              <Radio.Group defaultValue="potongan">
-                <Radio value="diskon" className="mr-2">Diskon</Radio>
-                <Radio value="gratis_ongkir">Gratis Ongkir</Radio>
-              </Radio.Group>
-            </Form.Item>
-
-            <Form.Item label="Kode Voucher" required>
-              <Input placeholder="Kode Voucher" suffix={<CountChar>0/10</CountChar>} />
-              <small className="form-text text-left text-muted">
-                Kode voucher mengandung Alfabet (A-Z) dan Angka (0-9)
-              </small>
-            </Form.Item>
-
-            <Form.Item label="Kuota Klaim" required>
-              <div>
-                <InputNumber
-                  placeholder="Kuota Klaim"
-                  className="w-100 h-33-custom-input fs-12 input-number-variant"
-                />
-                <small className="form-text text-left text-muted">
-                  Jumlah voucher dapat diklaim pengguna
-                </small>
-              </div>
-            </Form.Item>
-
-            <Form.Item label="Nominal" required>
-              <div>
-                <div className="ant-input-group-wrapper">
-                  <div className="ant-input-wrapper ant-input-group input-group-variant" style={{ zIndex: 1 }}>
-                    <span className={`ant-input-group-addon noselect fs-12 bg-transparent`}>Rp</span>
-                    <InputNumber
-                      placeholder="Nominal Diskon"
-                      className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
-                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                      parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
-                    />
-                  </div>
-                </div>
-                {/* <ErrorMessage item={record.product[type]} /> */}
-              </div>
-            </Form.Item>
-
-            <Form.Item label="Minimum Transaksi" required>
-              <div>
-                <div className="ant-input-group-wrapper">
-                  <div className="ant-input-wrapper ant-input-group input-group-variant" style={{ zIndex: 1 }}>
-                    <span className={`ant-input-group-addon noselect fs-12 bg-transparent`}>Rp</span>
-                    <InputNumber
-                      placeholder="Minimum Transaksi"
-                      className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
-                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                      parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
-                    />
-                  </div>
-                </div>
-                {/* <ErrorMessage item={record.product[type]} /> */}
-              </div>
-            </Form.Item>
-
-          </Form>
         </Card.Body>
       </Card>
-
 
 
       <ProductVoucherModal
@@ -523,13 +958,11 @@ const NewPromo = () => {
       />
 
       <Space>
-        <Button className="btn-tridatu">Simpan</Button>
-        <Button>Batal</Button>
+        <Button className="btn-tridatu" onClick={onSubmitHandler} style={{ width: 80 }} disabled={loading}>
+          {loading ? <LoadingOutlined /> : "Simpan"}
+        </Button>
+        <Button onClick={resetAllData}>Batal</Button>
       </Space>
-
-      <div className="d-none">
-        <Pagination />
-      </div>
 
       <style jsx>{AddStyleAdmin}</style>
       <style jsx>{`
@@ -574,4 +1007,4 @@ const NewPromo = () => {
   )
 }
 
-export default NewPromo
+export default withAuth(NewPromo)

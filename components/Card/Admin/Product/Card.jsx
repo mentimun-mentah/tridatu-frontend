@@ -10,6 +10,7 @@ import Image from "next/image";
 import Card from 'react-bootstrap/Card'
 import Button from "antd-button-color"
 
+import kFormatter from 'lib/kFormatter'
 import formatNumber from 'lib/formatNumber'
 
 const NormalPrice = ({ children }) => <span className="mb-0 fs-12 text-tridatu">Rp.{children}</span>
@@ -18,6 +19,7 @@ const DiscPrice = ({ children }) => <span className="mb-0 fs-10 text-tridatu"> <
 const CardProductAdmin = ({ data, aliveArchive, deleteProduct, t }) => {
   const { products_id, products_name, products_slug, products_image_product, products_live } = data;
   const { variants_min_price, variants_max_price, variants_discount, products_discount_status } = data;
+  const { products_visitor, variants_total_stock } = data;
 
   const [showModal, setShowModal] = useState(false)
 
@@ -130,16 +132,13 @@ const CardProductAdmin = ({ data, aliveArchive, deleteProduct, t }) => {
             </div>
             <div className="d-flex justify-content-between noselect w-100 align-items-baseline">
               <>{renderPrice()}</>
-              <span className="mb-0 fs-12 text-muted text-truncate">Stok <span className="text-dark">30</span></span>
+              <span className="mb-0 fs-12 text-muted text-truncate">Stok
+                <span className="text-dark"> {kFormatter(variants_total_stock)}</span>
+              </span>
             </div>
             <div className="product-meta">
               <div className="mb-0 product-meta-item"><i className="fal fa-eye" />
-                <span className="text-truncate">1000</span>
-              </div>
-              <div className="mb-0 product-meta-item product-meta-like">
-                <span>
-                  <i className="fal fa-heart" /> <span className="text-truncate">30</span>
-                </span>
+                <span className="text-truncate m-l-2">{products_visitor}</span>
               </div>
               <div className="mb-0 product-meta-item product-meta-sales">
                 <span>Terjual</span>

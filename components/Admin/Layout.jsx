@@ -110,10 +110,10 @@ const getActiveMenu = (routes, router) => {
   let rrSplit = router.split('/')
 
   let lastPathrr = rrSplit[rrSplit.length - 1]
-  let lastPathrs = rsSplit[rrSplit.length - 1]
+  let lastPathrs = rsSplit[rsSplit.length - 1]
 
   if(lastPathrr.startsWith('[')){
-    if(lastPathrs && isIn(lastPathrs, ['new', 'discount'])){
+    if(lastPathrs && isIn(lastPathrs, ['new', 'discount', 'promo'])){
       rsSplit.shift()
     }
   }
@@ -121,8 +121,14 @@ const getActiveMenu = (routes, router) => {
   let getRoutes = rsSplit[2]
   let getRouter = rrSplit[2]
 
-  if(getRoutes && getRoutes !== "products") {
-    return getRoutes.startsWith(getRouter)
+  if(getRoutes && getRoutes === "promo") {
+    if(lastPathrr.startsWith('[slu')){
+      rsSplit.pop()
+      rrSplit.splice(- 2, 2)
+      return rsSplit.join("/") === rrSplit.join("/")
+    } else {
+      return rsSplit.join("/") === rrSplit.join("/")
+    }
   }
 
   if(getRoutes && getRoutes === "products") {
@@ -132,6 +138,10 @@ const getActiveMenu = (routes, router) => {
     } else {
       return rsSplit.join("/") === rrSplit.join("/")
     }
+  }
+
+  if(getRoutes && getRoutes !== "products") {
+    return getRoutes.startsWith(getRouter)
   }
 }
 

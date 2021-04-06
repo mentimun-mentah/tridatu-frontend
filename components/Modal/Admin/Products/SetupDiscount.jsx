@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import { formItemLayout } from 'data/productsAdmin'
 import { countDiscPrice, disabledDate, disabledRangeTime } from 'lib/utility'
 import { columnsProductVariant, columnsProductNoVariant } from 'data/discount'
-import { initialValue, formPeriod, formPeriodIsValid, formTablePromoIsValid } from 'formdata/formPromo'
+import { initialValue, formPeriod, formPeriodIsValid, formTablePromoIsValid } from 'formdata/formDiscount'
 import { not_active, will_come, ongoing } from 'components/Card/Admin/Product/Promo/statusType'
 
 import axios, { jsonHeaderHandler, resNotification, formErrorMessage, signature_exp } from 'lib/axios'

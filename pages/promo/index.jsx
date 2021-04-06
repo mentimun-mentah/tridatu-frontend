@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Tabs, Input, Select, AutoComplete } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Tabs, Input, Select, Row as AntRow, Col as AntCol } from 'antd';
 
 import Container from 'react-bootstrap/Container'
-import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
 import Form from "react-bootstrap/Form";
 
@@ -28,16 +26,11 @@ const Promo = () => {
     setActiveTab(key);
   }
 
-  function handleChange(value) {
-    console.log(`selected ${value}`);
-  }
-
   return(
     <>
       <div className="slider-container">
         <div className="slider-wrapper">
-          <img src="https://ecs7.tokopedia.net/img/blog/promo/2019/08/Hotel_Launching_Digital-Hompage.jpg" 
-            className="slider-image" alt="Tridatu Bali ID" />
+          <img src="/static/images/promo/banner-promo.jpeg" className="slider-image" alt="Tridatu Bali ID" />
         </div>
       </div>
 
@@ -45,48 +38,47 @@ const Promo = () => {
         <TabPane tab="Semua Promo (12)" key={ALL_PROMO}>
         </TabPane>
 
-        <TabPane tab="Promo Spesial (4)" key={SPECIAL_PROMO}>
+        <TabPane tab="Promo Diskon (4)" key={SPECIAL_PROMO}>
         </TabPane>
 
-        <TabPane tab="Promo Bulan Ini (0)" key={MONTHLY_PROMO}>
+        <TabPane tab="Promo Gratis Ongkir (0)" key={MONTHLY_PROMO}>
         </TabPane>
       </Tabs>
 
-      <Container>
+      <Container fluid="lg">
 
         <section className="mt-4">
-          <Row>
-            <Col sm={12} md={6}>
-              <Form inline className="w-100 mb-3">
-                <div className="w-100 promo-search">
-                  <AutoComplete className="w-100">
-                    <Input size="large" suffix={<SearchOutlined className="text-black-50"/>} placeholder="Cari promo"/>
-                  </AutoComplete>
-                </div>
-              </Form>
-            </Col>
-            <Col sm={12} md={6}>
-              <Select 
-                size="large" 
-                className="w-100" 
-                placeholder="Urutkan"
-                onChange={handleChange}
-              >
-                <Select.Option value="1">Promo terpopuler</Select.Option>
-                <Select.Option value="2">Promo terbaru</Select.Option>
-              </Select>
-            </Col>
-          </Row>
+          <Form>
+            <Form.Row>
+              <Form.Group as={Col} lg={6} md={12}>
+                <Input 
+                  className="h-35"
+                  placeholder="Cari promo" 
+                  suffix={<i className="far fa-search text-black-50" />}
+                />
+              </Form.Group>
+              <Form.Group as={Col} lg={6} md={12}>
+                <Select 
+                  placeholder="Urutkan"
+                  style={{ width: "100%"}}
+                  className="product-search-select"
+                >
+                  <Select.Option value="2">Promo Terbaru</Select.Option>
+                  <Select.Option value="1">Promo Terlama</Select.Option>
+                </Select>
+              </Form.Group>
+            </Form.Row>
+          </Form>
         </section>
 
         <section>
-          <Row>
+          <AntRow gutter={[16,16]}>
             {promos.reverse().map((data, i) => (
-              <Col md={4} sm={6} key={i}>
-                <CardPromoMemo image={data} />
-              </Col>
+              <AntCol xs={24} sm={12} md={8} lg={8} key={i}>
+                <CardPromoMemo image={data} idx={i} />
+              </AntCol>
             ))}
-          </Row>
+          </AntRow>
         </section>
       </Container>
 

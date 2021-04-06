@@ -15,4 +15,4 @@ services:
 networks:
   default:
     external:
-      name: restapi_networks
+      name: tridatu_networks

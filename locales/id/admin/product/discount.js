@@ -6,6 +6,7 @@ export default {
   empty_product: "Tidak ada produk",
   product: "Produk",
   price: "Harga",
+  stock: "Stok",
   periode: "Periode Diskon",
   status_discount: "Status",
   action: "Aksi",

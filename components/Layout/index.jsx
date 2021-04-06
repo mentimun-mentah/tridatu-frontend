@@ -24,6 +24,9 @@ const Layout = ({ children }) => {
     if(isAadmin){
       document.body.style.paddingTop = '0';
     }
+    else{
+      document.body.style.paddingTop = '68px';
+    }
   }, [isAadmin])
 
   useEffect(() => {

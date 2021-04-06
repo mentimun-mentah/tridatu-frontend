@@ -31,6 +31,7 @@ const Variants = ({ product, selected, setSelected, quantity, setQuantity, whole
   const [originalImage, setOriginalImage] = useState("")
 
   const { products_slug, products_discount_status, products_variant, products_wholesale, products_image_size_guide } = product
+  const { variants_discount, variants_min_price, variants_max_price } = product
 
   if(products_image_size_guide){
     // console.log(products_image_size_guide)
@@ -41,7 +42,7 @@ const Variants = ({ product, selected, setSelected, quantity, setQuantity, whole
   useEffect(() => {
     if(products_variant){
       setVariation(products_variant)
-      let tmp_price = [], tmp_discount = [], tmp_stock = 0
+      let tmp_stock = 0
       // console.log("Variation\n", JSON.stringify(products_variant, null, 2))
       // console.log("Wholesale\n", JSON.stringify(products_wholesale, null, 2))
       // console.log("Discount Status\n", JSON.stringify(products_discount_status, null, 2))
@@ -49,14 +50,12 @@ const Variants = ({ product, selected, setSelected, quantity, setQuantity, whole
       if(va1_items && !va1_name && !va2_name) {
         setCountVariation(0)
         setVa2Items([])
-        va1_items.forEach(x => {tmp_price.push(+x.va1_price); tmp_discount.push(x.va1_discount)})
         tmp_stock = +va1_items[0].va1_stock
       }
       if(va1_name && va1_items && !va2_name) {
         const sumStock = va1_items.reduce((n, {va1_stock}) => n + +va1_stock, 0)
         setCountVariation(1)
         setVa2Items([])
-        va1_items.forEach(x => {tmp_price.push(+x.va1_price); tmp_discount.push(x.va1_discount)})
         tmp_stock = sumStock
       }
       if(va2_name) {
@@ -66,21 +65,13 @@ const Variants = ({ product, selected, setSelected, quantity, setQuantity, whole
         }
         setCountVariation(2)
         setVa2Items(va1_items[0].va2_items)
-        va1_items.forEach(x => x.va2_items.forEach(c => {tmp_price.push(+c.va2_price); tmp_discount.push(c.va2_discount)}))
         tmp_stock = sumStock
       }
 
-      tmp_price = _.uniq(tmp_price)
-      const min_price = _.min(tmp_price)
-      const max_price = _.max(tmp_price)
-
-      tmp_discount = _.uniq(tmp_discount)
-      const max_discount = _.max(tmp_discount)
-
       const data = {
         ...selected,
-        price: _.uniq([min_price, max_price]),
-        discount: max_discount,
+        price: _.uniq([+variants_min_price, +variants_max_price]),
+        discount: variants_discount,
         stock: tmp_stock
       }
       setSelected(data)

@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Form, Input, Radio, InputNumber, Select, Table, Space } from 'antd'
-import { PlusCircleOutlined } from '@ant-design/icons'
+import { Form, Input, Radio, InputNumber, Select, Table, Space, Card as CardAnt, Row, Col, Divider } from 'antd'
+import { PlusCircleOutlined, SettingOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 
 import _ from 'lodash'
 import makeid from 'lib/makeid'
+import formatNumber from 'lib/formatNumber'
 import Card from 'react-bootstrap/Card'
 import Button from "antd-button-color"
 
 import { imageValidation, uploadButton } from 'lib/imageUploader'
-import { columnsVoucher, columnsOngkir, columnsSelectedProduct, columnsSelectedBrand, columnsSelectedCategory } from 'data/voucher'
+import { columnsVoucher, columnsVoucherUpdate, columnsOngkir, columnsSelectedProduct, columnsSelectedBrand, columnsSelectedCategory } from 'data/voucher'
 import { columnsSelectedSubCategory, columnsSelectedItemSubCategory } from 'data/voucher'
 
 // import { productsData } from 'data/products'
@@ -137,6 +138,92 @@ const sp3 = [
   },
 ];
 
+const dataSourcePromoCode = [
+  {
+    key: '1',
+    promoCode: {
+      value: 'vd1',
+      kuota: 100,
+      kind: 'Diskon',
+      code: 'MIROUTER44',
+      min_transaction: 100000,
+      applicable_promo: 'Spesifik Produk'
+    }
+  },
+  {
+    key: '2',
+    promoCode: {
+      value: 'vd2',
+      kuota: 150,
+      kind: 'Diskon',
+      code: 'MISECCAM24',
+      min_transaction: 150000,
+      applicable_promo: 'Spesifik Produk'
+    }
+  },
+  {
+    key: '3',
+    promoCode: {
+      value: 'freeship',
+      kuota: 200,
+      kind: 'Free Ongkir',
+      code: 'MIFREEONGKIR',
+      min_transaction: 275000,
+      applicable_promo: 'Spesifik Produk'
+    }
+  },
+];
+
+const columnsPromoCode = (setState) => [
+  {
+    key: 'code',
+    dataIndex: 'promoCode',
+    title: 'Kode',
+    render: item => <span>{item.code}</span>
+  },
+  {
+    key: 'kuota',
+    dataIndex: 'promoCode',
+    title: 'Kuota',
+    render: (item) => <span>{item.kuota}</span>
+  },
+  {
+    key: 'min_transaction',
+    dataIndex: 'promoCode',
+    title: 'Min. Transaksi',
+    render: (item) => <span>Rp.{formatNumber(item.min_transaction)}</span>
+  },
+  {
+    key: 'kind',
+    dataIndex: 'promoCode',
+    title: 'Jenis',
+    render: (item) => <span>{item.kind}</span> // discount, discount_up_to, ongkir
+  },
+  {
+    key: 'applicable_promo',
+    dataIndex: 'promoCode',
+    title: 'Promo Berlaku',
+    render: () => <span>Spesifik Produk</span> // all | specific_product | specific_brand | category | sub_category | item_sub_category
+  },
+  {
+    key: 'actions',
+    dataIndex: 'promoCode',
+    title: 'Aksi',
+    align: 'center',
+    render: (item) => (
+      <Space>
+        <Button type="primary" ghost icon={<EditOutlined />} onClick={() => setState(item.value)}>
+          Edit
+        </Button>
+        <Button className="btn-tridatu" icon={<DeleteOutlined />}>
+          Delete
+        </Button>
+      </Space>
+    )
+  }
+]
+
+
 const ButtonAddVoucher = ({ onClick, disabled, children }) => (
   <Button
     block with="dashed" 
@@ -160,6 +247,12 @@ const tableProps = {
   components: productComponents
 }
 
+const promoCodeList = [
+  {code: "MIROUTER44", key: "vd1"},
+  {code: "MISECCAM24", key: "vd2"},
+  {code: "MIFREEONGKIR", key: "freeship"},
+]
+
 const UpdateVoucher = () => {
   const [typeVoucher, setTypeVoucher] = useState({value: "all", label: "Produk"})
   const [dataVoucher, setDataVoucher] = useState(dataVoucherUpdate)
@@ -178,6 +271,7 @@ const UpdateVoucher = () => {
   const [selectedCategory, setSelectedCategory] = useState([])
   const [selectedSubCategory, setSelectedSubCategory] = useState([])
   const [selectedItemSubCategory, setSelectedItemSubCategory] = useState([])
+  const [listPromoCode, setListPromoCode] = useState(promoCodeList)
   /*MODAL VOUCHER*/
 
   const addVoucherDiscountHandler = () => {
@@ -243,7 +337,7 @@ const UpdateVoucher = () => {
     }
   }
 
-  const columnsVouchers = columnsVoucher.map(col => {
+  const columnsVouchers = columnsVoucherUpdate.map(col => {
     if (!col.editable) return col;
     return {
       ...col,
@@ -450,6 +544,7 @@ const UpdateVoucher = () => {
               </Select>
             </Form.Item>
 
+            {/*
             <Form.Item label="Pilih Kode Promo" required>
               <Select
                 showSearch
@@ -466,61 +561,74 @@ const UpdateVoucher = () => {
                 <Select.Option value="freeship">MIFREEONGKIR</Select.Option>
               </Select>
             </Form.Item>
+            */}
 
-            <Form.Item label="Tipe Voucher" required>
-              <Radio.Group value={typeVoucher.value} onChange={selectTypeVoucherHandler}>
-                <Radio.Button value="all" label="Produk" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-boxes-alt mr-1" /> Semua Produk
-                </Radio.Button>
-                <Radio.Button value="specific_product" label="Produk" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-box-full mr-1" /> Spesifik Produk
-                </Radio.Button>
-                <Radio.Button value="specific_brand" label="Brand" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-layer-group mr-1" /> Spesifik Brand
-                </Radio.Button>
-                <br/>
-                <Radio.Button value="category" label="Kategori" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-sitemap mr-1" /> Kategori
-                </Radio.Button>
-                <Radio.Button value="sub_category" label="Sub Kategori" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-folder-tree mr-1" /> Sub Kategori
-                </Radio.Button>
-                <Radio.Button value="item_sub_category" label="Item Sub Kategori" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-folder mr-1" /> Item Sub Kategori
-                </Radio.Button>
-              </Radio.Group>
+            <Form.Item label="Daftar Kode Promo">
+              <Table 
+                pagination={false}
+                columns={columnsPromoCode(setSelectedPromo)}
+                dataSource={dataSourcePromoCode}
+              />
             </Form.Item>
 
-            <Form.Item label={`${typeVoucher.label} yang Berlaku`} required className="mb-0">
-              {typeVoucher.value === "all" ? 
-                <p className="mb-0 mt-n3 noselect">Semua Produk</p> : 
-                <Button with="dashed" type="primary"
-                  icon={<PlusCircleOutlined />}
-                  onClick={typeVoucher.value === "all" ? () => {} : () => onShowModalHandler(typeVoucher.value)}
-                >
-                  Tambahkan {typeVoucher.label}
-                </Button>
-              }
-            </Form.Item>
+            {selectedPromo && (
+              <>
+                <Form.Item label="Tipe Voucher" required>
+                  <Radio.Group value={typeVoucher.value} onChange={selectTypeVoucherHandler}>
+                    <Radio.Button value="all" label="Produk" className="voucher-radio-button-wrapper noselect">
+                      <i className="far fa-lg fa-boxes-alt mr-1" /> Semua Produk
+                    </Radio.Button>
+                    <Radio.Button value="specific_product" label="Produk" className="voucher-radio-button-wrapper noselect">
+                      <i className="far fa-lg fa-box-full mr-1" /> Spesifik Produk
+                    </Radio.Button>
+                    <Radio.Button value="specific_brand" label="Brand" className="voucher-radio-button-wrapper noselect">
+                      <i className="far fa-lg fa-layer-group mr-1" /> Spesifik Brand
+                    </Radio.Button>
+                    <br/>
+                    <Radio.Button value="category" label="Kategori" className="voucher-radio-button-wrapper noselect">
+                      <i className="far fa-lg fa-sitemap mr-1" /> Kategori
+                    </Radio.Button>
+                    <Radio.Button value="sub_category" label="Sub Kategori" className="voucher-radio-button-wrapper noselect">
+                      <i className="far fa-lg fa-folder-tree mr-1" /> Sub Kategori
+                    </Radio.Button>
+                    <Radio.Button value="item_sub_category" label="Item Sub Kategori" className="voucher-radio-button-wrapper noselect">
+                      <i className="far fa-lg fa-folder mr-1" /> Item Sub Kategori
+                    </Radio.Button>
+                  </Radio.Group>
+                </Form.Item>
 
-            {selectedProduct.length > 0 && typeVoucher.value === "specific_product" && (
-              <Table {...tableProps} columns={columnsProduct} dataSource={selectedProduct} />
-            )}
+                <Form.Item label={`${typeVoucher.label} yang Berlaku`} required className="mb-0">
+                  {typeVoucher.value === "all" ? 
+                    <p className="mb-0 mt-n3 noselect">Semua Produk</p> : 
+                    <Button with="dashed" type="primary"
+                      icon={<PlusCircleOutlined />}
+                      onClick={typeVoucher.value === "all" ? () => {} : () => onShowModalHandler(typeVoucher.value)}
+                    >
+                      Tambahkan {typeVoucher.label}
+                    </Button>
+                  }
+                </Form.Item>
 
-            {selectedBrand.length > 0 && typeVoucher.value === "specific_brand" && (
-              <Table {...tableProps} columns={columnsBrand} dataSource={selectedBrand} />
-            )}
+                {selectedProduct.length > 0 && typeVoucher.value === "specific_product" && (
+                  <Table {...tableProps} columns={columnsProduct} dataSource={selectedProduct} />
+                )}
 
-            {selectedCategory.length > 0 && typeVoucher.value === "category" && (
-              <Table {...tableProps} columns={columnsCategory} dataSource={selectedCategory} />
-            )}
+                {selectedBrand.length > 0 && typeVoucher.value === "specific_brand" && (
+                  <Table {...tableProps} columns={columnsBrand} dataSource={selectedBrand} />
+                )}
 
-            {selectedSubCategory.length > 0 && typeVoucher.value === "sub_category" && (
-              <Table {...tableProps} columns={columnsSubCategory} dataSource={selectedSubCategory} />
-            )}
+                {selectedCategory.length > 0 && typeVoucher.value === "category" && (
+                  <Table {...tableProps} columns={columnsCategory} dataSource={selectedCategory} />
+                )}
 
-            {selectedItemSubCategory.length > 0 && typeVoucher.value === "item_sub_category" && (
-              <Table {...tableProps} scroll={{ x:700, y:300 }} expandable={{ defaultExpandAllRows: true }} columns={columnsItemSubCategory} dataSource={selectedItemSubCategory} />
+                {selectedSubCategory.length > 0 && typeVoucher.value === "sub_category" && (
+                  <Table {...tableProps} columns={columnsSubCategory} dataSource={selectedSubCategory} />
+                )}
+
+                {selectedItemSubCategory.length > 0 && typeVoucher.value === "item_sub_category" && (
+                  <Table {...tableProps} scroll={{ x:700, y:300 }} expandable={{ defaultExpandAllRows: true }} columns={columnsItemSubCategory} dataSource={selectedItemSubCategory} />
+                )}
+              </>
             )}
 
           </Form>
@@ -529,6 +637,7 @@ const UpdateVoucher = () => {
 
 
 
+      {selectedPromo && (
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
           <h5 className="mb-0 fs-16-s">Pengaturan Bonus</h5>
@@ -659,6 +768,7 @@ const UpdateVoucher = () => {
 
         </Card.Body>
       </Card>
+      )}
 
 
 
@@ -702,10 +812,12 @@ const UpdateVoucher = () => {
         setSelectedItemSubCategory={setSelectedItemSubCategory}
       />
 
-      <Space>
-        <Button className="btn-tridatu">Simpan</Button>
-        <Button>Batal</Button>
-      </Space>
+      {selectedPromo && (
+        <Space>
+          <Button className="btn-tridatu">Simpan</Button>
+          <Button>Batal</Button>
+        </Space>
+      )}
 
       <div className="d-none">
         <Pagination />
@@ -748,6 +860,9 @@ const UpdateVoucher = () => {
         :global(.voucher-radio-button-wrapper.ant-radio-button-wrapper-disabled:hover){
           color: rgba(0, 0, 0, 0.25);
           box-shadow: unset;
+        }
+        :global(.list-card-promo .ant-card-actions > li){
+          margin: 6px 0;
         }
       `}</style>
     </>

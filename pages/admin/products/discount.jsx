@@ -20,7 +20,7 @@ import formFilter from "formdata/formFilter";
 import Pagination from "components/Pagination";
 
 import EditableCell from 'components/Card/Admin/Product/Promo/Cell'
-import PromoModal from 'components/Modal/Admin/Products/SetupPromo'
+import DiscountModal from 'components/Modal/Admin/Products/SetupDiscount'
 
 const components = { body: { cell: EditableCell } };
 const per_page = 10
@@ -223,7 +223,7 @@ const Discount = ({ searchQuery }) => {
       </Card>
 
 
-      <PromoModal 
+      <DiscountModal
         t={t}
         visible={show}
         onClose={closeModalSetPromoHandler}

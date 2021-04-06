@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { withAuth } from 'lib/withAuth'
 import { useRouter } from 'next/router'
 import { useDispatch, useSelector } from "react-redux";
@@ -23,6 +24,8 @@ const Brand = () => {
 
   const dispatch = useDispatch()
   const brands = useSelector(state => state.brand.brand)
+
+  const [search, setSearch] = useState("")
   
   const deleteBrandHandler = id => {
     axios.delete(`/brands/delete/${id}`, jsonHeaderHandler())
@@ -43,6 +46,14 @@ const Brand = () => {
       })
   }
 
+  useEffect(() => {
+    let queryString = {}
+    if(search) queryString["q"] = search
+    else delete queryString["q"]
+
+    dispatch(actions.getBrand({...queryString}))
+  }, [search])
+
   return(
     <>
       <Card className="border-0 shadow-none card-add-product">
@@ -54,8 +65,8 @@ const Brand = () => {
             <Form.Row>
               <Form.Group as={ColB} lg={12}>
                 <Input 
-                  // value={search}
-                  // onChange={e => setSearch(e.target.value)}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
                   placeholder="Cari brand"
                   className="account-search h-100"
                   prefix={<i className="far fa-search" />}

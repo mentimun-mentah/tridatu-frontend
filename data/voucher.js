@@ -1,11 +1,84 @@
 import { Tooltip } from 'antd'
 
+import kFormatter from "lib/kFormatter";
 import ItemInfoPromo from "components/Card/Admin/Product/Promo/ItemInfo";
 import ItemPricePromo from "components/Card/Admin/Product/Promo/ItemPrice";
 
 import ItemBrandInfo from "components/Card/Admin/Brands/ItemInfo";
 
 export const columnsVoucher = [
+  {
+    key: 'code',
+    title: (
+      <span>
+        Kode Voucher 
+        <Tooltip title={<small className="noselect">Kode voucher mengandung Alfabet (A-Z) dan Angka (0-9)</small>}>
+        <i className="fal fa-info-circle text-muted ml-1" />
+        </Tooltip>
+      </span>
+    ),
+    dataIndex: 'voucher',
+    type: 'code',
+    editable: true,
+    // width: 250,
+  },
+  {
+    key: 'quota',
+    title: (
+      <span>
+        Kuota Klaim
+        <Tooltip title={<small className="noselect">Jumlah voucher dapat diklaim pengguna</small>}>
+        <i className="fal fa-info-circle text-muted ml-1" />
+        </Tooltip>
+      </span>
+    ),
+    dataIndex: 'voucher',
+    type: 'quota',
+    editable: true,
+    // width: 250,
+  },
+  {
+    key: 'min_transaction',
+    title: (
+      <span>
+        Min. Transaksi
+        <Tooltip title={<small className="noselect">Minimum transaksi dapat dikosongkan</small>}>
+        <i className="fal fa-info-circle text-muted ml-1" />
+        </Tooltip>
+      </span>
+    ),
+    dataIndex: 'voucher',
+    type: 'min_transaction',
+    editable: true,
+    // width: 250,
+  },
+  {
+    key: 'nominal-percent',
+    title: 'Nominal/Persentase',
+    dataIndex: 'voucher',
+    type: 'nominal-percent',
+    editable: true,
+    // width: 250,
+  },
+  {
+    key: 'max_discount',
+    title: 'Max. Discount',
+    dataIndex: 'voucher',
+    type: 'max_discount',
+    editable: true,
+    // width: 250,
+  },
+  {
+    key: 'action',
+    title: 'Aksi',
+    align: 'center',
+    type: 'action',
+    editable: true,
+    render: () => <a><i className="fal fa-trash-alt text-center" /></a>,
+  }
+]
+
+export const columnsVoucherUpdate = [
   {
     key: 'code',
     title: (
@@ -66,14 +139,6 @@ export const columnsVoucher = [
     type: 'max_discount',
     editable: true,
     // width: 250,
-  },
-  {
-    key: 'action',
-    title: 'Aksi',
-    align: 'center',
-    type: 'action',
-    editable: true,
-    render: () => <a><i className="fal fa-trash-alt text-center" /></a>,
   }
 ]
 
@@ -93,7 +158,7 @@ export const columnsOngkir = [
     editable: true,
   },
   {
-    key: 'kuota',
+    key: 'quota',
     title: (
       <span>
         Kuota Klaim
@@ -103,14 +168,14 @@ export const columnsOngkir = [
       </span>
     ),
     dataIndex: 'voucher',
-    type: 'kuota',
+    type: 'quota',
     editable: true,
   },
   {
     key: 'min_transaction',
     title: 'Min. Transaksi',
     dataIndex: 'voucher',
-    type: 'minimum',
+    type: 'min_transaction',
     editable: true,
   },
   {
@@ -160,7 +225,7 @@ export const columnsVoucherProduct = [
     key: "stock",
     width: 150,
     align: "center",
-    render: (item) => <p className="mb-0">{+item.stock}</p>,
+    render: (item) => <span>{kFormatter(+item.variants_total_stock, 'k')}</span>,
   },
 ]
 
@@ -199,7 +264,7 @@ export const columnsSelectedProduct = [
     key: "stock",
     width: "20%",
     align: "center",
-    render: (item) => <p className="mb-0">{+item.stock}</p>,
+    render: (item) => <span>{kFormatter(+item.variants_total_stock, 'k')}</span>,
   },
   {
     key: 'action',

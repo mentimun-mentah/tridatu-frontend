@@ -278,6 +278,9 @@ const App = ({ Component, pageProps, store }) => {
           border-color: #8c8c8c;
           // box-shadow: 0 0 0 2px rgb(151 151 151 / 21%);
         }
+        .ant-select-item-option-selected:not(.ant-select-item-option-disabled) .ant-select-item-option-state{
+          color: #6c757d;
+        }
         /*ANT SELECT*/
 
         /*ANT TABS*/
@@ -591,6 +594,9 @@ const App = ({ Component, pageProps, store }) => {
         .va-top{
           vertical-align: top !important;
         }
+        .va-middle{
+          vertical-align: middle !important;
+        }
         .ws-preline{
           white-space: pre-line;
         }
@@ -660,6 +666,10 @@ const App = ({ Component, pageProps, store }) => {
           border-top: 5px solid rgb(243, 244, 245);
         }
 
+        .h-26{
+          height: 30px;
+        }
+
         .h-30{
           height: 30px;
         }
@@ -686,6 +696,9 @@ const App = ({ Component, pageProps, store }) => {
 
         .w-min-content {
           width: min-content;
+        }
+        .w-fit-content {
+          width: fit-content;
         }
         .w-340px{
           width: 340px !important;
@@ -718,6 +731,12 @@ const App = ({ Component, pageProps, store }) => {
         .custom-gutters > [class*="col"] {
           padding-right: 15px;
           padding-left: 15px;
+        }
+
+        blockquote {
+          padding: 0 0 0 .6em;
+          border-left: 4px solid hsla(0,0%,39.2%,.2);
+          opacity: .85;
         }
 
         @media only screen and (max-width: 767.98px) {

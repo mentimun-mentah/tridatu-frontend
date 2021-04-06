@@ -1,164 +1,185 @@
-import { Collapse, Typography } from 'antd';
+import { useEffect } from 'react'
+import { Collapse, Typography, Badge, Space, Tooltip } from 'antd';
 
 import Link from 'next/link'
+import Image from "next/image";
 import Col from 'react-bootstrap/Col'
 import Row from 'react-bootstrap/Row'
 import Card from 'react-bootstrap/Card'
-import Table from 'react-bootstrap/Table'
 import Button from 'react-bootstrap/Button'
 import Container from 'react-bootstrap/Container'
 
 import CardPromo from "components/Card/Promo";
+import SlugStyle from 'components/Promo/SlugStyle'
 
 const CardPromoMemo = React.memo(CardPromo);
 
-let promos = ['https://ecs7.tokopedia.net/img/blog/promo/2020/09/Thumbnail-6.jpg', 'https://ecs7.tokopedia.net/img/blog/promo/2020/07/Thumbnail-Interior.png', 'https://ecs7.tokopedia.net/img/blog/promo/2019/09/ZHIYUN-THUMBNAIL.jpg']
+let promos = ['/static/images/promo/new-promo.jpeg', '/static/images/promo/new-promo-1.jpeg', '/static/images/promo/new-promo-2.jpeg']
 
-const text = () => (
-  <div className="promo-detail-info">
-    <ol>
-      <li>
-        Periode program pengajuan KPR UOB hingga tanggal{" "}
-        <span>
-          30 November 2020 dengan batas pencairan kredit sampai 31 Desember 2020.
-        </span>
-      </li>
-      <li>
-        Setiap nasabah yang melakukan&nbsp;pengajuan&nbsp;dan
-        pencairan&nbsp;KPR&nbsp;UOB&nbsp;melalui&nbsp;
-        <a href="https://pib.uob.co.id/appforms/applynow/kpr.page?utm_medium=affiliate&utm_source=site&utm_campaign=bukalapakaff&utm_term=product&s_cid=pfs:id:paid:aff:site:bukalpk:bn:display:private-home-loan:na:bukalapakaff:product:na&vid=n">
-          link berikut
-        </a>
-        &nbsp;akan mendapatkan&nbsp;&nbsp;E-voucher Bukalapak dan berkesempatan
-        mengikuti Program Kejutan Simpanan.
-      </li>
-      <li>
-        Nominal&nbsp;<em>E-voucher Bukalapak&nbsp;</em>yang akan diberikan
-        berdasarkan nilai plafon yang dicairkan, dengan ketentuan sebagai berikut:{" "}
-      </li>
-      <li className="ql-indent-1">
-        Plafond Rp150.juta&nbsp;– &lt; Rp300 juta mendapatkan e-voucher senilai
-        Rp500 ribu.
-      </li>
-      <li className="ql-indent-1">
-        Plafond Rp300 juta&nbsp;– &lt; Rp600 juta&nbsp;mendapatkan e-voucher
-        senilai Rp1.125 juta.
-      </li>
-      <li className="ql-indent-1">
-        Plafond Rp600 juta&nbsp;– &lt; Rp900 juta mendapatkan e-voucher senilai
-        Rp1.875 juta.
-      </li>
-      <li className="ql-indent-1">
-        Plafond Rp900 juta&nbsp;– &lt; Rp1.2&nbsp;milyar mendapatkan e-voucher
-        senilai Rp2.625 juta.
-      </li>
-      <li className="ql-indent-1">
-        Plafond Rp1.2&nbsp;milyar&nbsp;– &lt; Rp1.5 milyar mendapatkan e-voucher
-        senilai Rp3.375 juta.
-      </li>
-      <li className="ql-indent-1">
-        Plafond Rp1.5 milyar&nbsp;– &lt; Rp1.8&nbsp;milyar mendapatkan e-voucher
-        senilai Rp4.125&nbsp;juta.
-      </li>
-      <li>
-        Program ini tidak dapat digabung dengan program lainnya dan tidak berlaku
-        untuk&nbsp;pengajuan&nbsp;melalui pihak ketiga lainnya seperti&nbsp;
-        <strong>
-          <em>Broker dan Developer</em>
-        </strong>
-        . Jika nasabah telah mengajukan&nbsp;KPR&nbsp;UOB&nbsp;melalui pihak
-        ketiga, maka nasabah tidak&nbsp;<em>eligible</em>&nbsp;untuk
-        mendapatkan&nbsp;<em>E-voucher Bukalapak.</em>
-      </li>
-      <li>
-        Program ini hanya berlaku untuk jaminan yang terletak di Jabodetabek, Kota
-        Batam, Medan, Bandung, Semarang, Yogyakarta, Surabaya, Makassar, dan Pulau
-        Bali.
-      </li>
-      <li>
-        Bank&nbsp;UOB&nbsp;Indonesia berhak menentukan siapa nasabah yang berhak
-        mendapatkan hadiah dimana keputusan tersebut tidak dapat diganggu gugat.
-      </li>
-    </ol>
-    <p />
-  </div>
-);
+let terms_conditions = "<ol><li><span style=\"box-sizing: border-box; font-weight: 400;\">Promo berlaku selama periode<span>&nbsp;</span><strong>17</strong></span><strong>-21</strong><strong>&nbsp;Maret 2021</strong></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Promo</span><strong>&nbsp;</strong><span style=\"box-sizing: border-box; font-weight: 400;\">hanya berlaku untuk pembelian produk di<span>&nbsp;</span></span><a href=\"https://www.tokopedia.com/discovery/fit-and-fun\"><strong>halaman ini</strong><span style=\"box-sizing: border-box; font-weight: 400;\">.</span></a></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Untuk menikmati<span>&nbsp;</span></span><strong>cashback 5% hingga Rp100.000</strong><span style=\"box-sizing: border-box; font-weight: 400;\">, pembeli harus memasukkan kode promo<span>&nbsp;</span></span><strong>MARCHFIT<span>&nbsp;</span></strong><span style=\"box-sizing: border-box; font-weight: 400;\">di halaman pembayaran.</span></li><li><strong>Cashback 5% hingga Rp100.000 berlaku untuk minimum pembelian Rp100.000</strong><span style=\"box-sizing: border-box; font-weight: 400;\"><span>&nbsp;</span>(belum termasuk ongkos kirim dan biaya tambahan lainnya).</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Untuk menikmati<span>&nbsp;</span></span><strong>cashback 3% hingga Rp300.000</strong><span style=\"box-sizing: border-box; font-weight: 400;\">, pembeli harus memasukkan kode promo<span>&nbsp;</span></span><strong>MARCHFUN<span>&nbsp;</span></strong><span style=\"box-sizing: border-box; font-weight: 400;\">di halaman pembayaran.</span></li><li><strong>Cashback 3% hingga Rp300.000 berlaku untuk minimum pembelian Rp300.000</strong><span style=\"box-sizing: border-box; font-weight: 400;\"><span>&nbsp;</span>(belum termasuk ongkos kirim dan biaya tambahan lainnya).</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Cashback akan masuk ke OVO Points. Pastikan Anda sudah mengaktifkan OVO untuk tetap bisa menikmati cashback dari promo ini.</span></li><li>Benefit cashback akan diberikan secara pro-rata jika menggunakan pembayaran sebagian OVO Point.</li><li>Cashback yang diberikan disesuaikan dengan jumlah pembayaran yang digunakan selain OVO Point.</li><li>Apabila terjadi pengembalian dana sebagian maka terdapat penyesuaian cashback.</li><li>Penggunaan kupon atau kode promo akan dibatalkan jika tidak memenuhi minimum transaksi penggunaan promo setelah dikurangi OVO Point yang digunakan atau pembayaran penuh dengan OVO Points.</li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Cashback akan diterima maksimal 1 x 24 jam setelah transaksi berhasil serta sesuai dengan Syarat dan Ketentuan yang berlaku.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Satu (1) pengguna Tokopedia hanya boleh menggunakan satu (1) akun Tokopedia untuk mengikuti promo ini. Jika ditemukan pembuatan lebih dari satu (1) akun oleh satu (1) pengguna yang sama dan/atau nomor handphone yang sama dan/atau alamat yang sama dan/atau ID pelanggan yang sama dan/atau identitas pembayaran yang sama dan/atau riwayat transaksi yang sama, maka pengguna tidak akan mendapatkan benefit dari promo Tokopedia.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Satu (1) akun Tokopedia hanya bisa menggunakan kode promo sebanyak satu (1) kali selama periode promo.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Kuota cashback<span>&nbsp;</span></span><strong>kode promo MARCHFIT<span>&nbsp;</span></strong><span style=\"box-sizing: border-box; font-weight: 400;\">terbatas untuk<span>&nbsp;</span></span><strong>300 pembeli pertama.</strong></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Kuota cashback<span>&nbsp;</span></span><strong>kode promo MARCHFUN<span>&nbsp;</span></strong><span style=\"box-sizing: border-box; font-weight: 400;\">terbatas untuk<span>&nbsp;</span></span><strong>100 pembeli pertama.</strong></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Promo tidak dapat digabung dengan promo lain.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Kupon/Kode Promo ini tidak berlaku untuk pembelian Emas dan Voucher/Deals.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Jika transaksi dibatalkan atau masuk ke Pusat Resolusi, dana yang kembali ke pembeli akan sesuai dengan nominal pembayaran yang dilakukan (tidak termasuk subsidi ongkir).</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Tokopedia berhak melakukan tindakan-tindakan yang diperlukan seperti pembatalan benefit jika ditemukan transaksi yang melanggar syarat &amp; ketentuan Tokopedia.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Syarat dan Ketentuan promo ini merupakan bagian yang tidak terpisahkan dan satu kesatuan dengan</span><a href=\"https://www.tokopedia.com/terms.pl\"><span>&nbsp;</span><span style=\"box-sizing: border-box; font-weight: 400;\">Syarat dan Ketentuan Tokopedia</span></a><span style=\"box-sizing: border-box; font-weight: 400;\">,</span><span style=\"box-sizing: border-box; font-weight: 400;\"><span>&nbsp;</span>serta dapat berubah sewaktu-waktu untuk disesuaikan dengan kebijakan sehubungan dengan promo ini.</span></li><li><span style=\"box-sizing: border-box; font-weight: 400;\">Dengan mengikuti promo ini, pengguna dianggap mengerti dan menyetujui semua syarat &amp; ketentuan berlaku.</span></li><li>Promo berlaku dengan minimum pembayaran produk sebesar<span>&nbsp;</span><strong>Rp 100.000<span>&nbsp;</span></strong>untuk Cashback 5% hingga Rp100.000 dan<span>&nbsp;</span><strong>Rp 300.000<span>&nbsp;</span></strong>untuk Cashback 3%<span>&nbsp;</span><span style=\"box-sizing: border-box; font-weight: 400;\">hingga Rp300.000<span>&nbsp;</span></span>setelah dikurangi penggunaan OVO Point</li></ol><p><span style=\"box-sizing: border-box; font-weight: 400;\">Beli produk Fit and Fun Spectasale terbaru secara online di Tokopedia. Belanja online jadi lebih hemat dengan gunakan promo Tokopedia! Temukan promo beragam peralatan gaming, perlengkapan olahraga serta koleksi mainan &amp; hobi terbaru dari Puma, MultiGame, Decathlon, Flexzone, Lego &amp; Hotwheels di Tokopedia untuk dapatkan berbagai keuntungan. Belanja mudah banyak diskon ya di Tokopedia aja!</span></p>"
+
 
 const PromoDetail = () => {
-
-  const callback = (key) => {
-    console.log(key);
-  }
+  useEffect(() => {
+    let listTable = document.getElementById("terms-conditions-id").getElementsByTagName("table")
+    let listTableMobile = document.getElementById("terms-conditions-id-mobile").getElementsByTagName("table")
+    for(let i = 0; i < listTable.length; i++){
+      listTable[i].classList.add("table-sm", "table-bordered", "table-responsive", "border-0")
+    }
+    for(let i = 0; i < listTableMobile.length; i++){
+      listTableMobile[i].classList.add("table-sm", "table-bordered", "table-responsive", "border-0")
+    }
+  }, [])
 
   return(
     <>
-      <Container className="mb-5 pt-md-4 p-t-0-s p-l-0-s p-r-0-s p-t-24-m">
-        <Card className="border-0 shadow">
-          <Card.Img variant="top" src="https://s1.bukalapak.com/promo/promo_partnerinfo_bloggy/original/3XE6rodxHGkoB3Sev2zijM-wBloggy_1.jpg" />
-          <Card.Body>
-            <div className="news-information font-weight-light fs-14 mb-2">
-              <span className="mr-1">
-                10 September 2020
-              </span> 
-              {" "}&#8226;{" "}
-              <span className="share-news ml-1">
-                <a className="text-reset"><i className="fal fa-share-square" /><span className="ml-1">Share</span></a>
-              </span>
-            </div>
-            <h3 className="fs-18-s">Belanja Gadget dan Electronic Ter-update Diskon Rp 200ribu dengan Kartu Kredit</h3>
-            <Card.Text className="fs-14-s">
-              Promo elektronik rumah pintar cashback hingga 200 ribu di Tokopedia, 
-              yuk cek promonya sekarang hanya di Tokopedia!
-            </Card.Text>
+      <Container fluid="md">
+        <section>
+          <Row>
+            <Col md="8" className="main-column">
+              <main className="main-content">
+                <div className="post-image">
+                  <Image 
+                    width={1200}
+                    height={630}
+                    layout="responsive"
+                    src="/static/images/promo/new-promo.jpeg"
+                    alt="Tridatu Bali"
+                    className="radius-top-img-card"
+                  />
+                </div>{/*post-image*/}
+                <div className="post-body">
+                  <Row>
+                    <Col sm="12">
+                      <div className="mb-4">
+                        <h3 className="fs-18">Jaga Daya Tahanmu + Bikin Hari Lebih Seru, Harga Mulai dari Seribu</h3>
+                      </div>
 
-            <Card className="border-0">
-              <Card.Body className="p-0 fs-12-s">
-                <Table responsive>
-                  <tbody>
-                    <tr>
-                      <th>Minimum Pembayaran</th>
-                      <td>Rp. 200.000</td>
-                    </tr>
-                    <tr>
-                      <th>Kode Promo</th>
-                      <td>
-                        <Typography.Paragraph copyable className="copy-code">
-                          BRINUF4BRINUF4
-                        </Typography.Paragraph>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>Periode Promo</th>
-                      <td>10 Sep - 29 Okt 2020</td>
-                    </tr>
-                  </tbody>
-                </Table>
-              </Card.Body>
-            </Card>
+                      <div className="mb-0 mb-md-4">
+                        <h4 className="fs-12 text-uppercase text-black font-weight-bold">deskripsi</h4>
+                        <p className="mb-0">
+                          Fit and Fun Spectasale Mulai dari Seribu Rupiah + Cashback hingga Rp300 Ribu, Mau?
+                        </p>
+                      </div>
 
-            <Collapse defaultActiveKey={['1']} onChange={callback}>
-              <Collapse.Panel header={<b>Syarat dan Ketentuan</b>} key="1">
-                {text()}
-              </Collapse.Panel>
-            </Collapse>
-            
-          </Card.Body>
-        </Card>
+                      <div className="mb-4 d-none d-md-block">
+                        <h4 className="fs-12 text-uppercase text-black font-weight-bold">Syarat dan ketentuan</h4>
+                        <div id="terms-conditions-id" dangerouslySetInnerHTML={{__html: terms_conditions}} />
+                      </div>
 
+                    </Col>
+                  </Row>
+                </div>{/*post-body*/}
+              </main>
+            </Col>
+
+            <Col md="4">
+              <div className="post-sidebar">
+                <div className="postbox">
+                  <div className="postbox-header">
+                    <h4 className="fs-16 text-black mb-0">Info Promo</h4>
+                  </div>{/*postbox-header*/}
+
+                  <div className="postbox-content">
+                    <div className="postbox-content-detail border-bottom-0">
+                      <img src="/static/svg/timer.svg" width="30" height="30" className="mb-3" />
+                      {/* <i className="fad fa-stopwatch text-black-50 fa-2x d-block m-b-10" /> */}
+                      <p className="fs-12 mb-0 text-secondary">Periode Promo</p>
+                      <p className="fs-14 mb-0 ls-n1 fw-500">17 - 21 Mar 2021</p>
+                    </div>{/*postbox-content-detail*/}
+                    <div className="postbox-content-detail border-left-0 border-bottom-0">
+                      <img src="/static/svg/money.svg" width="30" height="30" className="mb-3" />
+                      {/* <i className="fad fa-money-bill-wave text-black-50 fa-2x d-block m-b-10" /> */}
+                      <p className="fs-12 mb-0 text-secondary">Minimum Transaksi</p>
+                      <p className="fs-14 mb-0 ls-n1 fw-500">Rp.100.000</p>
+                    </div>{/*postbox-content-detail*/}
+                  </div>{/*postbox-content*/}
+
+                  <div className="postbox-content">
+                    <div className="postbox-content-detail postbox-content--group-code text-left">
+                      <Collapse bordered={false} defaultActiveKey={['0']} ghost expandIconPosition="right" className="group-code-collapse">
+                        {[...Array(3)].map((_, x) => (
+                          <Collapse.Panel 
+                            key={x} className={x > 0 && "border-top-code-promo"}
+                            header={<span className="fw-500 noselect">Diskon hingga Rp.{x+1}00.000</span>} 
+                          >
+                            <div className="fs-12 mb-2 text-muted">
+                              <p className="mb-3">Minimum transaksi Rp.{x+1}00.000</p>
+                              {/*
+                              <p className="noselect mb-3">
+                                <blockquote>Kode Promo
+                                  <Tooltip 
+                                    overlayClassName="tooltip-info-promo"
+                                    title={<small className="text-center">Masukkan kode promo di halaman pembayaran</small>}
+                                  >
+                                    <i className="fad fa-info-circle m-l-3 text-black-50 va-middle fs-11 hover-pointer" />
+                                  </Tooltip>
+                                </blockquote>
+                              </p>
+                              */}
+                            </div>
+                            <Space size={[8, 12]} wrap>
+                              {[...Array(1)].map((_, i) => (
+                                <Badge count={i+1} className="badge-count-code" size="small" key={i}>
+                                  <Card className="w-fit-content bg-light">
+                                    <Card.Body className="p-2 fs-12">
+                                      <Typography.Paragraph copyable className="mb-0 text-tridatu copy-code-btn">
+                                        MARCHFIT{x+1+i}
+                                      </Typography.Paragraph>
+                                    </Card.Body>
+                                  </Card>
+                                </Badge>
+                              ))}
+                            </Space>
+                          </Collapse.Panel>
+                        ))}
+                      </Collapse>
+                    </div>{/*postbox-content--group-code*/}
+                  </div>{/*postbox-content*/}
+
+                  <div className="postbox-content d-none">
+                    <div className="postbox-content-detail border-top-0">
+                      <p className="fs-14 mb-0 text-secondary noselect">
+                        <i className="fad fs-14 fa-badge-percent text-black-50 m-r-5 va-middle" />Tanpa kode promo
+                      </p>
+                    </div>{/*postbox-content-detail*/}
+                  </div>{/*postbox-content*/}
+
+                </div>{/*postbox*/}
+              </div>{/*post-sidebar*/}
+
+            </Col>
+          </Row>
+
+          <Row className="d-md-none">
+            <Col>
+              <div className="postbox-content mt-4">
+                <div className="postbox-content-detail">
+                  <h4 className="mb-0 fs-12 text-uppercase text-black font-weight-bold">Syarat dan ketentuan</h4>
+                </div>{/*postbox-content-detail*/}
+              </div>{/*postbox-content*/}
+              <div className="postbox-content postbox-content-mobile">
+                <div className="postbox-content-detail border-top-0">
+                  <div id="terms-conditions-id-mobile" dangerouslySetInnerHTML={{__html: terms_conditions}} />
+                </div>{/*postbox-content-detail*/}
+              </div>{/*postbox-content*/}
+            </Col>
+          </Row>
+        </section>
       </Container>
 
       <Container>
         <section>
-          <h4 className="text-center text-dark mb-4">Promo Lainnya</h4>
+          <h4 className="fs-20 text-center text-dark mb-4">Promo Lainnya</h4>
           <Row>
             {promos.reverse().map((data, i) => (
               <Col md={4} sm={6} key={i}>
-                <CardPromoMemo image={data} />
+                <CardPromoMemo image={data} idx={i} />
               </Col>
             ))}
           </Row>
 
-          <div className="text-center mb-5 mt-3">
+          <div className="text-center mb-5 mt-5">
             <Link href="/promo" as="/promo">
               <Button as="a" className="btn-dark-tridatu-outline mx-auto">Lihat Semua Promo</Button>
             </Link>
@@ -167,6 +188,7 @@ const PromoDetail = () => {
         </section>
       </Container>
 
+      <style jsx>{SlugStyle}</style>
       <style jsx>{`
         :global(.copy-code){
           color: #d63031;

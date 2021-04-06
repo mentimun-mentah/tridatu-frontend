@@ -26,6 +26,7 @@ const SetupVoucherBrand = ({ typeVoucher, visible, onClose, selectedBrand, setSe
   const brands = useSelector(state => state.brand.brand)
   /* GLOBAL STATE */
 
+  const [search, setSearch] = useState("")
   const [listSelected, setListSelected] = useState([])
   const [dataSourceBrand, setDataSourceBrand] = useState([])
 
@@ -55,9 +56,69 @@ const SetupVoucherBrand = ({ typeVoucher, visible, onClose, selectedBrand, setSe
     }
   }, [brands])
 
+  useEffect(() => {
+    let queryString = {}
+    if(search) queryString["q"] = search
+    else delete queryString["q"]
+
+    dispatch(actions.getBrand(queryString))
+  }, [search])
 
   const onSelectAllRow = (_, record) => {
-    setListSelected(record)
+    if(record.length) {
+      if(listSelected.length){
+        const newRecord = (arr) => {
+          for(let val of arr){
+            record.filter(obj => obj.key !== val.key)
+          }
+          return record
+        }
+
+        const mergeRecord = listSelected.concat(newRecord(listSelected))
+        const newMerge = Array.from(new Set(mergeRecord.map(a => a.key))).map(id => mergeRecord.find(a => a.key === id)) // remove duplicate
+
+        let found = []
+        for(let i = 0; i < newMerge.length; i++){
+          for(let j = 0; j < dataSourceBrand.length; j++){
+            if(newMerge[i].key == dataSourceBrand[j].key){
+              found.push(newMerge[i].key)
+              break;
+            }
+          }
+        }
+
+        let del = []
+        for(let j = 0; j < found.length; j++){
+          if(!record.map(x => x.key).includes(found[j])){
+            del.push(found[j])
+          }
+        }
+        del = [...new Set(del)]
+
+        let fix = []
+        for(let i = 0; i < newMerge.length; i++){
+          if(!del.includes(newMerge[i].key)){
+            fix.push(newMerge[i])
+          }
+        }
+        fix = [...new Set(fix)]
+
+        if(fix.length){
+          setListSelected(fix)
+        }
+        else{
+          setListSelected(newMerge)
+        }
+      } else {
+        setListSelected(state => [...state, ...record])
+      }
+    }
+    else {
+      let copyListSelected = [...listSelected]
+      let newDataSource = [...dataSourceBrand]
+      let newData = copyListSelected.filter(ar => !newDataSource.find(rm => (rm.key === ar.key && ar.key === rm.key) ))
+      setListSelected(newData)
+    }
   }
 
   const rowSelection = {
@@ -101,7 +162,8 @@ const SetupVoucherBrand = ({ typeVoucher, visible, onClose, selectedBrand, setSe
           <Form.Row>
             <Form.Group as={ColB} sm={12}>
               <Input 
-                name="q"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
                 placeholder="Cari brand" 
                 prefix={<i className="far fa-search" />}
                 className="h-35"

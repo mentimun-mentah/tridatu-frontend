@@ -19,10 +19,15 @@ const getBrandFail = (error) => {
   }
 }
 
-export const getBrand = () => {
+export const getBrand = (q = "") => {
+  let queryString = {}
+
+  if(q !== "" && q !== undefined) queryString["q"] = q.q
+  else delete queryString["q"]
+
   return dispatch => {
     dispatch(getBrandStart())
-    axios.get("/brands/all-brands")
+    axios.get("/brands/all-brands", { params: queryString })
       .then(res => {
         dispatch(getBrandSuccess(res.data))
       })

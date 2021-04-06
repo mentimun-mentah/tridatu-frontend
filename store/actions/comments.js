@@ -1,7 +1,7 @@
 import axios, { signature_exp } from "lib/axios";
 import * as actionType from "./actionTypes";
 
-const getAllCommentsStart = () => {
+export const getAllCommentsStart = () => {
   return { type: actionType.GET_ALLCOMMENTS_START }
 }
 
@@ -19,7 +19,7 @@ const getAllCommentsFail = (error) => {
   }
 }
 
-export const getAllComments = ({ page = 1, per_page = 10, commentable_id, commentable_type }) => {
+export const getAllComments = ({ page = 1, per_page = 4, commentable_id, commentable_type }) => {
   let queryString = {}
   if(page) queryString["page"] = page
   if(per_page) queryString["per_page"] = per_page

@@ -1,45 +1,116 @@
-import { Row, Col, Input, Select } from 'antd'
+import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
+import { useState, useEffect } from 'react'
+import { Input, Select } from 'antd'
+import { useSelector } from 'react-redux'
+import { AnimatePresence } from 'framer-motion'
 
-import Masonry from 'react-masonry-css'
+import * as actions from 'store/actions'
+
 import ColB from 'react-bootstrap/Col'
+import Masonry from 'react-masonry-css'
 import Form from 'react-bootstrap/Form'
-import Card from "react-bootstrap/Card";
-import Container from 'react-bootstrap/Container'
+import Card from 'react-bootstrap/Card'
+import formFilter from 'formdata/formFilter'
+import Pagination from 'components/Pagination'
+import CardPromo from 'components/Card/Admin/Voucher/Card'
 
-import CardVoucherOnly from "components/Card/Admin/Voucher/VoucherOnly";
-import CardVoucherOnly1 from "components/Card/Admin/Voucher/VoucherOnly1";
-import CardPromo from "components/Card/Admin/Voucher/Card";
-import CardPromo1 from "components/Card/Admin/Voucher/Card1";
-import CardPromo2 from "components/Card/Admin/Voucher/Card2";
-import CardPromo3 from "components/Card/Admin/Voucher/Card3";
-import EmptyPromo from "components/Card/Empty/Promo";
+// import CardVoucherOnly from "components/Card/Admin/Voucher/VoucherOnly";
+// import CardVoucherOnly1 from "components/Card/Admin/Voucher/VoucherOnly1";
+// import CardPromo1 from "components/Card/Admin/Voucher/Card1";
+// import CardPromo2 from "components/Card/Admin/Voucher/Card2";
+// import CardPromo3 from "components/Card/Admin/Voucher/Card3";
+// import EmptyPromo from "components/Card/Empty/Promo";
 
-import { promos } from "data/promoData";
+// import { promos } from "data/promoData";
 
 const CardPromoMemo = React.memo(CardPromo);
 
-const orderList = [
-  { name: "Semua Promo", value: "all" },
-  { name: "Tanpa Kode Promo", value: "without_promo", },
-  { name: "Dengan Kode Promo", value: "with_promo", },
-  { name: "Promo Tidak Ditampilkan", value: "nolive_promo", }
-]
-
 const orderListStatus = [
   { label: "Semua Status", value: "" },
-  { label: "Akan Datang", value: "with_promo", },
-  { label: "Sedang Berjalan", value: "nolive_promo", },
+  { label: "Akan Datang", value: "will_come", },
+  { label: "Sedang Berjalan", value: "ongoing", },
   { label: "Telah Berakhir", value: "have_ended", }
 ]
 
 const breakpointColumnsObj = {
-  default: 3,
-  1200: 2,
-  992: 2,
-  576: 1
-};
+  default: 3, 1200: 2,
+  992: 2, 576: 1
+}
 
-const Promo = () => {
+const per_page = 9
+const Promo = ({ searchQuery }) => {
+  const router = useRouter()
+
+  const promos = useSelector(state => state.promo.promos)
+
+  const [page, setPage] = useState(promos.page)
+  const [filter, setFilter] = useState(formFilter)
+
+  const { q, status } = filter
+
+  const onSearchChange = e => {
+    const data = {
+      ...filter,
+      q: { value: e.target.value }
+    }
+    setFilter(data)
+    setPage(1)
+  }
+
+  const onStatusChange = val => {
+    const data = {
+      ...filter,
+      status: { value: val }
+    }
+    setFilter(data)
+    setPage(1)
+  }
+
+  useEffect(() => {
+    if(promos && promos.data && !router.query.hasOwnProperty("page")){
+      setPage(promos.page)
+    }
+    if(promos && router.query.hasOwnProperty("page")){
+      setPage(+router.query.page)
+    }
+  }, [promos])
+
+  useEffect(() => {
+    let queryString = router.query
+    if(page) queryString["page"] = page
+
+    if(q.value) queryString["q"] = q.value
+    else delete queryString["q"]
+
+    if(status.value[0] !== "" || status.value !== "") queryString["status"] = status.value
+    else delete queryString["order_by"]
+    if(status.value === "" || status.value[0] === "") delete queryString["status"]
+
+    router.replace({
+      pathname: "/admin/promo",
+      query: queryString
+    })
+  }, [filter, page])
+
+  useEffect(() => {
+    if(!searchQuery) return
+    const state = JSON.parse(JSON.stringify(filter))
+    if(searchQuery.hasOwnProperty("page")) {
+      if(+searchQuery.page !== page) setPage(searchQuery.page)
+      else setPage(page)
+    }
+    if(searchQuery.hasOwnProperty("status")) {
+      state.status.value = [searchQuery.status]
+    }
+    if(searchQuery.hasOwnProperty("q")) {
+      state.q.value = [searchQuery.q]
+    }
+    setFilter(state)
+  }, [])
+
+  const showPagination = promos !== null && promos && promos.data && promos.data.length > 0 && (promos.next_num !== null || promos.prev_num !== null);
+
   return(
     <>
       <Card className="border-0 shadow-none card-add-product">
@@ -49,35 +120,22 @@ const Promo = () => {
         <Card.Body className="p-3">
           <Form>
             <Form.Row>
-              <Form.Group as={ColB} lg={4} md={12}>
+              <Form.Group as={ColB} lg={8} md={12}>
                 <Input 
                   className="h-35"
                   placeholder="Cari berdasarkan nama" 
                   prefix={<i className="far fa-search" />}
-                  // value={search}
-                  // onChange={onSearchChange}
+                  value={q.value}
+                  onChange={onSearchChange}
                 />
-              </Form.Group>
-              <Form.Group as={ColB} lg={4} md={12}>
-                <Select 
-                  placeholder="Urutkan" 
-                  style={{ width: "100%"}}
-                  className="product-search-select"
-                  defaultValue="all"
-                  // value={order_by}
-                  // onChange={onOrderChange}
-                >
-                  {orderList.map((list, i) => (
-                    <Select.Option key={i} value={list.value}>{list.name}</Select.Option>
-                  ))}
-                </Select>
               </Form.Group>
               <Form.Group as={ColB} lg={4} md={12}>
                 <Select 
                   placeholder="Status" 
                   style={{ width: "100%"}}
                   className="product-search-select"
-                  defaultValue=""
+                  value={status.value}
+                  onChange={onStatusChange}
                 >
                   {orderListStatus.map((list, i) => (
                     <Select.Option key={i} value={list.value}>{list.label}</Select.Option>
@@ -87,33 +145,30 @@ const Promo = () => {
             </Form.Row>
           </Form>
 
+            <AnimatePresence>
           <Masonry
             breakpointCols={breakpointColumnsObj}
             className="my-masonry-grid"
             columnClassName="my-masonry-grid_column"
           >
-            <CardPromoMemo image='/static/images/promo/2.jpeg' />
-            <CardPromo1 image='/static/images/promo/used.jpg' />
-            <CardPromo2 image='https://ecs7.tokopedia.net/img/blog/promo/2020/01/Thumbnail_600x3282.jpg' />
-            <CardPromo3 image='/static/images/promo/no-image.jpg' />
+              {promos && promos.data && promos.data.length > 0 && promos.data.map(promo => (
+                <CardPromoMemo data={promo} key={promo.promos_id}/>
+              ))}
           </Masonry>
+            </AnimatePresence>
 
-          {/*
-            <Row gutter={[16, 16]} className="make-columns">
-              <Col xl={8} lg={12} md={12} sm={12} xs={24}>
-                <CardPromoMemo image='/static/images/promo/2.jpeg' />
-              </Col>
-              <Col xl={8} lg={12} md={12} sm={12} xs={24}>
-                <CardPromo1 image='/static/images/promo/used.jpg' />
-              </Col>
-              <Col xl={8} lg={12} md={12} sm={12} xs={24}>
-                <CardPromo2 image='https://ecs7.tokopedia.net/img/blog/promo/2020/01/Thumbnail_600x3282.jpg' />
-              </Col>
-              <Col xl={8} lg={12} md={12} sm={12} xs={24}>
-                <CardPromo3 image='/static/images/promo/no-image.jpg' />
-              </Col>
-            </Row>
-          */}
+            {showPagination && (
+              <Card.Body className="text-center">
+                <Pagination 
+                  total={promos.total} 
+                  goTo={val => setPage(val)} 
+                  current={page} 
+                  hideOnSinglePage 
+                  pageSize={per_page}
+                />
+              </Card.Body>
+            )}
+
         </Card.Body>
       </Card>
 
@@ -139,4 +194,11 @@ const Promo = () => {
   )
 }
 
-export default Promo
+Promo.getInitialProps = async ctx => {
+  const searchQuery = ctx.query
+  await ctx.store.dispatch(actions.getPromos({ ...searchQuery, per_page: per_page }))
+  console.log(searchQuery)
+  return { searchQuery: searchQuery }
+}
+
+export default withAuth(Promo)

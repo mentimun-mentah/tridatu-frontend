@@ -44,7 +44,7 @@ const SetupVoucherSubCategory = ({ typeVoucher, visible, onClose, selectedSubCat
   }, [visible])
 
   useEffect(() => {
-    if(categories && categories.length >= 0){
+    if(categories && categories.length >= 0 && visible){
       let tmp = []
       for(let val of categories){
         if(val.sub_categories_id && isIn(val.sub_categories_id.toString(), _.map(selectedSubCategory, o => o.key))){

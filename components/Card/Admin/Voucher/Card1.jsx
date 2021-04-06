@@ -28,9 +28,11 @@ const AdminCardVoucher = ({ image, idx }) => {
         className="shadow-sm"
         bodyStyle={{ padding: 0 }}
         actions={[
-          <a className="text-decoration-none">
-            <EditOutlined key="edit" />
-          </a>,
+          <Link href="promo/update-promo/[slug]" as="promo/update-promo/1">
+            <a className="text-decoration-none">
+              <EditOutlined key="edit" />
+            </a>
+          </Link>,
            <Popconfirm 
             title="Hapus promo ini?"
             onConfirm={() => {}}

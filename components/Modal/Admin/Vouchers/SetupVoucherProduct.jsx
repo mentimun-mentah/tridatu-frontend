@@ -9,11 +9,10 @@ import { columnsVoucherProduct } from 'data/voucher'
 import _ from 'lodash'
 import Button from 'antd-button-color'
 import isIn from 'validator/lib/isIn'
-import ColB from 'react-bootstrap/Col'
 import Card from 'react-bootstrap/Card'
-// import Form from 'react-bootstrap/Form'
 import isEmpty from 'validator/lib/isEmpty';
 import Pagination from "components/Pagination";
+import renameCategory from 'lib/renameCategory'
 
 const EmptyProduct = () => (
   <div className="w-100">
@@ -21,49 +20,27 @@ const EmptyProduct = () => (
   </div>
 )
 
-const orderList = [
-  { label: "Terbaru", value: "newest" },
-  { label: "Harga Tertinggi", value: "high_price", },
-  { label: "Harga Terendah", value: "low_price", }
-]
-
-const options = [
-  { value: 'all', label: 'Semua Kategori', },
-  { value: 'category', label: 'Kategori',
-    children: [
-      { value: 'pria', label: 'Pria',
-        children: [
-          { value: 'atasan', label: 'Atasan',
-            children: [
-              { value: 'kemeja', label: 'Kemeja', },
-            ],
-          },
-          { value: 'bawahan', label: 'Celana', }
-        ],
-      },
-    ]
-  },
-];
-
 const per_page = 10
 const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, setSelectedProduct }) => {
   // if(!visible) return null
   const dispatch = useDispatch()
 
   /* GLOBAL STATE */
+  const brandsData = useSelector(state => state.brand.brand)
   const products = useSelector(state => state.products.products)
+  const allCategoriesData = useSelector(state => state.categories.allCategories)
   /* GLOBAL STATE */
-
 
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(products.page)
-  const [order_by, setOrderBy] = useState(orderList[0].value)
-  const [dataSourceProducts, setDataSourceProduct] = useState([])
+  const [order_by, setOrderBy] = useState("")
   const [listSelected, setListSelected] = useState([])
+  const [allCategoriesList, setAllCategoriesList] = useState([])
+  const [dataSourceProducts, setDataSourceProduct] = useState([])
 
   const [isInStock, setIsInStock] = useState(true)
   const [selectedBrand, setSelectedBrand] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState({ keyList: [], value: [] })
 
   useEffect(() => {
     if(typeVoucher.value === "specific_product" && visible){
@@ -76,9 +53,9 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
       let tmp = []
       for(let val of products.data){
         if(isIn(val.products_id, _.map(selectedProduct, o => o.key))){
-          tmp.push({ key: val.products_id, disabled: true, products: { ...val, stock: 30 }})
+          tmp.push({ key: val.products_id, disabled: true, products: { ...val }})
         } else {
-          tmp.push({ key: val.products_id, products: { ...val, stock: 30 }})
+          tmp.push({ key: val.products_id, products: { ...val }})
         }
       }
       setDataSourceProduct(tmp)
@@ -95,6 +72,7 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
     if(visible){
       setListSelected(selectedProduct)
     }
+    dispatch(actions.getAllCategories())
   }, [visible])
 
   useEffect(() => {
@@ -108,8 +86,26 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
     if(order_by) queryString["order_by"] = order_by
     else delete queryString["order_by"]
 
+    if(selectedBrand.length > 0) queryString["brand"] = selectedBrand.join(",")
+    else delete queryString["brand"]
+
+    if(selectedCategory.keyList.length > 0) queryString["item_sub_cat"] = selectedCategory.keyList.join(",")
+    else delete queryString["item_sub_cat"]
+
+    if(isInStock) queryString["pre_order"] = "false"
+    else delete queryString["pre_order"]
+
     dispatch(actions.getProducts({...queryString, per_page: per_page, live: "true"}))
-  },[page, order_by, search])
+  },[page, order_by, search, selectedBrand, selectedCategory, isInStock])
+
+  useEffect(() => {
+    const renamedCategory = renameCategory(allCategoriesData)
+    const finalCategories = [
+      { key: 'all', title: 'Semua Kategori', },
+      { key: 'category', title: 'Kategori', children: renamedCategory }
+    ]
+    setAllCategoriesList(finalCategories)
+  },[allCategoriesData])
 
   const onSelectAllRow = (_, record) => {
     if(record.length) {
@@ -178,20 +174,26 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
   };
 
   const onCloseModal = () => {
+    setPage(1)
+    setSearch("")
+    setOrderBy("")
+    setSelectedBrand([])
+    setSelectedCategory({ keyList: [], value: [] })
+    onClose()
+  }
+
+  const onSaveProduct = () => {
     setSelectedProduct(listSelected)
     setPage(1)
     setSearch("")
-    setOrderBy(orderList[0].value)
+    setOrderBy("")
+    setSelectedBrand([])
+    setSelectedCategory({ keyList: [], value: [] })
     onClose()
   }
 
   const onSearchChange = e => {
     setSearch(e.target.value)
-    setPage(1)
-  }
-
-  const onOrderChange = val => {
-    setOrderBy(val)
     setPage(1)
   }
 
@@ -203,26 +205,54 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
 
     setOrderBy(sortPrice)
     setPage(1)
-    console.log(sortPrice)
   }
 
-  const onCategoryChange = val => {
+  const onCategoryChange = (val, child) => {
+    let lastValue = val[val.length - 1]
+    child = child.filter(x => x.key === lastValue)
+
+    const getKeys = (array) => {
+      let list = []
+      for(let val of array){
+        if(val.children){
+          for(let val2 of val.children){
+            if(val2.children){
+              for(let val3 of val2.children){
+                list.push(val3.key)
+              }
+            }
+            else list.push(val2.key)
+          }
+        }
+        else list.push(val.key)
+      }
+      return list
+    }
 
     if(val[0] === "category" && val.length === 1){
-      setSelectedCategory(["all"])
+      setSelectedCategory({ keyList: [], value: ["all"] })
     }
     else{
-      setSelectedCategory(val)
+      setSelectedCategory({ keyList: getKeys(child), value: val })
     }
+    setPage(1)
+  }
 
+  const onBrandChange = val => {
+    setPage(1)
+    setSelectedBrand(val)
   }
 
   const onResetAllFilter = e => {
     e.preventDefault()
     setSearch("")
     setSelectedBrand([])
-    setSelectedCategory([])
+    setSelectedCategory({ keyList: [], value: [] })
     setIsInStock(true)
+  }
+
+  const fetchBrands = () => {
+    dispatch(actions.getBrand())
   }
 
   return(
@@ -231,6 +261,7 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
         zIndex={3000} visible={visible}
         title={`Pilih ${typeVoucher.label}`} closable={false}
         maskClosable={false}
+        bodyStyle={{ height: '80vh' }}
         footer={[
           <Space key="action-btn">
             {listSelected.length > 0 && <small key="info"><span className="text-tridatu">{listSelected.length} </span>Item terpilih</small>}
@@ -240,7 +271,7 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
               type="submit" 
               className="btn-tridatu" 
               style={{ width: 80 }} 
-              onClick={onCloseModal}
+              onClick={onSaveProduct}
             >
               Simpan
             </Button>
@@ -254,11 +285,12 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
               <Form.Item label="Kategori" className="mb-0">
                 <Cascader 
                   changeOnSelect 
-                  options={options} 
+                  options={allCategoriesList} 
                   expandTrigger="hover" 
                   placeholder="Pilih kategori" 
-                  value={selectedCategory}
+                  value={selectedCategory.value}
                   onChange={onCategoryChange}
+                  fieldNames={{ label: 'title', value: 'key', children: 'children' }}
                 />
               </Form.Item>
             </Col>
@@ -269,10 +301,14 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
                   placeholder="Pilih brand" 
                   className="select-brand w-100"
                   value={selectedBrand}
-                  onChange={val => setSelectedBrand(val)}
+                  onFocus={() => fetchBrands()}
+                  onChange={onBrandChange}
+                  filterOption={(input, option) =>
+                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
                 >
-                  {['Adidas', 'Bilabong', 'Converse', 'Deus', 'Gap', 'Giordano', 'Nike'].map(x => (
-                    <Select.Option key={x}>{x}</Select.Option>
+                  {brandsData.map(data => (
+                    <Select.Option value={data.id} key={data.id}>{data.name}</Select.Option>
                   ))}
                 </Select>
               </Form.Item>
@@ -304,42 +340,11 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
           </Row>
         </Form>
 
-        {/*
-        <Form>
-          <Form.Row>
-            <Form.Group as={ColB} lg={8} md={6}>
-              <Input 
-                name="q"
-                placeholder="Cari berdasarkan nama" 
-                prefix={<i className="far fa-search" />}
-                className="h-35"
-                value={search}
-                onChange={onSearchChange}
-              />
-            </Form.Group>
-            <Form.Group as={ColB} lg={4} md={6}>
-              <Select 
-                placeholder="Urutkan" 
-                style={{ width: "100%"}}
-                className="product-search-select"
-                dropdownClassName="idx-3010"
-                value={order_by}
-                onChange={onOrderChange}
-              >
-                {orderList.map((list, i) => (
-                  <Select.Option key={i} value={list.value}>{list.label}</Select.Option>
-                ))}
-              </Select>
-            </Form.Group>
-          </Form.Row>
-        </Form>
-        */}
-
         <Table 
           pagination={false} 
           onChange={onTableChange}
           rowSelection={rowSelection}
-          scroll={{ x: 850, y: 400 }}
+          scroll={{ x: 850, y: 350 }}
           columns={columnsVoucherProduct} 
           dataSource={dataSourceProducts}
           locale={{ emptyText: <EmptyProduct /> }}
@@ -385,6 +390,12 @@ const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, s
       }
       :global(.ant-cascader-menus, .ant-select-dropdown){
         z-index: 3010;
+      }
+      :global(.select-brand .ant-select-selector){
+        overflow: auto;
+      }
+      :global(.select-brand.ant-select-multiple .ant-select-selection-item-remove > .anticon){
+        vertical-align: 0;
       }
       @media screen and (min-width: 576px) {
         :global(.float-right-md){

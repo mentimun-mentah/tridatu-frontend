@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from 'framer-motion'
-import { Rate, Tag } from "antd";
+import { Rate, Tag, Divider } from "antd";
 import { countDiscPrice } from 'lib/utility'
 import { ongoing } from 'components/Card/Admin/Product/Promo/statusType'
 
@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Card from "react-bootstrap/Card";
 
+import kFormatter from 'lib/kFormatter'
 import formatNumber from 'lib/formatNumber'
 import * as actions from "store/actions";
 
@@ -99,12 +100,10 @@ const CardProduct = ({ data }) => {
                 {renderPrice()}
               </p>
               <div className="card-rating fs-12 mb-0 text-muted">
-                <Rate
-                  className="fs-12 mx-0"
-                  allowHalf
-                  disabled
-                  defaultValue={4.5}
-                /> ({Math.floor((Math.random() * 100) + 1)})
+                <Rate className="fs-12 mx-0" allowHalf disabled count={1} value={1} />
+                <span className="va-middle ml-1">{parseFloat((Math.random() * 4) + 1).toFixed(1)}</span>
+                <Divider type="vertical" className="mx-1" style={{ borderColor: "#31353b52", height: "0.7em", top: "0.02em" }} />
+                <span className="va-middle text-truncate">Terjual {kFormatter(Math.floor((Math.random() * 10000) + 1), 'rb')}</span>
               </div>
             </Card.Body>
           </a>
