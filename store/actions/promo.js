@@ -1,6 +1,7 @@
 import { message } from 'antd'
 import axios, { jsonHeaderHandler, signature_exp, resNotification } from "lib/axios";
 import * as actionType from "./actionTypes";
+import isIn from 'validator/lib/isIn'
 
 const searchPromoNameStart = () => {
   return { type: actionType.SEARCH_PROMO_NAME_START }
@@ -35,6 +36,51 @@ const getPromoFail = (error) => {
   return { 
     type: actionType.GET_PROMO_FAIL,
     error: error
+  }
+}
+
+const deletePromoStart = () => {
+  return { type: actionType.DELETE_PROMO_START }
+}
+
+const deletePromoSuccess = () => {
+  return { type: actionType.DELETE_PROMO_SUCCESS }
+}
+
+const deletePromoFail = (error) => {
+  return { 
+    type: actionType.DELETE_PROMO_FAIL,
+    error: error
+  }
+}
+
+export const deletePromo = (id, router) => {
+  return dispatch => {
+    dispatch(deletePromoStart())
+    axios.delete(`/promos/delete/${id}`, jsonHeaderHandler())
+      .then(res => {
+        const resDetail = res.data.detail
+        const notFound = ["Promo not found!", "Promo tidak ditemukan!"]
+        if(isIn(resDetail, notFound)){
+          resNotification("error", "Error", resDetail)
+        } else {
+          resNotification("success", "Success", resDetail)
+          dispatch(getPromos({ ...router }))
+          dispatch(deletePromoSuccess())
+        }
+      })
+      .catch(err => {
+        const errDetail = err.response.data.detail;
+        if(errDetail == signature_exp){
+          resNotification("success", "Success", "Successfully delete the promo.")
+          dispatch(getPromos({ ...router }))
+        } else {
+          if(typeof(errDetail) === "string" && errDetail !== signature_exp) {
+            resNotification("error", "Error", errDetail)
+            dispatch(deletePromoFail(errDetail))
+          }
+        }
+      })
   }
 }
 

@@ -12,10 +12,11 @@ year = year.getFullYear()
 
 const IMG_SOS = '/static/images/social-media'
 const IMG_COURIER = '/static/images/couriers'
+const IMG_PAYMENT = '/static/images/bank'
 
 const social_list = ['facebook', 'instagram', 'twitter', 'tiktok']
 const courier_list = ['jne', 'jet', 'lion', 'pos', 'tiki']
-const payment_list = ['mandiri', 'permata', 'bni', 'bri', 'bca', 'go-pay', 'ovo']
+const payment_list = ['mandiri', 'permata', 'bni', 'bri', 'bca', 'gopay', 'ovo']
 
 const Footer = () => {
   const router = useRouter()
@@ -137,7 +138,7 @@ const Footer = () => {
                           key={i}
                           width={48}
                           height={48}
-                          src={`https://www.gramedia.com/assets/bank/payment-${data}.png`}
+                          src={`${IMG_PAYMENT}/${data}.png`}
                           className="payment-info"
                           alt="tridatu-bali"
                         />

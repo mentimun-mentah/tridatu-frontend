@@ -31,7 +31,7 @@ export const formSelectedPromo = {
   promo_id: { value: [], isValid: true, message: null }
 }
 
-export const formLengthVoucherIsValid = (state, setState, kind) => {
+export const formLengthVoucherIsValid = (state, setState, kind, t) => {
   const voucher = { ...state.voucher }
   const selected = { ...state.selected}
   let isGood = true
@@ -39,14 +39,14 @@ export const formLengthVoucherIsValid = (state, setState, kind) => {
   if(voucher.value <= 0){
     isGood = false
     voucher.isValid = false
-    voucher.message = "Pastikan nilai ini memiliki setidaknya 1 item"
+    voucher.message = t.validation.empty_voucher
   }
 
   if(kind !== "all"){
     if(selected.value <= 0){
       isGood = false
       selected.isValid = false
-      selected.message = "Pastikan nilai ini memiliki setidaknya 1 item"
+      selected.message = t.validation.empty_voucher
     }
   }
 
@@ -55,14 +55,14 @@ export const formLengthVoucherIsValid = (state, setState, kind) => {
   return isGood
 }
 
-export const formSelectedPromoIsValid = (state, setState) => {
+export const formSelectedPromoIsValid = (state, setState, t) => {
   const promo_id = { ...state.promo_id }
   let isGood = true
 
   if(promo_id.value.length <= 0){
     isGood = false
     promo_id.isValid = false
-    promo_id.message = "Promo tidak boleh kosong"
+    promo_id.message = t.validation.empty_promo
   }
 
   if(!isGood) setState({ ...state, promo_id })
@@ -126,7 +126,7 @@ export const formPromoIsValid = (state, setState, state2, setState2, t) => {
   return isGood
 }
 
-export const formTableVoucherIsValid = (state, setState, idx) => {
+export const formTableVoucherIsValid = (state, setState, idx, t) => {
   const newState = [...state]
   let isGood = true
 
@@ -141,39 +141,39 @@ export const formTableVoucherIsValid = (state, setState, idx) => {
   if(isEmpty(codeValue)){
     isGood = false
     newState[idx]["voucher"].code.isValid = false
-    newState[idx]["voucher"].code.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].code.message = t.validation.empty_column
   }
 
   if(isEmpty(quotaValue && quotaValue.toString())){
     isGood = false
     newState[idx]["voucher"].quota.isValid = false
-    newState[idx]["voucher"].quota.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].quota.message = t.validation.empty_column
   }
 
   if((kindValue === "discount") && isEmpty(minTransactionValue && minTransactionValue.toString() || "")){
     if(minTransactionValue < 0){
       isGood = false
       newState[idx]["voucher"].min_transaction.isValid = false
-      newState[idx]["voucher"].min_transaction.message = "Min. Transaksi mulai dari 0"
+      newState[idx]["voucher"].min_transaction.message = t.validation.min_transaction
     }
   }
 
   if((kindValue === "discount") && isEmpty(nominalValue && nominalValue.toString() || "")){
     isGood = false
     newState[idx]["voucher"].nominal.isValid = false
-    newState[idx]["voucher"].nominal.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].nominal.message = t.validation.empty_column
   }
 
   if((kindValue === "discount_up_to") && isEmpty(percentValue && percentValue.toString() || "")){
     isGood = false
     newState[idx]["voucher"].percent.isValid = false
-    newState[idx]["voucher"].percent.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].percent.message = t.validation.empty_column
   }
 
   if((kindValue === "discount_up_to") && isEmpty(maxDiscountValue && maxDiscountValue.toString() || "")){
     isGood = false
     newState[idx]["voucher"].max_discount.isValid = false
-    newState[idx]["voucher"].max_discount.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].max_discount.message = t.validation.empty_column
   }
 
   if(!isGood) setState(newState)
@@ -181,7 +181,7 @@ export const formTableVoucherIsValid = (state, setState, idx) => {
   return isGood
 }
 
-export const formTableOngkirIsValid = (state, setState, idx) => {
+export const formTableOngkirIsValid = (state, setState, idx, t) => {
   const newState = [...state]
   let isGood = true
 
@@ -192,19 +192,19 @@ export const formTableOngkirIsValid = (state, setState, idx) => {
   if(isEmpty(codeValue)){
     isGood = false
     newState[idx]["voucher"].code.isValid = false
-    newState[idx]["voucher"].code.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].code.message = t.validation.empty_column
   }
 
   if(isEmpty(quotaValue && quotaValue.toString())){
     isGood = false
     newState[idx]["voucher"].quota.isValid = false
-    newState[idx]["voucher"].quota.message = "Kolom tidak boleh kosong"
+    newState[idx]["voucher"].quota.message = t.validation.empty_column
   }
 
   if(minTransactionValue < 0){
     isGood = false
     newState[idx]["voucher"].min_transaction.isValid = false
-    newState[idx]["voucher"].min_transaction.message = "Min. Transaksi mulai dari 0"
+    newState[idx]["voucher"].min_transaction.message = t.validation.min_transaction
   }
 
   if(!isGood) setState(newState)

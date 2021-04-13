@@ -1,68 +1,65 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Table, Modal, Empty, Space, Input } from 'antd'
+import { Table, Input, Modal, Empty, Space } from 'antd'
 
 import * as actions from "store/actions";
 
-import { columnsVoucherBrand } from 'data/voucher'
+import { columnsVoucherCategory } from 'data/voucher'
 
 import _ from 'lodash'
 import isIn from 'validator/lib/isIn'
-import Button from 'antd-button-color'
 import ColB from 'react-bootstrap/Col'
+import Button from 'antd-button-color'
 import Form from 'react-bootstrap/Form'
 
-const EmptyBrand = ({ t }) => (
+const EmptyCategory = () => (
   <div className="w-100">
-    <Empty className="my-5" description={<span className="text-secondary">{t.basic_details.no_brand}</span>} />
+    <Empty className="my-5" description={<span className="text-secondary">Tidak ada kategori</span>} />
   </div>
 )
 
-const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, setSelectedBrand }) => {
+const SetupVoucherCategory = ({ typeVoucher, visible, onClose, selectedCategory, setSelectedCategory}) => {
   // if(!visible) return null
   const dispatch = useDispatch()
 
   /* GLOBAL STATE */
-  const brands = useSelector(state => state.brand.brand)
+  const categories = useSelector(state => state.categories.categories)
   /* GLOBAL STATE */
 
   const [search, setSearch] = useState("")
   const [listSelected, setListSelected] = useState([])
-  const [dataSourceBrand, setDataSourceBrand] = useState([])
+  const [dataSourceCategory, setDataSourceCategory] = useState([])
 
   useEffect(() => {
     if(visible){
-      setListSelected(selectedBrand)
+      setListSelected(selectedCategory)
     }
   }, [visible])
 
   useEffect(() => {
-    if(typeVoucher.value === "specific_brand" && visible){
-      dispatch(actions.getBrand())
+    if(typeVoucher.value === "category" && visible){
+      dispatch(actions.getCategories(false))
     }
+    return () => dispatch(actions.getCategoriesSuccess([]))
   }, [visible])
 
   useEffect(() => {
-    if(brands && brands.length >= 0){
+    if(categories && categories.length >= 0){
       let tmp = []
-      for(let val of brands){
-        if(isIn(val.id.toString(), _.map(selectedBrand, o => o.key))){
-          tmp.push({ key: val.id, disabled: true, brand: { ...val }})
+      for(let val of categories){
+        if(isIn(val.categories_id.toString(), _.map(selectedCategory, o => o.key))){
+          tmp.push({ key: val.categories_id, disabled: true, category: { ...val }})
         } else {
-          tmp.push({ key: val.id, brand: { ...val }})
+          tmp.push({ key: val.categories_id, category: { ...val }})
         }
       }
-      setDataSourceBrand(tmp)
+      setDataSourceCategory(tmp)
     }
-  }, [brands])
+  }, [categories])
 
   useEffect(() => {
-    let queryString = {}
-    if(search) queryString["q"] = search
-    else delete queryString["q"]
-
-    dispatch(actions.getBrand(queryString))
-  }, [search])
+    dispatch(actions.getCategories(false, search))
+  },[search])
 
   const onSelectAllRow = (_, record) => {
     if(record.length) {
@@ -79,8 +76,8 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
 
         let found = []
         for(let i = 0; i < newMerge.length; i++){
-          for(let j = 0; j < dataSourceBrand.length; j++){
-            if(newMerge[i].key == dataSourceBrand[j].key){
+          for(let j = 0; j < dataSourceCategory.length; j++){
+            if(newMerge[i].key == dataSourceCategory[j].key){
               found.push(newMerge[i].key)
               break;
             }
@@ -115,14 +112,13 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
     }
     else {
       let copyListSelected = [...listSelected]
-      let newDataSource = [...dataSourceBrand]
+      let newDataSource = [...dataSourceCategory]
       let newData = copyListSelected.filter(ar => !newDataSource.find(rm => (rm.key === ar.key && ar.key === rm.key) ))
       setListSelected(newData)
     }
   }
 
   const rowSelection = {
-    columnWidth: 20,
     onChange: onSelectAllRow,
     selectedRowKeys: _.map(listSelected, obj => obj.key), 
     getCheckboxProps: (record) => ({
@@ -132,7 +128,8 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
   };
 
   const onCloseModal = () => {
-    setSelectedBrand(listSelected)
+    setSelectedCategory(listSelected)
+    setSearch("")
     onClose()
   }
 
@@ -140,14 +137,12 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
     <>
       <Modal centered width={1000} 
         zIndex={3000} visible={visible}
-        title={`${t.basic_details.select} ${typeVoucher.label}`} closable={false}
+        title={`Pilih ${typeVoucher.label}`} closable={false}
         maskClosable={false}
         footer={[
           <Space key="action-btn">
-            {listSelected.length > 0 && 
-              <small key="info"><span className="text-tridatu">{listSelected.length} </span>{t.basic_details.item_selected}</small>
-            }
-            <Button key="back" onClick={onCloseModal}>{t.cancel}</Button>
+            {listSelected.length > 0 && <small key="info"><span className="text-tridatu">{listSelected.length} </span>Item terpilih</small>}
+            <Button key="back" onClick={onCloseModal}>Batal</Button>
             <Button 
               key="submit" 
               type="submit" 
@@ -155,20 +150,20 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
               style={{ width: 80 }} 
               onClick={onCloseModal}
             >
-              {t.save}
+              Simpan
             </Button>
           </Space>
         ]}
       >
         <Form>
           <Form.Row>
-            <Form.Group as={ColB} sm={12}>
+            <Form.Group as={ColB} lg={12}>
               <Input 
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder={t.basic_details.search_brand}
+                className="account-search h-100"
+                placeholder="Cari kategori"
                 prefix={<i className="far fa-search" />}
-                className="h-35"
               />
             </Form.Group>
           </Form.Row>
@@ -178,10 +173,10 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
           pagination={false} 
           scroll={{ y: 400 }}
           rowSelection={rowSelection}
-          columns={columnsVoucherBrand(t)} 
-          dataSource={dataSourceBrand}
-          rowClassName={record => isIn(record.key.toString(), _.map(selectedBrand, o => o.key)) ? "disabled-row" : "modif-row"}
-          locale={{ emptyText: <EmptyBrand t={t} /> }}
+          columns={columnsVoucherCategory} 
+          dataSource={dataSourceCategory}
+          rowClassName={record => isIn(record.key.toString(), _.map(selectedCategory, o => o.key)) ? "disabled-row" : "modif-row"}
+          locale={{ emptyText: <EmptyCategory /> }}
         />
 
       </Modal>
@@ -209,4 +204,4 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
   )
 }
 
-export default SetupVoucherBrand
+export default SetupVoucherCategory

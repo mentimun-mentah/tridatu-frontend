@@ -10,7 +10,7 @@ import Card from 'react-bootstrap/Card'
 import Button from "antd-button-color"
 
 import { imageValidation, uploadButton } from 'lib/imageUploader'
-import { columnsVoucher, columnsVoucherUpdate, columnsOngkir, columnsSelectedProduct, columnsSelectedBrand, columnsSelectedCategory } from 'data/voucher'
+import { columnsVoucher, columnsVoucherUpdate, columnsOngkir, columnsOngkirUpdate, columnsSelectedProduct, columnsSelectedBrand, columnsSelectedCategory } from 'data/voucher'
 import { columnsSelectedSubCategory, columnsSelectedItemSubCategory } from 'data/voucher'
 
 // import { productsData } from 'data/products'
@@ -20,11 +20,11 @@ import AddStyleAdmin from 'components/Admin/addStyle'
 import EditableCell from 'components/Admin/Voucher/CellUpdatePromo'
 import ProductEditableCell from 'components/Admin/Voucher/ProductCell'
 
-import BrandVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherBrand'
-import ProductVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherProduct'
-import CategoryVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherCategory'
-import SubCategoryVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherSubCategory'
-import ItemSubCategoryVoucherModal from 'components/Modal/Admin/Vouchers/SetupVoucherItemSubCategory'
+import BrandVoucherModal from 'components/Modal/Admin/Update/Vouchers/SetupVoucherBrand'
+import ProductVoucherModal from 'components/Modal/Admin/Update/Vouchers/SetupVoucherProduct'
+import CategoryVoucherModal from 'components/Modal/Admin/Update/Vouchers/SetupVoucherCategory'
+import SubCategoryVoucherModal from 'components/Modal/Admin/Update/Vouchers/SetupVoucherSubCategory'
+import ItemSubCategoryVoucherModal from 'components/Modal/Admin/Update/Vouchers/SetupVoucherItemSubCategory'
 import {useEffect} from 'react'
 
 
@@ -352,7 +352,7 @@ const UpdateVoucher = () => {
     }
   })
 
-  const columnsShipping = columnsOngkir.map(col => {
+  const columnsShipping = columnsOngkirUpdate.map(col => {
     if (!col.editable) return col;
     return {
       ...col,

@@ -9,4 +9,4 @@ export { getSlugProduct, getProductSlugStart, getProductSlugSuccess, getProductS
 export { searchCityDistrict, getShippingCost } from './shipping'
 export { getDiscount, nonActiveDiscount } from './discount'
 export { getAllComments, getAllCommentsStart, getAllCommentsSuccess } from './comments'
-export { searchPromoName, getPromos } from './promo'
+export { searchPromoName, getPromos, deletePromo } from './promo'

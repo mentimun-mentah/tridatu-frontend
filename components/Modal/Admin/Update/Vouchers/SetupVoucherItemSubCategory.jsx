@@ -14,13 +14,13 @@ import Form from 'react-bootstrap/Form'
 
 import { getSelectedKeys, convertRecord, newConcat, setRecordOnSearch } from 'lib/voucher'
 
-const EmptyCategory = ({t}) => (
+const EmptyCategory = () => (
   <div className="w-100">
-    <Empty className="my-5" description={<span className="text-secondary">{t.basic_details.no_item_sub_category}</span>} />
+    <Empty className="my-5" description={<span className="text-secondary">Tidak ada item sub kategori</span>} />
   </div>
 )
 
-const SetupVoucherItemSubCategory = ({ t, typeVoucher, visible, onClose, selectedItemSubCategory, setSelectedItemSubCategory }) => {
+const SetupVoucherItemSubCategory = ({ typeVoucher, visible, onClose, selectedItemSubCategory, setSelectedItemSubCategory }) => {
   const dispatch = useDispatch()
 
   /* GLOBAL STATE */
@@ -51,7 +51,7 @@ const SetupVoucherItemSubCategory = ({ t, typeVoucher, visible, onClose, selecte
       for(let cat of allCategories){
         for(let sub of cat.sub_categories){
           const child = sub.item_sub_categories.map(x => {
-            x["name"] = x.item_sub_categories_name;
+            x["name"] = x.item_sub_categories_name + " " + x.item_sub_categories_id;
             delete x.item_sub_categories_name;
             return { 
               key: x.item_sub_categories_id, 
@@ -151,14 +151,14 @@ const SetupVoucherItemSubCategory = ({ t, typeVoucher, visible, onClose, selecte
     <>
       <Modal centered width={1000} 
         zIndex={3000} visible={visible}
-        title={`${t.basic_details.select} ${typeVoucher.label}`} closable={false}
+        title={`Pilih ${typeVoucher.label}`} closable={false}
         maskClosable={false}
         footer={[
           <Space key="action-btn">
             {getSelectedKeys(listSelected).length > 0 && (
-              <small key="info"><span className="text-tridatu">{getSelectedKeys(listSelected).length} </span>{t.basic_details.item_selected}</small>
+              <small key="info"><span className="text-tridatu">{getSelectedKeys(listSelected).length} </span>Item terpilih</small>
             )}
-            <Button key="back" onClick={onCloseModal}>{t.cancel}</Button>
+            <Button key="back" onClick={onCloseModal}>Batal</Button>
             <Button 
               key="submit" 
               type="submit" 
@@ -166,7 +166,7 @@ const SetupVoucherItemSubCategory = ({ t, typeVoucher, visible, onClose, selecte
               style={{ width: 80 }} 
               onClick={onCloseModal}
             >
-              {t.save}
+              Simpan
             </Button>
           </Space>
         ]}
@@ -178,7 +178,7 @@ const SetupVoucherItemSubCategory = ({ t, typeVoucher, visible, onClose, selecte
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="account-search h-100"
-                placeholder={t.basic_details.search_item_sub_category}
+                placeholder="Cari kategori"
                 prefix={<i className="far fa-search" />}
               />
             </Form.Group>
@@ -190,10 +190,10 @@ const SetupVoucherItemSubCategory = ({ t, typeVoucher, visible, onClose, selecte
           scroll={{ y: 400 }}
           rowSelection={rowSelection}
           expandable={{ defaultExpandAllRows: true }}
-          columns={columnsVoucherItemSubCategory(t)}
+          columns={columnsVoucherItemSubCategory} 
           dataSource={dataSourceItemSubCategory}
           rowClassName={record => isIn(record.key.toString(), _.map(getSelectedKeys(selectedItemSubCategory), o => o)) ? "disabled-row" : "modif-row"}
-          locale={{ emptyText: <EmptyCategory t={t} /> }}
+          locale={{ emptyText: <EmptyCategory /> }}
         />
 
       </Modal>

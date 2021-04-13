@@ -8,7 +8,9 @@ const CountChar = ({children}) => <span className="text-muted noselect border-le
 const DISCOUNT = "discount"
 const PERCENT = "discount_up_to"
 
-const VoucherCellEditable = ({ index, record, editable, onBlur, onChange, onRemove, discountTypeHandler, type, children, ...restProps }) => {
+const VoucherCellEditable = ({ 
+  t, index, record, editable, onBlur, onChange, onRemove, discountTypeHandler, type, children, ...restProps 
+}) => {
   let childNode = children
   const disabled = record.voucher.kind.value === DISCOUNT
 
@@ -22,7 +24,7 @@ const VoucherCellEditable = ({ index, record, editable, onBlur, onChange, onRemo
                 maxLength={10}
                 onBlur={onBlur}
                 onChange={onChange}
-                placeholder="Kode Voucher" 
+                placeholder={t.bonus_settings.voucher_code}
                 value={record.voucher[type].value}
                 suffix={<CountChar>{record.voucher[type].value.length}/10</CountChar>} 
               />
@@ -38,7 +40,7 @@ const VoucherCellEditable = ({ index, record, editable, onBlur, onChange, onRemo
                 max={10000000}
                 onBlur={onBlur}
                 onChange={onChange}
-                placeholder="Kuota Klaim"
+                placeholder={t.bonus_settings.claim_quota}
                 value={record.voucher[type].value}
                 className="w-100 h-33-custom-input fs-12 input-number-variant"
                 formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
@@ -69,7 +71,7 @@ const VoucherCellEditable = ({ index, record, editable, onBlur, onChange, onRemo
                     step={disabled ? 1 : 0.1}
                     max={!disabled ? 95 : 10000000}
                     value={record.voucher[disabled ? 'nominal' : 'percent'].value}
-                    placeholder={disabled ? "Nominal Diskon" : "Persentase Diskon"}
+                    placeholder={disabled ? t.bonus_settings.nominal_discount : t.bonus_settings.percent_discount}
                     className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
                     parser={value => value.replace(/\Rp\s?|(\.*)/g, '')}
@@ -91,7 +93,7 @@ const VoucherCellEditable = ({ index, record, editable, onBlur, onChange, onRemo
                     max={10000000}
                     onBlur={onBlur}
                     onChange={onChange}
-                    placeholder="Minimum Transaksi"
+                    placeholder={t.bonus_settings.min_transaction}
                     value={record.voucher[type].value}
                     className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
@@ -115,7 +117,7 @@ const VoucherCellEditable = ({ index, record, editable, onBlur, onChange, onRemo
                     onBlur={onBlur}
                     disabled={disabled}
                     onChange={onChange}
-                    placeholder="Maximum Diskon"
+                    placeholder={t.bonus_settings.max_discount}
                     value={record.voucher[type].value}
                     className="w-100 bor-left-rad-0 h-33-custom-input fs-12 input-number-variant"
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}

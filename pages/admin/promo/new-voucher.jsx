@@ -1,8 +1,12 @@
 import { withAuth } from 'lib/withAuth'
+import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Form, Radio, Select, Table, Space, Tooltip } from 'antd'
 import { PlusCircleOutlined, LoadingOutlined  } from '@ant-design/icons'
+
+import id from 'locales/id/admin/promo/new-voucher'
+import en from 'locales/en/admin/promo/new-voucher'
 
 import _ from 'lodash'
 import makeid from 'lib/makeid'
@@ -65,13 +69,19 @@ const tableProps = {
   components: productComponents
 }
 
-const initialTypeVoucher = { value: ALL_KIND, label: "Produk" }
 
 const tooltipSelectPromoFirst = <small>Pilih promo terlebih dahulu</small>
-const tooltipMaximumVoucher = <small>Pilih promo terlebih dahulu</small>
+const tooltipMaximumVoucher = <small>Jumlah promo sudah mencapai batas maksimum</small>
 
 const NewPromo = () => {
+  const router = useRouter()
   const dispatch = useDispatch()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
+
+  const initialTypeVoucher = { value: ALL_KIND, label: t.basic_details.product }
+
   /*GLOBAL STATE*/
   const listPromoName = useSelector(state => state.promo.listPromoName)
   /*GLOBAL STATE*/
@@ -99,7 +109,7 @@ const NewPromo = () => {
   /*SEARCH PROMO*/
   const [searchName, setSearchName] = useState("")
   const [selectedPromo, setSelectedPromo] = useState(formSelectedPromo)
-  const [notFound, setNotFound] = useState("Harap masukkan 1 karakter atau lebih")
+  const [notFound, setNotFound] = useState(t.basic_details.input_select_promo_1)
   /*SEARCH PROMO*/
 
   const { promo_id } = selectedPromo
@@ -227,20 +237,20 @@ const NewPromo = () => {
     if(isIn(item, ["code", "quota"])){
       if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
         newData[index]['voucher'][item].isValid = false
-        newData[index]['voucher'][item].message = "Kolom tidak boleh kosong"
+        newData[index]['voucher'][item].message = t.validation.empty_column
       }
     }
     if(item === "nominal-percent"){
       if(newData[index]['voucher']['kind'].value === "discount"){
         if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
           newData[index]['voucher']['nominal'].isValid = false
-          newData[index]['voucher']['nominal'].message = "Kolom tidak boleh kosong"
+          newData[index]['voucher']['nominal'].message = t.validation.empty_column
         }
       }
       if(newData[index]['voucher']['kind'].value === "discount_up_to"){
         if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
           newData[index]['voucher']['percent'].isValid = false
-          newData[index]['voucher']['percent'].message = "Kolom tidak boleh kosong"
+          newData[index]['voucher']['percent'].message = t.validation.empty_column
         }
       }
     }
@@ -252,12 +262,12 @@ const NewPromo = () => {
     if(isIn(item, ["code", "quota"])){
       if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
         newData[index]['voucher'][item].isValid = false
-        newData[index]['voucher'][item].message = "Kolom tidak boleh kosong"
+        newData[index]['voucher'][item].message = t.validation.empty_column
       }
     }
     if(item === "min_transaction" && e.target.value < 0) {
       newData[index]['voucher'][item].isValid = false
-      newData[index]['voucher'][item].message = "Min. Transaksi mulai dari 0"
+      newData[index]['voucher'][item].message = t.validation.min_transaction
     }
     setDataFreeShipping(newData)
   }
@@ -284,7 +294,7 @@ const NewPromo = () => {
         if(isIn(value, listCode)){
           newData[index]['voucher'][item].value = value
           newData[index]['voucher'][item].isValid = false
-          newData[index]['voucher'][item].message = "Kode tidak boleh sama"
+          newData[index]['voucher'][item].message = t.validation.duplicate_code
         }
       }
       if(isEmpty(e.target.value || "", { ignore_whitespace: true })) {
@@ -353,7 +363,7 @@ const NewPromo = () => {
   }
   /*FUNCTION FOR EDITING DATA TABLE*/
 
-  const columnsVouchers = columnsVoucher.map(col => {
+  const columnsVouchers = columnsVoucher(t).map(col => {
     if (!col.editable) return col;
     return {
       ...col,
@@ -366,11 +376,12 @@ const NewPromo = () => {
         onChange: e => onTableChange(e, col.type, index),
         onRemove: () => removeVoucherDiscountHandler(index),
         discountTypeHandler: val => discountTypeHandler(val, index),
+        t: t
       })
     }
   })
 
-  const columnsShipping = columnsOngkir.map(col => {
+  const columnsShipping = columnsOngkir(t).map(col => {
     if (!col.editable) return col;
     return {
       ...col,
@@ -381,7 +392,8 @@ const NewPromo = () => {
         editable: col.editable,
         onBlur: e => onValidateTableOngkir(e, col.type, index),
         onChange: e => onTableChangeOngkir(e, col.type, index),
-        onRemove: () => removeFreeShippingHandler(index)
+        onRemove: () => removeFreeShippingHandler(index),
+        t: t
       })
     }
   })
@@ -640,14 +652,14 @@ const NewPromo = () => {
     let tableIsValid = []
     let tableOngkirIsValid = []
     for(let i = 0; i < dataVoucher.length; i++){
-      tableIsValid.push(formTableVoucherIsValid(dataVoucher, setDataVoucher, i))
+      tableIsValid.push(formTableVoucherIsValid(dataVoucher, setDataVoucher, i, t))
     }
     for(let i = 0; i < dataFreeShipping.length; i++){
-      tableOngkirIsValid.push(formTableOngkirIsValid(dataFreeShipping, setDataFreeShipping, i))
+      tableOngkirIsValid.push(formTableOngkirIsValid(dataFreeShipping, setDataFreeShipping, i, t))
     }
     if(
-      formSelectedPromoIsValid(selectedPromo, setSelectedPromo) && 
-      formLengthVoucherIsValid(countVoucherLength, setCountVoucherLength, typeVoucher.value) &&
+      formSelectedPromoIsValid(selectedPromo, setSelectedPromo, t) && 
+      formLengthVoucherIsValid(countVoucherLength, setCountVoucherLength, typeVoucher.value, t) &&
       !isIn("false", tableIsValid) && !isIn("false", tableOngkirIsValid)
     ){
       const data = {
@@ -736,10 +748,10 @@ const NewPromo = () => {
 
   useEffect(() => {
     if(searchName.length && listPromoName.length <= 0){
-      setNotFound("Hasil tidak ditemukan")
+      setNotFound(t.basic_details.not_found)
     }
     if(searchName.length <= 0){
-      setNotFound("Harap masukkan 1 karakter atau lebih")
+      setNotFound(t.basic_details.input_select_promo_1)
     }
   }, [listPromoName])
 
@@ -760,18 +772,18 @@ const NewPromo = () => {
     <>
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Rincian Dasar</h5>
+          <h5 className="mb-0 fs-16-s">{t.basic_details.title}</h5>
         </Card.Body>
         <Card.Body className="p-3">
           <Form layout="vertical">
 
             <Form.Item required
-              label="Pilih Promo"
+              label={t.basic_details.select_promo}
               validateStatus={!promo_id.isValid && promo_id.message && "error"}
             >
               <Select
                 showSearch
-                placeholder="Pilih promo"
+                placeholder={t.basic_details.select_promo}
                 optionFilterProp="children"
                 value={promo_id.value}
                 onSearch={fetchPromoName}
@@ -791,41 +803,47 @@ const NewPromo = () => {
               <ErrorMessage item={promo_id} />
             </Form.Item>
 
-            <Form.Item label="Tipe Voucher" required>
+            <Form.Item label={t.basic_details.voucher_type} required>
               <Radio.Group value={typeVoucher.value} onChange={selectTypeVoucherHandler}>
-                <Radio.Button value={ALL_KIND} label="Produk" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-boxes-alt mr-1" /> Semua Produk
+                <Radio.Button value={ALL_KIND} label={t.basic_details.product} className="voucher-radio-button-wrapper noselect">
+                  <i className="far fa-lg fa-boxes-alt mr-1" /> {t.basic_details.all_product}
                 </Radio.Button>
-                <Radio.Button value={SPECIFIC_PRODUCT} label="Produk" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-box-full mr-1" /> Spesifik Produk
+                <Radio.Button value={SPECIFIC_PRODUCT} label={t.basic_details.product} className="voucher-radio-button-wrapper noselect">
+                  <i className="far fa-lg fa-box-full mr-1" /> {t.basic_details.specific_product}
                 </Radio.Button>
-                <Radio.Button value={SPECIFIC_BRAND} label="Brand" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-layer-group mr-1" /> Spesifik Brand
+                <Radio.Button value={SPECIFIC_BRAND} label={t.basic_details.brand} className="voucher-radio-button-wrapper noselect">
+                  <i className="far fa-lg fa-layer-group mr-1" /> {t.basic_details.specific_brand}
                 </Radio.Button>
                 <br className="d-none d-md-block" />
-                <Radio.Button value={CATEGORY} label="Kategori" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-sitemap mr-1" /> Kategori
+                <Radio.Button value={CATEGORY} label={t.basic_details.category} className="voucher-radio-button-wrapper noselect">
+                  <i className="far fa-lg fa-sitemap mr-1" /> {t.basic_details.category}
                 </Radio.Button>
-                <Radio.Button value={SUB_CATEGORY} label="Sub Kategori" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-folder-tree mr-1" /> Sub Kategori
+                <Radio.Button value={SUB_CATEGORY} label={t.basic_details.sub_category} className="voucher-radio-button-wrapper noselect">
+                  <i className="far fa-lg fa-folder-tree mr-1" /> {t.basic_details.sub_category}
                 </Radio.Button>
-                <Radio.Button value={ITEM_SUB_CATEGORY} label="Item Sub Kategori" className="voucher-radio-button-wrapper noselect">
-                  <i className="far fa-lg fa-folder mr-1" /> Item Sub Kategori
+                <Radio.Button value={ITEM_SUB_CATEGORY} label={t.basic_details.item_sub_category} className="voucher-radio-button-wrapper noselect">
+                  <i className="far fa-lg fa-folder mr-1" /> {t.basic_details.item_sub_category}
                 </Radio.Button>
               </Radio.Group>
             </Form.Item>
 
-            <Form.Item label={`${typeVoucher.label} yang Berlaku`} required className="mb-0">
+            <Form.Item 
+              required 
+              className="mb-0"
+              label={locale === "en" ? 
+                      `${t.basic_details.applicable} ${typeVoucher.label}` : `${typeVoucher.label} ${t.basic_details.applicable}`
+                    } 
+            >
               {typeVoucher.value === ALL_KIND ? 
-                <p className="mb-0 mt-n3 noselect">Semua Produk</p> : 
+                <p className="mb-0 mt-n3 noselect">{t.basic_details.all_product}</p> : 
                 <>
-                <Button with="dashed" type="primary"
-                  icon={<PlusCircleOutlined />}
-                  onClick={typeVoucher.value === ALL_KIND ? () => {} : () => onShowModalHandler(typeVoucher.value)}
-                >
-                  Tambahkan {typeVoucher.label}
-                </Button>
-                <ErrorMessage item={selected} />
+                  <Button with="dashed" type="primary"
+                    icon={<PlusCircleOutlined />}
+                    onClick={typeVoucher.value === ALL_KIND ? () => {} : () => onShowModalHandler(typeVoucher.value)}
+                  >
+                    {t.basic_details.add} {typeVoucher.label}
+                  </Button>
+                  <ErrorMessage item={selected} />
                 </>
               }
             </Form.Item>
@@ -858,13 +876,13 @@ const NewPromo = () => {
 
       <Card className="border-0 shadow-sm card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Pengaturan Bonus</h5>
-          <small className="text-muted">{10 - voucher.value} voucher tersisa</small>
+          <h5 className="mb-0 fs-16-s">{t.bonus_settings.title}</h5>
+          <small className="text-muted">{10 - voucher.value} {t.bonus_settings.voucher_left}</small>
         </Card.Body>
 
         <Card.Body className="p-3">
           <p className="fs-15 mb-3 w-100 fw-500">
-            Voucher Diskon
+            {t.bonus_settings.discount_voucher}
           </p>
           {dataVoucher.length > 0 && (
             <Table
@@ -883,7 +901,7 @@ const NewPromo = () => {
                 disabled={voucher.value >= 10 || !Boolean(promo_id.value.length)}
                 title={(!Boolean(promo_id.value.length) && tooltipSelectPromoFirst) || (voucher.value >= 10 && tooltipMaximumVoucher)}
               >
-                Tambah Voucher Diskon
+                {t.bonus_settings.add_discount_voucher}
               </ButtonAddVoucher>
               <span className="fs-14">
                 <ErrorMessage item={voucher} />
@@ -892,7 +910,7 @@ const NewPromo = () => {
           )}
 
           <p className="fs-15 my-3 w-100 fw-500">
-            Voucher Gratis Ongkir
+            {t.bonus_settings.free_shipping_voucher}
           </p>
           {dataFreeShipping.length > 0 && (
             <Table
@@ -909,7 +927,7 @@ const NewPromo = () => {
               disabled={voucher.value >= 10 || !Boolean(promo_id.value.length)}
               title={(!Boolean(promo_id.value.length) && tooltipSelectPromoFirst) || (voucher.value >= 10 && tooltipMaximumVoucher)}
             >
-              Tambah Voucher Gratis Ongkir
+              {t.bonus_settings.add_free_shipping_voucher}
             </ButtonAddVoucher>
           )}
 
@@ -918,6 +936,7 @@ const NewPromo = () => {
 
 
       <ProductVoucherModal
+        t={t}
         typeVoucher={typeVoucher}
         visible={showProductModal}
         onClose={() => setShowProductModal(false)}
@@ -926,6 +945,7 @@ const NewPromo = () => {
       />
 
       <BrandVoucherModal
+        t={t}
         typeVoucher={typeVoucher}
         visible={showBrandModal}
         onClose={() => setShowBrandModal(false)}
@@ -934,6 +954,7 @@ const NewPromo = () => {
       />
 
       <CategoryVoucherModal
+        t={t}
         typeVoucher={typeVoucher}
         visible={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
@@ -942,6 +963,7 @@ const NewPromo = () => {
       />
 
       <SubCategoryVoucherModal
+        t={t}
         typeVoucher={typeVoucher}
         visible={showSubCategoryModal}
         onClose={() => setShowSubCategoryModal(false)}
@@ -950,6 +972,7 @@ const NewPromo = () => {
       />
 
       <ItemSubCategoryVoucherModal
+        t={t}
         typeVoucher={typeVoucher}
         visible={showItemSubCategoryModal}
         onClose={() => setShowItemSubCategoryModal(false)}
@@ -959,9 +982,9 @@ const NewPromo = () => {
 
       <Space>
         <Button className="btn-tridatu" onClick={onSubmitHandler} style={{ width: 80 }} disabled={loading}>
-          {loading ? <LoadingOutlined /> : "Simpan"}
+          {loading ? <LoadingOutlined /> : t.save}
         </Button>
-        <Button onClick={resetAllData}>Batal</Button>
+        <Button onClick={resetAllData}>t.cancel</Button>
       </Space>
 
       <style jsx>{AddStyleAdmin}</style>

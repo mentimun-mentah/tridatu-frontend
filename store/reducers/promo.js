@@ -50,6 +50,26 @@ const getPromoFail = (state, action) => {
   })
 }
 
+const deletePromoStart = (state, _) => {
+  return updateObject(state, {
+    error: null,
+    loading: false,
+  });
+}
+
+const deletePromoSuccess = (state, _) => {
+  return updateObject(state, {
+    loading: false,
+  })
+}
+
+const deletePromoFail = (state, action) => {
+  return updateObject(state, {
+    loading: false,
+    error: action.error,
+  })
+}
+
 const reducer = (state = initialState, action) => {
   switch(action.type){
     case actionType.SEARCH_PROMO_NAME_START:
@@ -65,6 +85,13 @@ const reducer = (state = initialState, action) => {
       return getPromoSuccess(state, action)
     case actionType.GET_PROMO_FAIL:
       return getPromoFail(state, action)
+
+    case actionType.DELETE_PROMO_START:
+      return deletePromoStart(state, action)
+    case actionType.DELETE_PROMO_SUCCESS:
+      return deletePromoSuccess(state, action)
+    case actionType.DELETE_PROMO_FAIL:
+      return deletePromoFail(state, action)
 
     default:
       return state

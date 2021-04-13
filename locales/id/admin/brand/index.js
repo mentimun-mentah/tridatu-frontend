@@ -1,5 +1,6 @@
 export default {
   success_response: "Berhasil menambahkan brand baru.",
+  search_placeholder: "Cari brand",
   manage_brand: "Kelola Brand",
   add_brand: "Tambah Brand",
   brand_name: "Nama Brand",

@@ -67,7 +67,7 @@ const Brand = () => {
                 <Input 
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Cari brand"
+                  placeholder={t.search_placeholder}
                   className="account-search h-100"
                   prefix={<i className="far fa-search" />}
                 />

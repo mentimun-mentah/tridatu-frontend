@@ -1,5 +1,6 @@
 export default {
   success_response: "Successfully add a new brand.",
+  search_placeholder: "Search brand",
   manage_brand: "Manage Brand",
   add_brand: "Add Brand",
   brand_name: "Brand Name",

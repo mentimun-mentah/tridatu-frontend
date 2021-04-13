@@ -1,9 +1,9 @@
 import { withAuth } from 'lib/withAuth'
 import { useRouter } from 'next/router'
 import { useState, useEffect } from 'react'
-import { Input, Select } from 'antd'
-import { useSelector } from 'react-redux'
-import { AnimatePresence } from 'framer-motion'
+import { Input, Select, Empty } from 'antd'
+import { useSelector, useDispatch } from 'react-redux'
+import { AnimatePresence, motion } from 'framer-motion'
 
 import * as actions from 'store/actions'
 
@@ -15,23 +15,10 @@ import formFilter from 'formdata/formFilter'
 import Pagination from 'components/Pagination'
 import CardPromo from 'components/Card/Admin/Voucher/Card'
 
-// import CardVoucherOnly from "components/Card/Admin/Voucher/VoucherOnly";
-// import CardVoucherOnly1 from "components/Card/Admin/Voucher/VoucherOnly1";
-// import CardPromo1 from "components/Card/Admin/Voucher/Card1";
-// import CardPromo2 from "components/Card/Admin/Voucher/Card2";
-// import CardPromo3 from "components/Card/Admin/Voucher/Card3";
-// import EmptyPromo from "components/Card/Empty/Promo";
-
-// import { promos } from "data/promoData";
+import id from 'locales/id/admin/promo'
+import en from 'locales/en/admin/promo'
 
 const CardPromoMemo = React.memo(CardPromo);
-
-const orderListStatus = [
-  { label: "Semua Status", value: "" },
-  { label: "Akan Datang", value: "will_come", },
-  { label: "Sedang Berjalan", value: "ongoing", },
-  { label: "Telah Berakhir", value: "have_ended", }
-]
 
 const breakpointColumnsObj = {
   default: 3, 1200: 2,
@@ -41,6 +28,10 @@ const breakpointColumnsObj = {
 const per_page = 9
 const Promo = ({ searchQuery }) => {
   const router = useRouter()
+  const dispatch = useDispatch()
+
+  const { locale } = router
+  const t = locale === "en" ? en : id
 
   const promos = useSelector(state => state.promo.promos)
 
@@ -111,11 +102,18 @@ const Promo = ({ searchQuery }) => {
 
   const showPagination = promos !== null && promos && promos.data && promos.data.length > 0 && (promos.next_num !== null || promos.prev_num !== null);
 
+  const orderListStatus = [
+    { label: t.status_type.all_status, value: "" },
+    { label: t.status_type.will_come, value: "will_come", },
+    { label: t.status_type.ongoing, value: "ongoing", },
+    { label: t.status_type.have_ended, value: "have_ended", }
+  ]
+
   return(
     <>
       <Card className="border-0 shadow-none card-add-product">
         <Card.Body className="p-3 border-bottom">
-          <h5 className="mb-0 fs-16-s">Kelola Promo</h5>
+          <h5 className="mb-0 fs-16-s">{t.manage_promo}</h5>
         </Card.Body>
         <Card.Body className="p-3">
           <Form>
@@ -123,7 +121,7 @@ const Promo = ({ searchQuery }) => {
               <Form.Group as={ColB} lg={8} md={12}>
                 <Input 
                   className="h-35"
-                  placeholder="Cari berdasarkan nama" 
+                  placeholder={t.search_placeholder} 
                   prefix={<i className="far fa-search" />}
                   value={q.value}
                   onChange={onSearchChange}
@@ -145,29 +143,45 @@ const Promo = ({ searchQuery }) => {
             </Form.Row>
           </Form>
 
+          {promos && promos.data && promos.data.length > 0 ? (
             <AnimatePresence>
-          <Masonry
-            breakpointCols={breakpointColumnsObj}
-            className="my-masonry-grid"
-            columnClassName="my-masonry-grid_column"
-          >
-              {promos && promos.data && promos.data.length > 0 && promos.data.map(promo => (
-                <CardPromoMemo data={promo} key={promo.promos_id}/>
-              ))}
-          </Masonry>
+              <Masonry
+                breakpointCols={breakpointColumnsObj}
+                className="my-masonry-grid"
+                columnClassName="my-masonry-grid_column"
+              >
+                {promos && promos.data && promos.data.length > 0 && promos.data.map(promo => (
+                  <CardPromoMemo 
+                    t={t}
+                    data={promo} 
+                    key={promo.promos_id}
+                    deletePromo={(id) => dispatch(actions.deletePromo(id, {...router.query, per_page: per_page}))}
+                  />
+                ))}
+              </Masonry>
             </AnimatePresence>
+          ):(
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: ".2" }}
+            >
+              <Empty className="my-5" description={<span className="text-secondary">{t.empty_promo}</span>} /> 
+            </motion.div>
+          )}
 
-            {showPagination && (
-              <Card.Body className="text-center">
-                <Pagination 
-                  total={promos.total} 
-                  goTo={val => setPage(val)} 
-                  current={page} 
-                  hideOnSinglePage 
-                  pageSize={per_page}
-                />
-              </Card.Body>
-            )}
+          {showPagination && (
+            <Card.Body className="text-center">
+              <Pagination 
+                total={promos.total} 
+                goTo={val => setPage(val)} 
+                current={page} 
+                hideOnSinglePage 
+                pageSize={per_page}
+              />
+            </Card.Body>
+          )}
 
         </Card.Body>
       </Card>

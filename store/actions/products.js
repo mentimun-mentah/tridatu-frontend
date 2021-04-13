@@ -2,6 +2,7 @@ import { message } from 'antd'
 import axios, { jsonHeaderHandler, signature_exp, resNotification } from "lib/axios";
 import * as actionType from "./actionTypes";
 import isBoolean from 'validator/lib/isBoolean';
+import isIn from 'validator/lib/isIn'
 
 message.config({ maxCount: 1 });
 
@@ -290,9 +291,9 @@ export const deleteProduct = (id, router) => {
     axios.delete(`/products/delete/${id}`, jsonHeaderHandler())
       .then(res => {
         const resDetail = res.data.detail
-        const notFound = "Product not found!"
+        const notFound = ["Product not found!", "Produk tidak ditemukan!"]
 
-        if(resDetail === notFound){
+        if(isIn(resDetail, notFound)){
           resNotification("error", "Error", resDetail)
         } else {
           resNotification("success", "Success", resDetail)

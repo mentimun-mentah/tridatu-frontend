@@ -14,14 +14,14 @@ import isEmpty from 'validator/lib/isEmpty';
 import Pagination from "components/Pagination";
 import renameCategory from 'lib/renameCategory'
 
-const EmptyProduct = ({ t }) => (
+const EmptyProduct = () => (
   <div className="w-100">
-    <Empty className="my-5" description={<span className="text-secondary">{t.basic_details.no_product}</span>} />
+    <Empty className="my-5" description={<span className="text-secondary">Tidak ada produk</span>} />
   </div>
 )
 
 const per_page = 10
-const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct, setSelectedProduct }) => {
+const SetupVoucherProduct = ({ typeVoucher, visible, onClose, selectedProduct, setSelectedProduct }) => {
   // if(!visible) return null
   const dispatch = useDispatch()
 
@@ -101,8 +101,8 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
   useEffect(() => {
     const renamedCategory = renameCategory(allCategoriesData)
     const finalCategories = [
-      { key: 'all', title: t.basic_details.all_category, },
-      { key: 'category', title: t.basic_details.category, children: renamedCategory }
+      { key: 'all', title: 'Semua Kategori', },
+      { key: 'category', title: 'Kategori', children: renamedCategory }
     ]
     setAllCategoriesList(finalCategories)
   },[allCategoriesData])
@@ -259,15 +259,13 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
     <>
       <Modal centered width={1000} 
         zIndex={3000} visible={visible}
-        title={`${t.basic_details.select} ${typeVoucher.label}`} closable={false}
+        title={`Pilih ${typeVoucher.label}`} closable={false}
         maskClosable={false}
         bodyStyle={{ height: '80vh' }}
         footer={[
           <Space key="action-btn">
-            {listSelected.length > 0 && 
-              <small key="info"><span className="text-tridatu">{listSelected.length} </span>{t.basic_details.item_selected}</small>
-            }
-            <Button key="back" onClick={onCloseModal}>{t.cancel}</Button>
+            {listSelected.length > 0 && <small key="info"><span className="text-tridatu">{listSelected.length} </span>Item terpilih</small>}
+            <Button key="back" onClick={onCloseModal}>Batal</Button>
             <Button 
               key="submit" 
               type="submit" 
@@ -275,7 +273,7 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
               style={{ width: 80 }} 
               onClick={onSaveProduct}
             >
-              {t.save}
+              Simpan
             </Button>
           </Space>
         ]}
@@ -284,12 +282,12 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
         <Form layout="vertical">
           <Row gutter={[16, 8]}>
             <Col xl={8} lg={8} md={8} sm={24} xs={24}>
-              <Form.Item label={t.basic_details.category} className="mb-0">
+              <Form.Item label="Kategori" className="mb-0">
                 <Cascader 
                   changeOnSelect 
                   options={allCategoriesList} 
                   expandTrigger="hover" 
-                  placeholder={`${t.basic_details.select} ${t.basic_details.category}`} 
+                  placeholder="Pilih kategori" 
                   value={selectedCategory.value}
                   onChange={onCategoryChange}
                   fieldNames={{ label: 'title', value: 'key', children: 'children' }}
@@ -297,10 +295,10 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
               </Form.Item>
             </Col>
             <Col xl={8} lg={8} md={8} sm={24} xs={24}>
-              <Form.Item label={t.basic_details.brand} className="mb-0">
+              <Form.Item label="Brand" className="mb-0">
                 <Select 
                   mode="multiple" 
-                  placeholder={`${t.basic_details.select} ${t.basic_details.brand}`} 
+                  placeholder="Pilih brand" 
                   className="select-brand w-100"
                   value={selectedBrand}
                   onFocus={() => fetchBrands()}
@@ -316,19 +314,19 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
               </Form.Item>
             </Col>
             <Col xl={8} lg={8} md={8} sm={24} xs={24}>
-              <Form.Item label={t.basic_details.search_product} className="mb-2">
+              <Form.Item label="Cari produk" className="mb-2">
                 <Input 
                   value={search} 
                   className="h-35" 
                   onChange={onSearchChange}
-                  placeholder={t.basic_details.serach_product_by_name}
+                  placeholder="Cari berdasarkan nama produk" 
                 />
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={[16, 16]} justify="space-between" align="middle">
             <Col xs={{ order: 2, span: 24 }} sm={{ order: 1, span: 8 }}>
-              <Button className="btn-tridatu" onClick={onResetAllFilter}>{t.basic_details.reset}</Button>
+              <Button className="btn-tridatu" onClick={onResetAllFilter}>Atur ulang</Button>
             </Col>
             <Col xs={{ order: 1, span: 24 }} sm={{ order: 2, span: 16 }}>
               <Checkbox 
@@ -336,7 +334,7 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
                 className="noselect float-right-md"
                 onChange={e => setIsInStock(e.target.checked)}
               >
-                {t.basic_details.product_available}
+                Hanya menampilkan produk yang tersedia
               </Checkbox>
             </Col>
           </Row>
@@ -347,9 +345,9 @@ const SetupVoucherProduct = ({ t, typeVoucher, visible, onClose, selectedProduct
           onChange={onTableChange}
           rowSelection={rowSelection}
           scroll={{ x: 850, y: 350 }}
-          columns={columnsVoucherProduct(t)} 
+          columns={columnsVoucherProduct} 
           dataSource={dataSourceProducts}
-          locale={{ emptyText: <EmptyProduct t={t} /> }}
+          locale={{ emptyText: <EmptyProduct /> }}
           rowClassName={record => isIn(record.key, _.map(selectedProduct, o => o.key)) ? "disabled-row" : "modif-row"}
         />
 

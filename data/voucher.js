@@ -6,13 +6,13 @@ import ItemPricePromo from "components/Card/Admin/Product/Promo/ItemPrice";
 
 import ItemBrandInfo from "components/Card/Admin/Brands/ItemInfo";
 
-export const columnsVoucher = [
+export const columnsVoucher = (t) => [
   {
     key: 'code',
     title: (
       <span>
-        Kode Voucher 
-        <Tooltip title={<small className="noselect">Kode voucher mengandung Alfabet (A-Z) dan Angka (0-9)</small>}>
+        {t.bonus_settings.voucher_code}
+        <Tooltip title={<small className="noselect">{t.bonus_settings.tooltip.voucher_code}</small>}>
         <i className="fal fa-info-circle text-muted ml-1" />
         </Tooltip>
       </span>
@@ -26,8 +26,8 @@ export const columnsVoucher = [
     key: 'quota',
     title: (
       <span>
-        Kuota Klaim
-        <Tooltip title={<small className="noselect">Jumlah voucher dapat diklaim pengguna</small>}>
+        {t.bonus_settings.claim_quota}
+        <Tooltip title={<small className="noselect">{t.bonus_settings.tooltip.claim_quota}</small>}>
         <i className="fal fa-info-circle text-muted ml-1" />
         </Tooltip>
       </span>
@@ -41,8 +41,8 @@ export const columnsVoucher = [
     key: 'min_transaction',
     title: (
       <span>
-        Min. Transaksi
-        <Tooltip title={<small className="noselect">Minimum transaksi dapat dikosongkan</small>}>
+        {t.bonus_settings.min_transaction}
+        <Tooltip title={<small className="noselect">{t.bonus_settings.tooltip.min_transaction}</small>}>
         <i className="fal fa-info-circle text-muted ml-1" />
         </Tooltip>
       </span>
@@ -54,7 +54,7 @@ export const columnsVoucher = [
   },
   {
     key: 'nominal-percent',
-    title: 'Nominal/Persentase',
+    title: t.bonus_settings.nominal_percent,
     dataIndex: 'voucher',
     type: 'nominal-percent',
     editable: true,
@@ -62,7 +62,7 @@ export const columnsVoucher = [
   },
   {
     key: 'max_discount',
-    title: 'Max. Discount',
+    title: t.bonus_settings.max_discount,
     dataIndex: 'voucher',
     type: 'max_discount',
     editable: true,
@@ -70,7 +70,7 @@ export const columnsVoucher = [
   },
   {
     key: 'action',
-    title: 'Aksi',
+    title: t.bonus_settings.action,
     align: 'center',
     type: 'action',
     editable: true,
@@ -142,12 +142,12 @@ export const columnsVoucherUpdate = [
   }
 ]
 
-export const columnsOngkir = [
+export const columnsOngkirUpdate = [
   {
     key: 'code',
     title: (
       <span>
-        Kode Voucher 
+        Kode Voucher
         <Tooltip title={<small className="noselect">Kode voucher mengandung Alfabet (A-Z) dan Angka (0-9)</small>}>
         <i className="fal fa-info-circle text-muted ml-1" />
         </Tooltip>
@@ -173,14 +173,14 @@ export const columnsOngkir = [
   },
   {
     key: 'min_transaction',
-    title: 'Min. Transaksi',
+    title: "Min. Transaksi",
     dataIndex: 'voucher',
     type: 'min_transaction',
     editable: true,
   },
   {
     key: 'action',
-    title: 'Aksi',
+    title: "Aksi",
     align: 'center',
     type: 'action',
     editable: true,
@@ -188,9 +188,55 @@ export const columnsOngkir = [
   }
 ]
 
-export const columnsVoucherProduct = [
+export const columnsOngkir = (t) => [
   {
-    title: "Produk",
+    key: 'code',
+    title: (
+      <span>
+        {t.bonus_settings.voucher_code}
+        <Tooltip title={<small className="noselect">{t.bonus_settings.tooltip.voucher_code}</small>}>
+        <i className="fal fa-info-circle text-muted ml-1" />
+        </Tooltip>
+      </span>
+    ),
+    dataIndex: 'voucher',
+    type: 'code',
+    editable: true,
+  },
+  {
+    key: 'quota',
+    title: (
+      <span>
+        {t.bonus_settings.claim_quota}
+        <Tooltip title={<small className="noselect">{t.bonus_settings.tooltip.claim_quota}</small>}>
+        <i className="fal fa-info-circle text-muted ml-1" />
+        </Tooltip>
+      </span>
+    ),
+    dataIndex: 'voucher',
+    type: 'quota',
+    editable: true,
+  },
+  {
+    key: 'min_transaction',
+    title: t.bonus_settings.min_transaction,
+    dataIndex: 'voucher',
+    type: 'min_transaction',
+    editable: true,
+  },
+  {
+    key: 'action',
+    title: t.bonus_settings.action,
+    align: 'center',
+    type: 'action',
+    editable: true,
+    render: () => <a><i className="fal fa-trash-alt text-center" /></a>,
+  }
+]
+
+export const columnsVoucherProduct = (t) => [
+  {
+    title: t.basic_details.product,
     dataIndex: "products",
     key: "product",
     width: 270,
@@ -204,7 +250,7 @@ export const columnsVoucherProduct = [
     ),
   },
   {
-    title: "Harga",
+    title: t.basic_details.price,
     dataIndex: "products",
     key: "price",
     width: 180,
@@ -220,7 +266,7 @@ export const columnsVoucherProduct = [
     ),
   },
   {
-    title: "Stok",
+    title: t.basic_details.stock,
     dataIndex: "products",
     key: "stock",
     width: 150,
@@ -277,9 +323,9 @@ export const columnsSelectedProduct = [
   }
 ]
 
-export const columnsVoucherBrand = [
+export const columnsVoucherBrand = (t) => [
   {
-    title: "Brand",
+    title: t.basic_details.brand,
     dataIndex: "brand",
     key: "brand",
     width: 270,
@@ -308,9 +354,9 @@ export const columnsSelectedBrand = [
   }
 ]
 
-export const columnsVoucherCategory = [
+export const columnsVoucherCategory = (t) => [
   {
-    title: "Kategori",
+    title: t.basic_details.category,
     dataIndex: "category",
     key: "category",
     render: (item) => <span>{item.categories_name}</span>
@@ -337,9 +383,9 @@ export const columnsSelectedCategory = [
   }
 ]
 
-export const columnsVoucherSubCategory = [
+export const columnsVoucherSubCategory = (t) => [
   {
-    title: "Sub Kategori",
+    title: t.basic_details.sub_category,
     dataIndex: "category",
     key: "category",
     render: (item) => (
@@ -370,9 +416,9 @@ export const columnsSelectedSubCategory = [
   }
 ]
 
-export const columnsVoucherItemSubCategory = [
+export const columnsVoucherItemSubCategory = (t) => [
   {
-    title: "Item Sub Kategori",
+    title: t.basic_details.item_sub_category,
     dataIndex: "category",
     key: "category",
     render: (item) => <span>{item.name}</span>

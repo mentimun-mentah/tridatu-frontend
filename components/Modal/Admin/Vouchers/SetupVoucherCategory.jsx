@@ -12,13 +12,13 @@ import ColB from 'react-bootstrap/Col'
 import Button from 'antd-button-color'
 import Form from 'react-bootstrap/Form'
 
-const EmptyCategory = () => (
+const EmptyCategory = ({t}) => (
   <div className="w-100">
-    <Empty className="my-5" description={<span className="text-secondary">Tidak ada kategori</span>} />
+    <Empty className="my-5" description={<span className="text-secondary">{t.basic_details.no_category}</span>} />
   </div>
 )
 
-const SetupVoucherCategory = ({ typeVoucher, visible, onClose, selectedCategory, setSelectedCategory}) => {
+const SetupVoucherCategory = ({ t, typeVoucher, visible, onClose, selectedCategory, setSelectedCategory}) => {
   // if(!visible) return null
   const dispatch = useDispatch()
 
@@ -137,12 +137,14 @@ const SetupVoucherCategory = ({ typeVoucher, visible, onClose, selectedCategory,
     <>
       <Modal centered width={1000} 
         zIndex={3000} visible={visible}
-        title={`Pilih ${typeVoucher.label}`} closable={false}
+        title={`${t.basic_details.select} ${typeVoucher.label}`} closable={false}
         maskClosable={false}
         footer={[
           <Space key="action-btn">
-            {listSelected.length > 0 && <small key="info"><span className="text-tridatu">{listSelected.length} </span>Item terpilih</small>}
-            <Button key="back" onClick={onCloseModal}>Batal</Button>
+            {listSelected.length > 0 && 
+              <small key="info"><span className="text-tridatu">{listSelected.length} </span>{t.basic_details.item_selected}</small>
+            }
+            <Button key="back" onClick={onCloseModal}>{t.cancel}</Button>
             <Button 
               key="submit" 
               type="submit" 
@@ -150,7 +152,7 @@ const SetupVoucherCategory = ({ typeVoucher, visible, onClose, selectedCategory,
               style={{ width: 80 }} 
               onClick={onCloseModal}
             >
-              Simpan
+              {t.save}
             </Button>
           </Space>
         ]}
@@ -162,7 +164,7 @@ const SetupVoucherCategory = ({ typeVoucher, visible, onClose, selectedCategory,
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="account-search h-100"
-                placeholder="Cari kategori"
+                placeholder={t.basic_details.search_category}
                 prefix={<i className="far fa-search" />}
               />
             </Form.Group>
@@ -173,10 +175,10 @@ const SetupVoucherCategory = ({ typeVoucher, visible, onClose, selectedCategory,
           pagination={false} 
           scroll={{ y: 400 }}
           rowSelection={rowSelection}
-          columns={columnsVoucherCategory} 
+          columns={columnsVoucherCategory(t)} 
           dataSource={dataSourceCategory}
           rowClassName={record => isIn(record.key.toString(), _.map(selectedCategory, o => o.key)) ? "disabled-row" : "modif-row"}
-          locale={{ emptyText: <EmptyCategory /> }}
+          locale={{ emptyText: <EmptyCategory t={t} /> }}
         />
 
       </Modal>

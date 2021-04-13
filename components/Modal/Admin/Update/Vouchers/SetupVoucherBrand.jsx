@@ -12,13 +12,13 @@ import Button from 'antd-button-color'
 import ColB from 'react-bootstrap/Col'
 import Form from 'react-bootstrap/Form'
 
-const EmptyBrand = ({ t }) => (
+const EmptyBrand = () => (
   <div className="w-100">
-    <Empty className="my-5" description={<span className="text-secondary">{t.basic_details.no_brand}</span>} />
+    <Empty className="my-5" description={<span className="text-secondary">Tidak ada brand</span>} />
   </div>
 )
 
-const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, setSelectedBrand }) => {
+const SetupVoucherBrand = ({ typeVoucher, visible, onClose, selectedBrand, setSelectedBrand }) => {
   // if(!visible) return null
   const dispatch = useDispatch()
 
@@ -140,14 +140,12 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
     <>
       <Modal centered width={1000} 
         zIndex={3000} visible={visible}
-        title={`${t.basic_details.select} ${typeVoucher.label}`} closable={false}
+        title={`Pilih ${typeVoucher.label}`} closable={false}
         maskClosable={false}
         footer={[
           <Space key="action-btn">
-            {listSelected.length > 0 && 
-              <small key="info"><span className="text-tridatu">{listSelected.length} </span>{t.basic_details.item_selected}</small>
-            }
-            <Button key="back" onClick={onCloseModal}>{t.cancel}</Button>
+            {listSelected.length > 0 && <small key="info"><span className="text-tridatu">{listSelected.length} </span>Item terpilih</small>}
+            <Button key="back" onClick={onCloseModal}>Batal</Button>
             <Button 
               key="submit" 
               type="submit" 
@@ -155,7 +153,7 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
               style={{ width: 80 }} 
               onClick={onCloseModal}
             >
-              {t.save}
+              Simpan
             </Button>
           </Space>
         ]}
@@ -166,7 +164,7 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
               <Input 
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder={t.basic_details.search_brand}
+                placeholder="Cari brand" 
                 prefix={<i className="far fa-search" />}
                 className="h-35"
               />
@@ -178,10 +176,10 @@ const SetupVoucherBrand = ({ t, typeVoucher, visible, onClose, selectedBrand, se
           pagination={false} 
           scroll={{ y: 400 }}
           rowSelection={rowSelection}
-          columns={columnsVoucherBrand(t)} 
+          columns={columnsVoucherBrand} 
           dataSource={dataSourceBrand}
           rowClassName={record => isIn(record.key.toString(), _.map(selectedBrand, o => o.key)) ? "disabled-row" : "modif-row"}
-          locale={{ emptyText: <EmptyBrand t={t} /> }}
+          locale={{ emptyText: <EmptyBrand /> }}
         />
 
       </Modal>

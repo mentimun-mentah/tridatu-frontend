@@ -140,6 +140,9 @@ const Products = ({ searchQuery }) => {
     if(products && router.query.hasOwnProperty("page")){
       setPage(+router.query.page)
     }
+    if(products && router.query.hasOwnProperty("order_by") && (router.query.hasOwnProperty("order_by") !== order_by)) {
+      setOrderBy(order_by)
+    }
   }, [products])
 
   const onSearchChange = e => {
